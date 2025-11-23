@@ -1,12 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hello World</title>
-  </head>
+    <title>Budget Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/src/components/ui.js?v=1.18"></script> <!-- Cache busting -->
+</head>
+<body class="bg-gray-100">
+    <div id="menu-container"></div>
+    <main id="content" class="p-4 w-4/5 mx-auto"></main>
+    <script>
+        const content = document.getElementById('content');
+        const menuContainer = document.getElementById('menu-container');
+        let currentCollection = 'items';
+        let currentDocuments = [];
+        let currentHeaders = [];
 
-  <body>
-    <h1>Hello World</h1>
-  </body>
+        // --- Quản lý Modal (Collections Page) ---
+        let isEditMode = false;
+        let currentDocId = null;
+
+        function openModal(mode, docId = null) {
+            const modal = document.getElementById('form-modal');
+            const form = document.getElementById('item-form');
+            const formTitle = document.getElementById('form-title');
+            const formFields = document.getElementById('form-fields');
+
+            form.reset();
+            isEditMode = mode === 'edit';
+            currentDocId = docId;
+            const headersFromDOM = document.getElementById('collections-content').dataset.headers.split(',');
+
+            if (isEditMode) {
+                formTitle.textContent = 'Chỉnh sửa Mục';
+                const doc = currentDocuments.find(d => d['Danh mục thu chi'] == docId);
+                if (doc) {
+                    formFields.innerHTML = createFormFields(doc, headersFromDOM);
+                } else {
+                    alert(`Lỗi: Không tìm thấy mục với ID: ${docId}`);
+                    closeModal();
+                    return;
+                }
+            } else {
+                formTitle.textContent = 'Thêm Mục Mới';
+                formFields.innerHTML = createFormFields({}, headersFromDOM);
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('form-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function createFormFields(doc, headers) {
+            let html = '';
+            headers.forEach(key => {
+                const value = doc[key] || '';
+                html += `<div class="mb-4">
+                           <label class="block text-gray-700 text-sm font-bold mb-2 text-left">${key}</label>
+                           <input type="text" name="${key}" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                         </div>`;
+            });
+            return html;
+        }
+
+        // --- Dữ liệu & Lệnh gọi API ---
+        async function loadCollectionData() {
+            const collectionContent = document.getElementById('collections-content');
+            if (!collectionContent) return;
+            collectionContent.innerHTML = '<p class="text-center">Đang tải...</p>';
+            const predefinedHeaders = collectionContent.dataset.headers.split(',');
+
+            try {
+                const response = await fetch(`/api/collections/${currentCollection}/documents`);
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                currentDocuments = await response.json();
+                currentHeaders = predefinedHeaders;
+
+                if (currentDocuments.length === 0) {
+                    collectionContent.innerHTML = "<p class='text-center text-gray-500'>Không có dữ liệu. Vui lòng nhấn nút '+' để thêm mới.</p>";
+                } else {
+                    collectionContent.innerHTML = createTable(currentDocuments, currentHeaders);
+                    attachTableEventListeners();
+                }
+            } catch (error) {
+                console.error('Error loading collection data:', error);
+                collectionContent.innerHTML = `<p class="text-center text-red-500">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function loadManagementData() {
+            const treeContainer = document.getElementById('management-tree');
+            if (!treeContainer) return;
+
+            try {
+                const response = await fetch('/api/management/tree');
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                const data = await response.json();
+                
+                if (Object.keys(data).length === 0) {
+                    treeContainer.innerHTML = '<p class="text-center text-gray-500">Không có dữ liệu để hiển thị.</p>';
+                    return;
+                }
+
+                treeContainer.innerHTML = buildTreeHtml(data);
+                attachTreeEventListeners();
+
+            } catch (error) {
+                console.error('Error loading management data:', error);
+                treeContainer.innerHTML = `<p class="text-center text-red-500">Error: ${error.message}</p>`;
+            }
+        }
+
+        function buildTreeHtml(data) {
+            let html = '<ul>';
+            const sortedYears = Object.keys(data).sort((a, b) => b - a);
+
+            for (const year of sortedYears) {
+                html += `<li><span class="toggle">Năm ${year}</span>`;
+                html += '<ul class="nested">';
+                const sortedMonths = Object.keys(data[year]).sort((a, b) => b - a);
+
+                for (const month of sortedMonths) {
+                    html += `<li><span class="toggle">Tháng ${month}</span>`;
+                    html += '<ul class="nested">';
+                    for (const item of data[year][month]) {
+                        const itemName = item['Tên'] || 'Không có tên';
+                        const itemAmount = item['Số tiền'] ? ` - ${item['Số tiền']}` : '';
+                        html += `<li class="leaf-node">${itemName}${itemAmount}</li>`;
+                    }
+                    html += '</ul></li>';
+                }
+                html += '</ul></li>';
+            }
+            html += '</ul>';
+            return html;
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // VALIDATION: Kiểm tra xem ID có được cung cấp hay không
+            if (!data['Danh mục thu chi'] || data['Danh mục thu chi'].trim() === '') {
+                alert('Trường "Danh mục thu chi" (ID) là bắt buộc.');
+                return;
+            }
+
+            const url = isEditMode
+                ? `/api/collections/${currentCollection}/${currentDocId}`
+                : `/api/collections/${currentCollection}/documents`;
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeModal();
+                    await loadCollectionData();
+                } else {
+                    alert(`Operation failed: ${await response.text()}`);
+                }
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('An error occurred.');
+            }
+        }
+
+        async function handleDelete(docId) {
+            if (confirm('Bạn có chắc muốn xóa mục này không?')) {
+                try {
+                    const response = await fetch(`/api/collections/${currentCollection}/${docId}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        await loadCollectionData();
+                    } else {
+                        alert(`Delete failed: ${await response.text()}`);
+                    }
+                } catch (error) {
+                    console.error('Error deleting:', error);
+                    alert('An error occurred.');
+                }
+            }
+        }
+
+        // --- Trình xử lý sự kiện & Điều hướng ---
+        function attachGlobalEventListeners() {
+            menuContainer.addEventListener('click', e => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    const path = new URL(e.target.href).pathname;
+                    history.pushState({ path }, '', path);
+                    handleNav(path);
+                }
+            });
+        }
+
+        function attachPageEventListeners() {
+            const addNewBtn = document.getElementById('add-new-btn');
+            if (addNewBtn) addNewBtn.addEventListener('click', () => openModal('add'));
+
+            const cancelBtn = document.getElementById('cancel-btn');
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+            const itemForm = document.getElementById('item-form');
+            if(itemForm) itemForm.addEventListener('submit', handleFormSubmit);
+        }
+        
+        function attachTreeEventListeners() {
+            const treeContainer = document.getElementById('management-tree');
+            if (!treeContainer) return;
+            treeContainer.addEventListener('click', function (event) {
+                if (event.target.classList.contains('toggle')) {
+                    const nestedList = event.target.nextElementSibling;
+                    if (nestedList && nestedList.tagName === 'UL') {
+                        event.target.classList.toggle('expanded');
+                        nestedList.classList.toggle('active');
+                    }
+                }
+            });
+        }
+
+        function attachTableEventListeners() {
+            content.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => handleDelete(e.currentTarget.dataset.id));
+            });
+            content.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => openModal('edit', e.currentTarget.dataset.id));
+            });
+        }
+
+        const routes = {
+            '/': '/pages/home',
+            '/collections': '/pages/collections',
+            '/management': '/pages/management'
+        };
+
+        async function handleNav(path) {
+            const pagePath = routes[path] || '/pages/home'; // Default to home
+            try {
+                const response = await fetch(pagePath);
+                content.innerHTML = await response.text();
+                
+                if (path === '/collections') {
+                    currentCollection = 'items'; 
+                    await loadCollectionData();
+                    attachPageEventListeners();
+                } else if (path === '/management') {
+                    await loadManagementData();
+                }
+            } catch (error) {
+                content.innerHTML = '<h1>Page Not Found</h1>';
+                console.error('Error fetching page:', error);
+            }
+        }
+
+        async function initialLoad() {
+            const menuResponse = await fetch('/components/menu');
+            menuContainer.innerHTML = await menuResponse.text();
+            attachGlobalEventListeners();
+
+            window.onpopstate = (e) => {
+                handleNav(e.state ? e.state.path : '/');
+            };
+
+            await handleNav(window.location.pathname);
+        }
+
+        initialLoad();
+    </script>
+</body>
 </html>

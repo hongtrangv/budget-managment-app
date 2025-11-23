@@ -1,0 +1,64 @@
+<!-- src/pages/management.html -->
+<style>
+    /* --- Tree Menu Styling --- */
+    .tree-menu ul {
+        list-style-type: none;
+        padding-left: 25px;
+        border-left: 1px dashed #ccc;
+    }
+
+    .tree-menu li {
+        position: relative;
+        padding: 4px 0;
+    }
+
+    .tree-menu li::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: -25px;
+        width: 20px;
+        height: 1px;
+        background-color: #ccc;
+    }
+
+    /* Nút mở rộng/thu gọn (+/-) */
+    .tree-menu .toggle {
+        cursor: pointer;
+        display: inline-block;
+        font-weight: bold;
+        margin-right: 8px;
+        font-family: monospace;
+        user-select: none; /* Ngăn chặn việc chọn văn bản khi nhấp đúp */
+    }
+
+    /* Ẩn các nhánh con theo mặc định */
+    .tree-menu .nested {
+        display: none;
+    }
+
+    /* Hiển thị các nhánh con khi mục cha có lớp 'active' */
+    .tree-menu .active {
+        display: block;
+    }
+
+    /* Thay đổi biểu tượng khi mở rộng */
+    .tree-menu .toggle.expanded::before {
+        content: '- ';
+    }
+
+    .tree-menu .toggle:not(.expanded)::before {
+        content: '+ ';
+    }
+
+    .tree-menu .leaf-node {
+        padding-left: 28px; /* Căn chỉnh các mục con không có nút toggle */
+    }
+</style>
+
+<h1 class="text-2xl font-bold mb-4">Quản lý Chi tiêu theo Thời gian</h1>
+
+<div id="management-tree" class="tree-menu">
+    <!-- Cây menu sẽ được tạo tự động bởi JavaScript -->
+    <p>Đang tải dữ liệu...</p>
+</div>

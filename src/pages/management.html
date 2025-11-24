@@ -1,83 +1,50 @@
 <!-- src/pages/management.html -->
 <style>
-    /* --- Tree Menu Styling --- */
-    .tree-menu ul {
-        list-style-type: none;
-        padding-left: 25px;
-        border-left: 1px dashed #ccc;
-    }
+    /* --- Tree Menu Styling (re-used) --- */
+    .tree-menu ul { list-style-type: none; padding-left: 25px; border-left: 1px dashed #ccc; }
+    .tree-menu li { position: relative; padding: 4px 0; }
+    .tree-menu li::before { content: ''; position: absolute; top: 15px; left: -25px; width: 20px; height: 1px; background-color: #ccc; }
+    .tree-menu .toggle { cursor: pointer; display: inline-block; font-weight: bold; user-select: none; }
+    .tree-menu .nested { display: none; }
+    .tree-menu .active { display: block; }
+    .tree-menu .toggle.expanded::before { content: '- '; }
+    .tree-menu .toggle:not(.expanded)::before { content: '+ '; }
+    .tree-menu .month-link { cursor: pointer; display: block; padding: 4px 0; }
+    .tree-menu .month-link:hover { background-color: #f0f0f0; }
+    .tree-menu .month-link.active-month { background-color: #e0e7ff; font-weight: bold; }
 
-    .tree-menu li {
-        position: relative;
-        padding: 4px 0;
+    /* --- Tab Styling for Items --- */
+    #item-tab-bar { display: flex; border-bottom: 2px solid #ccc; flex-wrap: wrap; /* Allow tabs to wrap */ }
+    .item-tab {
+        padding: 10px 15px; cursor: pointer; background-color: #f1f5f9;
+        border: 1px solid #ccc; border-bottom: none; border-radius: 5px 5px 0 0;
+        margin-right: 5px; margin-top: 5px; position: relative;
     }
-
-    .tree-menu li::before {
-        content: '';
-        position: absolute;
-        top: 15px;
-        left: -25px;
-        width: 20px;
-        height: 1px;
-        background-color: #ccc;
+    .item-tab.active-tab {
+        background-color: #fff; border-bottom: 2px solid #fff; transform: translateY(2px);
     }
-
-    /* Nút mở rộng/thu gọn (+/-) */
-    .tree-menu .toggle {
-        cursor: pointer;
-        display: inline-block;
-        font-weight: bold;
-        margin-right: 8px;
-        font-family: monospace;
-        user-select: none; /* Ngăn chặn việc chọn văn bản khi nhấp đúp */
+    .tab-close-btn {
+        margin-left: 10px; color: #999; font-weight: bold; cursor: pointer;
+        border: none; background: none; padding: 0; font-size: 16px;
     }
-
-    /* Ẩn các nhánh con theo mặc định */
-    .tree-menu .nested {
-        display: none;
-    }
-
-    /* Hiển thị các nhánh con khi mục cha có lớp 'active' */
-    .tree-menu .active {
-        display: block;
-    }
-
-    /* Thay đổi biểu tượng khi mở rộng */
-    .tree-menu .toggle.expanded::before {
-        content: '- ';
-    }
-
-    .tree-menu .toggle:not(.expanded)::before {
-        content: '+ ';
-    }
-
-    .tree-menu .month-link {
-        cursor: pointer;
-        display: block;
-        padding: 4px 0;
-    }
-
-    .tree-menu .month-link:hover {
-        background-color: #f0f0f0;
-    }
-
-    .tree-menu .month-link.active {
-        background-color: #e0e7ff; /* Tailwind's indigo-100 */
-        font-weight: bold;
-    }
+    .tab-close-btn:hover { color: #333; }
+    .item-tab-content { display: none; padding: 20px; }
+    .item-tab-content.active-content { display: block; }
 </style>
 
-<h1 class="text-2xl font-bold mb-4">Quản lý Chi tiêu theo Thời gian</h1>
+<h1 class="text-2xl font-bold mb-4">Quản lý Chi tiết theo Khoản mục</h1>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Cột Menu cây -->
+    <!-- Cột Menu cây (Năm/Tháng) -->
     <div id="management-tree" class="md:col-span-1 tree-menu bg-white p-4 shadow-lg rounded-lg">
-        <!-- Cây menu sẽ được tạo tự động bởi JavaScript -->
         <p>Đang tải dữ liệu...</p>
     </div>
 
-    <!-- Cột nội dung chi tiết -->
-    <div id="items-container" class="md:col-span-2 bg-white p-4 shadow-lg rounded-lg">
-        <p class="text-gray-500">Vui lòng chọn một tháng từ menu bên trái để xem chi tiết.</p>
+    <!-- Cột nội dung (Tabs cho mỗi item) -->
+    <div id="item-viewer" class="md:col-span-2 shadow-lg rounded-lg">
+        <div id="item-tab-bar" class="bg-white p-4 rounded-t-lg"></div>
+        <div id="item-tab-content-container" class="bg-white p-4 rounded-b-lg border-t-2 border-gray-200">
+             <p id="viewer-placeholder" class="text-gray-500">Vui lòng chọn một tháng từ menu để hiển thị các khoản chi.</p>
+        </div>
     </div>
 </div>

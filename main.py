@@ -7,7 +7,8 @@ from src.database.firestore_queries import (
     get_document_from_collection,
     add_document_to_collection,
     delete_document_from_collection,
-    update_document_in_collection
+    update_document_in_collection,
+    get_management_data_tree  # Import hàm mới
 )
 
 app = Flask(__name__)
@@ -42,34 +43,15 @@ def ui_js():
 
 @app.route("/api/management/tree")
 def get_management_tree():
-    """Lấy dữ liệu chi tiêu và cấu trúc nó theo dạng cây Năm -> Tháng -> Mục."""
+    """Lấy dữ liệu chi tiêu đã được cấu trúc sẵn từ Firestore."""
     try:
-        items = get_all_documents_from_collection('items')
-        
-        # Sử dụng defaultdict để dễ dàng nhóm dữ liệu
-        tree = defaultdict(lambda: defaultdict(list))
-
-        for item in items:
-            date_str = item.get('Ngày') # Lấy trường ngày
-            if date_str and isinstance(date_str, str) and '-' in date_str:
-                try:
-                    parts = date_str.split('-')
-                    if len(parts) >= 2:
-                        year, month = parts[0], parts[1]
-                        # Thêm mục vào đúng nhánh Năm -> Tháng
-                        tree[year][month].append(item)
-                except (ValueError, IndexError):
-                    # Bỏ qua các mục có định dạng ngày không hợp lệ
-                    continue
-        
-        # Chuyển đổi defaultdict thành dict thường để jsonify hoạt động tốt
-        dict_tree = {year: dict(months) for year, months in tree.items()}
-        
-        return jsonify(dict_tree)
+        # Gọi hàm mới để lấy cây dữ liệu đã được xử lý
+        tree = get_management_data_tree()
+        return jsonify(tree)
 
     except Exception as e:
-        print(f"Error creating management tree: {e}")
-        return jsonify({"error": "Failed to create data tree"}), 500
+        print(f"Error getting management tree: {e}")
+        return jsonify({"error": "Failed to get data tree"}), 500
 
 @app.route("/api/collections")
 def get_collections_route():

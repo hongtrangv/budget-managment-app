@@ -62,3 +62,85 @@
     <!-- Cây menu sẽ được tạo tự động bởi JavaScript -->
     <p>Đang tải dữ liệu...</p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const treeContainer = document.getElementById('management-tree');
+
+    // Hàm để gọi API và lấy dữ liệu cây
+    async function fetchManagementTree() {
+        try {
+            const response = await fetch('/api/management/tree');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            renderTree(data);
+        } catch (error) {
+            treeContainer.innerHTML = `<p class="text-red-500">Lỗi khi tải dữ liệu: ${error.message}</p>`;
+            console.error('Error fetching management tree:', error);
+        }
+    }
+
+    // Hàm để hiển thị dữ liệu lên cây menu
+    function renderTree(data) {
+        if (!data || Object.keys(data).length === 0) {
+            treeContainer.innerHTML = '<p>Không có dữ liệu chi tiêu để hiển thị.</p>';
+            return;
+        }
+
+        let treeHtml = '<ul>';
+
+        // Lặp qua các năm (sắp xếp giảm dần)
+        const sortedYears = Object.keys(data).sort((a, b) => b - a);
+        for (const year of sortedYears) {
+            treeHtml += '<li>';
+            treeHtml += `<span class="toggle">${year}</span>`;
+            treeHtml += '<ul class="nested">';
+
+            // Lặp qua các tháng trong năm (sắp xếp giảm dần)
+            const sortedMonths = Object.keys(data[year]).sort((a, b) => b - a);
+            for (const month of sortedMonths) {
+                treeHtml += '<li>';
+                treeHtml += `<span class="toggle">Tháng ${month}</span>`;
+                treeHtml += '<ul class="nested">';
+
+                // Lặp qua các mục chi tiêu trong tháng
+                if (data[year][month].length > 0) {
+                    data[year][month].forEach(item => {
+                        // Định dạng lại ngày và số tiền cho dễ đọc
+                        const formattedDate = new Date(item.date).toLocaleDateString('vi-VN');
+                        const formattedAmount = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.amount);
+                        treeHtml += `<li class="leaf-node">${item.name}: ${formattedAmount} - <em>(${formattedDate})</em></li>`;
+                    });
+                } else {
+                    treeHtml += '<li class="leaf-node"><em>Không có chi tiêu trong tháng này.</em></li>';
+                }
+
+                treeHtml += '</ul></li>'; // Đóng thẻ <ul> và <li> của tháng
+            }
+            treeHtml += '</ul></li>'; // Đóng thẻ <ul> và <li> của năm
+        }
+        treeHtml += '</ul>';
+        treeContainer.innerHTML = treeHtml;
+        addToggleEventListeners();
+    }
+
+    // Hàm để thêm sự kiện click cho các nút (+/-)
+    function addToggleEventListeners() {
+        const toggles = document.querySelectorAll('.tree-menu .toggle');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+                const nestedList = this.nextElementSibling;
+                if (nestedList && nestedList.classList.contains('nested')) {
+                    nestedList.classList.toggle('active');
+                }
+            });
+        });
+    }
+
+    // Bắt đầu quá trình
+    fetchManagementTree();
+});
+</script>

@@ -124,12 +124,13 @@ class ManagementTree:
         """Lấy tất cả các mục 'Chi' cho một tháng và năm cụ thể."""
         try:
             # Phải đảm bảo "month" có dạng "Tháng X" để khớp với ID trong Firestore
-            month_id = f"Tháng {month}"
-            items_ref = db.collection('Year').document(year).collection('Months').document(month_id).collection('Chi')
+            month_id = month
+            items_ref = db.collection('Year').document(year).collection('Months').document(month_id).collection('Types')
             docs = items_ref.stream()
-            
+           
             results = []
-            for doc in docs:
+            for doc in docs:                 
+                print(f"Lấy các mục chi cho {doc.id}")
                 doc_data = doc.to_dict()
                 doc_data['id'] = doc.id # Gán ID của tài liệu vào dữ liệu trả về
                 results.append(doc_data)
@@ -139,3 +140,26 @@ class ManagementTree:
         except Exception as e:
             print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
             return []
+
+    @staticmethod
+    def get_items_for_type(year, month,type):
+        """Lấy tất cả các mục 'Chi' cho một tháng và năm cụ thể."""
+        try:
+            # Phải đảm bảo "month" có dạng "Tháng X" để khớp với ID trong Firestore
+            month_id = month
+            items_ref = db.collection('Year').document(year).collection('Months').document(month_id).collection('Types').document(type)
+            docs = items_ref.stream()
+           
+            results = []
+            for doc in docs:                 
+                print(f"Lấy các mục chi cho {doc.id}")
+                doc_data = doc.to_dict()
+                doc_data['id'] = doc.id # Gán ID của tài liệu vào dữ liệu trả về
+                results.append(doc_data)
+            
+            print(f"Tìm thấy {len(results)} mục chi cho {month_id}, {year}")
+            return results
+        except Exception as e:
+            print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
+            return []
+     

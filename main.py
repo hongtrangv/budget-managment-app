@@ -1,49 +1,54 @@
 import os
-from flask import Flask, send_file, send_from_directory
+from flask import Flask, send_file
 
-# --- API Blueprints ---
-# Each blueprint is a self-contained module for a specific API feature set.
-from src.api.management_api import management_api
-from src.api.collections_api import collections_api # Import the new blueprint
+# Import các blueprint từ thư mục api
+from src.api.collections_api import collections_bp
+from src.api.management_api import management_bp
 
-# Initialize the main Flask application
 app = Flask(__name__)
-# Ensure proper display of non-ASCII characters (like Vietnamese) in JSON responses.
 app.config['JSON_AS_ASCII'] = False
 
-# === REGISTER API BLUEPRINTS ===
-# Registering a blueprint attaches all of its routes to the main app.
-# The url_prefix defined in the blueprint will be applied to all its routes.
-app.register_blueprint(management_api)
-app.register_blueprint(collections_api) # Register the new blueprint
+# === ĐĂNG KÝ BLUEPRINTS ===
+app.register_blueprint(collections_bp)
+app.register_blueprint(management_bp)
 
 
-# === STATIC FILE & SPA ROUTING ===
+# === CÁC TUYẾN HIỂN THỊ TRANG (Views) ===
 
-@app.route('/src/<path:path>')
-def send_src(path):
-    """Serves any file from the 'src' directory (e.g., HTML, JS, CSS)."""
-    return send_from_directory('src', path)
-
-@app.route('/')
+# Các route chính của ứng dụng single-page.
+# Chúng đều trả về trang index.html, và JavaScript phía client sẽ xử lý việc hiển thị trang con phù hợp.
+@app.route("/")
 @app.route('/collections')
 @app.route('/management')
 def index():
-    """Serves the main single-page application shell (index.html)."""
+    """Phục vụ file HTML chính của ứng dụng (Single Page Application shell)."""
     return send_file('src/index.html')
 
-# The legacy API routes for the 'collections' page have been removed from this file
-# and are now neatly organized in 'src/api/collections_api.py'.
+# Các route dưới đây hoạt động như một API, cung cấp các mảnh HTML (partials) cho client.
+@app.route('/components/menu')
+def menu():
+    return send_file('src/components/menu.html')
+
+@app.route('/pages/home')
+def home():
+    return send_file('src/pages/home.html')
+
+@app.route('/pages/collections')
+def collections_page():
+    return send_file('src/pages/collections.html')
+
+@app.route('/pages/management')
+def management_page():
+    return send_file('src/pages/management.html')
+
+@app.route('/src/components/ui.js')
+def ui_js():
+    return send_file('src/components/ui.js')
 
 
-# === MAIN ENTRY POINT ===
-
+# === KHỞI CHẠY ỨNG DỤNG ===
 def main():
-    """Starts the Flask development server."""
-    # The app runs on all available network interfaces (0.0.0.0)
-    # on the port specified by the environment, defaulting to 8080.
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
 
 if __name__ == "__main__":
     main()

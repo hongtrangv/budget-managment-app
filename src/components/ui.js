@@ -11,7 +11,7 @@ let currentDocId = null;
 // --- State for Management Page ---
 let mgmtState = {
     activeMonthLink: null,
-    activeYear: null,
+    activeYear: null,    
     activeMonth: null,
     openTabs: {},
 };
@@ -175,35 +175,53 @@ async function handleDelete(docId) {
 //  LOGIC FOR "MANAGEMENT" PAGE
 // ==================================================
 
-function renderItemForm(item = {}, tabId, isNew = false) {
+// Renders the form for creating a NEW item
+function renderNewItemForm(tabId) {
     const today = new Date().toISOString().split('T')[0];
-    const date = item.date || today;
-    const title = isNew ? 'Tạo khoản chi mới' : `Chi tiết: ${item['Tên'] || ''}`;
-    const buttonText = isNew ? 'Tạo mới' : 'Lưu thay đổi';
-
     return `
-        <form class="item-form p-4 bg-gray-50 rounded" data-tab-id="${tabId}" data-item-id="${item.id || ''}" data-is-new="${isNew}">
-            <h3 class="text-lg font-bold mb-4">${title}</h3>
+        <form class="item-form p-4 bg-gray-50 rounded" data-tab-id="${tabId}" data-is-new="true" onsubmit="handleItemFormSubmit(event)">
+            <h3 class="text-lg font-bold mb-4">Tạo khoản chi mới</h3>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Tên khoản chi</label>
-                <input type="text" name="Tên" value="${item['Tên'] || ''}" required class="input-field" ${isNew ? '' : 'disabled'}>
+                <input type="text" name="Tên" required class="input-field">
             </div>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Số tiền (VND)</label>
-                <input type="number" name="Số tiền" value="${item['Số tiền'] || ''}" required class="input-field" ${isNew ? '' : 'disabled'}>
+                <input type="number" name="Số tiền" required class="input-field">
             </div>
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Ngày</label>
-                <input type="date" name="date" value="${date}" required class="input-field" ${isNew ? '' : 'disabled'}>
+                <input type="date" name="date" value="${today}" required class="input-field">
             </div>
-            <div class="form-actions mt-4 space-x-2">
-                ${!isNew ? `<button type="button" class="btn-edit-item">Sửa</button>` : ''}
-                <button type="submit" class="btn-save-item" ${isNew ? '' : 'style="display:none;"'}>${buttonText}</button>
-                ${!isNew ? `<button type="button" class="btn-delete-item btn-danger">Xóa</button>` : ''}
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn-save-item">Tạo mới</button>
             </div>
         </form>
     `;
 }
+
+// Renders a table to display the details of an existing item
+function renderItemTable(item) {
+    let tableHtml = `<div class="p-4"><h3 class="text-lg font-bold mb-4">Chi tiết: ${item['Tên'] || ''}</h3><div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-white">`;
+    tableHtml += '<thead class="bg-gray-200 text-gray-600"><tr><th class="py-2 px-4 text-left">Trường</th><th class="py-2 px-4 text-left">Giá trị</th></tr></thead>';
+    tableHtml += '<tbody>';
+    
+    // Define the order or fields to display
+    const fieldOrder = ['Tên', 'Số tiền', 'date', 'id'];
+    
+    for (const key of fieldOrder) {
+        if (Object.prototype.hasOwnProperty.call(item, key)) {
+            const value = item[key];
+             if (key !== 'id') { // Don't show the ID row in the table
+                tableHtml += `<tr class="border-b"><td class="py-2 px-4 font-semibold">${key}</td><td class="py-2 px-4">${value}</td></tr>`;
+            }
+        }
+    }
+
+    tableHtml += '</tbody></table></div></div>';
+    return tableHtml;
+}
+
 
 function createTab(title, tabId, options = {}) {
     const { isSpecial = false } = options;
@@ -211,7 +229,8 @@ function createTab(title, tabId, options = {}) {
     const tabButton = document.createElement('div');
     tabButton.className = isSpecial ? 'special-tab' : 'item-tab';
     tabButton.dataset.tabId = tabId;
-    tabButton.innerHTML = `<span>${title}</span>` + (isSpecial ? '' : `<button class="tab-close-btn" data-tab-id="${tabId}">&times;</button>`);
+    // No close button 'x'
+    tabButton.innerHTML = `<span>${title}</span>`;
     tabBar.appendChild(tabButton);
 }
 
@@ -220,9 +239,17 @@ function createTabContent(item, tabId, isNew = false) {
     const contentPane = document.createElement('div');
     contentPane.className = 'item-tab-content';
     contentPane.id = tabId;
-    contentPane.innerHTML = renderItemForm(item, tabId, isNew);
+    
+    // Render a form for a new item, or a table for an existing one
+    if (isNew) {
+        contentPane.innerHTML = renderNewItemForm(tabId);
+    } else {
+        contentPane.innerHTML = renderItemTable(item);
+    }
+    
     contentContainer.appendChild(contentPane);
 }
+
 
 async function loadManagementPage() {
     const treeContainer = document.getElementById('management-tree');
@@ -232,7 +259,7 @@ async function loadManagementPage() {
         if (!response.ok) throw new Error(`API call failed: ${response.status}`);
         const structure = await response.json();
 
-        treeContainer.innerHTML = `<ul>${Object.keys(structure).sort((a,b) => a-b).map(year => `
+        treeContainer.innerHTML = `<ul>${Object.keys(structure).sort((a,b) => b-a).map(year => `
             <li><span class="toggle">${year}</span><ul class="nested">${structure[year].map(month => `
                 <li><span class="month-link" data-year="${year}" data-month="${month}">Tháng ${month}</span></li>`).join('')}</ul></li>`).join('')}</ul>`;
     } catch (e) { 
@@ -243,6 +270,7 @@ async function loadManagementPage() {
 async function loadMonthData(year, month, monthElement) {
     if (mgmtState.activeMonthLink) mgmtState.activeMonthLink.classList.remove('active-month');
     monthElement.classList.add('active-month');
+    // Reset state but keep track of the new active month
     mgmtState = { activeMonthLink: monthElement, activeYear: year, activeMonth: month, openTabs: {} };
 
     const tabBar = document.getElementById('item-tab-bar');
@@ -258,7 +286,7 @@ async function loadMonthData(year, month, monthElement) {
         const placeholder = document.getElementById('viewer-placeholder');
         if(placeholder) placeholder.style.display = 'none';
 
-        createTab('+', 'new-item-tab', { isSpecial: true });
+        // Create the '+' tab for adding new items       
         createTabContent({}, 'new-item-tab', true);
         mgmtState.openTabs['new-item-tab'] = true;
 
@@ -266,15 +294,18 @@ async function loadMonthData(year, month, monthElement) {
             items.forEach(item => {
                 const tabId = `tab-${item.id}`;
                 createTab(item['Tên'] || item.id, tabId);
-                createTabContent(item, tabId);
+                createTabContent(item, tabId, false); // 'false' because this is an existing item
                 mgmtState.openTabs[tabId] = true;
             });
-            // Automatically switch to the first item's tab
+            // Automatically switch to the first real item's tab
             switchTab(`tab-${items[0].id}`);
         } else {
             // If no items, switch to the 'new item' tab
             switchTab('new-item-tab');
-            if(placeholder) placeholder.textContent = "Không có khoản chi nào trong tháng này.";
+            if(placeholder) {
+                placeholder.textContent = "Không có khoản chi nào trong tháng này.";
+                placeholder.style.display = 'block'; // Make sure it's visible
+            }
         }
 
     } catch (e) { 
@@ -287,33 +318,48 @@ async function loadMonthData(year, month, monthElement) {
 function switchTab(tabId) {
     document.querySelectorAll('.item-tab, .special-tab').forEach(t => t.classList.remove('active-tab'));
     document.querySelectorAll('.item-tab-content').forEach(c => c.classList.remove('active-content'));
+    
     const tabButton = document.querySelector(`[data-tab-id='${tabId}']`);
     if (tabButton) tabButton.classList.add('active-tab');
+
     const contentPane = document.getElementById(tabId);
     if (contentPane) contentPane.classList.add('active-content');
 }
 
-function closeTab(tabId) {
-    if (tabId === 'new-item-tab') return; 
-    const tabButton = document.querySelector(`[data-tab-id='${tabId}']`);
-    const contentPane = document.getElementById(tabId);
-    if (tabButton) tabButton.remove();
-    if (contentPane) contentPane.remove();
-    delete mgmtState.openTabs[tabId];
-
-    if (tabButton && tabButton.classList.contains('active-tab')) {
-        const remainingTabs = Object.keys(mgmtState.openTabs);
-        switchTab(remainingTabs.length > 0 ? remainingTabs[0] : 'new-item-tab');
-    }
-}
-
+// This function handles the submission of the NEW item form
 async function handleItemFormSubmit(event) {
     event.preventDefault();
-    // Implementation for this is needed for Create/Update
-}
+    const form = event.target;
+    // Ensure we are in the context of the management page
+    if (!mgmtState.activeYear || !mgmtState.activeMonth) {
+        alert("Vui lòng chọn một tháng từ menu bên trái trước.");
+        return;
+    }
 
-async function handleItemDelete(itemId) {
-    // Implementation for this is needed for Delete
+    const data = Object.fromEntries(new FormData(form));
+    // Add month and year to the data
+    data.year = mgmtState.activeYear;
+    data.month = mgmtState.activeMonth;
+
+    try {
+        const response = await fetch('/api/management/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Không thể tạo mục mới.');
+        }
+        
+        alert('Tạo mục mới thành công!');
+        // Reload the data for the current month to show the new item
+        await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
+
+    } catch (error) {
+        console.error('New item form submission error:', error);
+        alert(`Lỗi: ${error.message}`);
+    }
 }
 
 
@@ -337,7 +383,6 @@ function attachPageEventListeners(pagePath) {
     const pageContent = document.getElementById('content');
 
     if (pagePath === '/collections') {
-        // Event listeners for the collections page
         const selector = document.getElementById('collection-selector');
         const addButton = document.getElementById('add-new-btn');
         const collectionsContent = document.getElementById('collections-content');
@@ -359,21 +404,30 @@ function attachPageEventListeners(pagePath) {
         }
     } 
     else if (pagePath === '/management') {
+        // Reset state when page loads
         mgmtState = { activeMonthLink: null, activeYear: null, activeMonth: null, openTabs: {} };
+        
+        // Use a single, persistent event listener on the page content area
         pageContent.addEventListener('click', function(e) {
             const target = e.target;
+            
+            // Handle tree view toggle
             if (target.classList.contains('toggle')) {
                 target.classList.toggle('expanded');
                 target.nextElementSibling?.classList.toggle('active');
-            } else if (target.classList.contains('month-link')) {
+            } 
+            // Handle month selection
+            else if (target.classList.contains('month-link')) {
                 loadMonthData(target.dataset.year, target.dataset.month, target);
-            } else if (target.closest('.item-tab, .special-tab') && !target.classList.contains('tab-close-btn')) {
+            } 
+            // Handle tab switching
+            else if (target.closest('.item-tab, .special-tab')) {
                 switchTab(target.closest('.item-tab, .special-tab').dataset.tabId);
-            } else if (target.classList.contains('tab-close-btn')) {
-                closeTab(target.dataset.tabId);
             }
         });
-        // The form submission logic for management page will be added here later
+
+        // The form submission for the management page is now handled by the 'onsubmit'
+        // attribute in the form itself to avoid listener duplication.
     }
 }
 
@@ -394,8 +448,10 @@ async function handleNav(path) {
         }
         content.innerHTML = await response.text();
         
+        // Always attach page-specific listeners after loading new content
         attachPageEventListeners(routePath);
 
+        // Load initial data for the specific page
         if (routePath === '/collections') {
             await loadCollectionData();
         }
@@ -414,10 +470,15 @@ async function initialLoad() {
     menuContainer.innerHTML = await menuResponse.text();
 
     attachGlobalEventListeners();
+    
+    // Handle back/forward browser navigation
     window.onpopstate = e => {
         handleNav(e.state?.path || '/');
     };
+
+    // Initial page load based on the current URL
     await handleNav(window.location.pathname);
 }
 
+// Start the application
 initialLoad();

@@ -41,27 +41,21 @@ def get_management_data_tree():
     Lấy dữ liệu từ Firestore theo cấu trúc lồng nhau: Year -> Months.
     Trả về một dict với các năm là key và danh sách tháng là value.
     """
-    try:
-        print("\n--- Bắt đầu lấy cây Năm -> Tháng ---")
+    try:        
         tree = defaultdict(list)
         year_docs = db.collection('Year').stream()
         
         for year_doc in year_docs:
-            year_id = year_doc.id
-            print(f"Đang xử lý Năm: {year_id}")
-            
+            year_id = year_doc.id           
             month_docs = year_doc.reference.collection('Months').stream()
             
             months_list = []
             for month_doc in month_docs:
-                month_id = month_doc.id
-                print(f"  -> Tìm thấy Tháng: {month_id}")
+                month_id = month_doc.id                
                 months_list.append(month_id)
             
             # Sắp xếp các tháng và thêm vào cây
             tree[year_id] = sorted(months_list)
-                    
-        print("--- Hoàn tất lấy dữ liệu ---\n")
         return dict(tree)
 
     except Exception as e:

@@ -117,28 +117,15 @@
         }
 
         function buildTreeHtml(data) {
-            let html = '<ul>';
-            const sortedYears = Object.keys(data).sort((a, b) => b - a);
-
-            for (const year of sortedYears) {
-                html += `<li><span class="toggle">Năm ${year}</span>`;
-                html += '<ul class="nested">';
-                const sortedMonths = Object.keys(data[year]).sort((a, b) => b - a);
-
-                for (const month of sortedMonths) {
-                    html += `<li><span class="toggle">Tháng ${month}</span>`;
-                    html += '<ul class="nested">';
-                    for (const item of data[year][month]) {
-                        const itemName = item['Tên'] || 'Không có tên';
-                        const itemAmount = item['Số tiền'] ? ` - ${item['Số tiền']}` : '';
-                        html += `<li class="leaf-node">${itemName}${itemAmount}</li>`;
-                    }
-                    html += '</ul></li>';
-                }
-                html += '</ul></li>';
-            }
-            html += '</ul>';
-            return html;
+            const sortedYears = Object.keys(data).sort((a, b) => a- b); // Sort years ascending
+            return `<ul>${sortedYears.map(year => `
+                <li>
+                    <span class="toggle">${year}</span>
+                    <ul class="nested">${data[year].sort((a, b) => a - b).map(month => `
+                        <li><span class="month-link" data-year="${year}" data-month="${month}">Tháng ${month}</span></li>`
+                    ).join('')}</ul>
+                </li>`
+            ).join('')}</ul>`;
         }
 
         async function handleFormSubmit(event) {

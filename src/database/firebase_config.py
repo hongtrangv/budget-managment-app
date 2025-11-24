@@ -3,47 +3,77 @@ from firebase_admin import credentials, firestore
 import os
 import json
 
+# --- A Mock Firestore Client for Graceful Failure ---
+# This allows the server to run even if Firebase is not configured.
+# API endpoints will return errors or empty lists, but the frontend will load.
+class MockFirestoreClient:
+    def collection(self, *args, **kwargs):
+        print("WARNING: Using MockFirestoreClient. Firebase is not configured.")
+        return MockCollectionRef()
+
+class MockCollectionRef:
+    def document(self, *args, **kwargs):
+        return MockDocRef()
+    def stream(self, *args, **kwargs):
+        return []
+    def get(self, *args, **kwargs):
+        return []
+
+class MockDocRef:
+    def get(self, *args, **kwargs):
+        return MockDocSnapshot(exists=False)
+    def set(self, *args, **kwargs):
+        pass
+    def update(self, *args, **kwargs):
+        pass
+    def delete(self, *args, **kwargs):
+        pass
+    def collection(self, *args, **kwargs):
+        return MockCollectionRef()
+
+class MockDocSnapshot:
+    def __init__(self, exists=False, data=None):
+        self._exists = exists
+        self._data = data if data else {}
+    @property
+    def exists(self):
+        return self._exists
+    def to_dict(self):
+        return self._data
+
+# --- Firebase Admin SDK Configuration ---
 db = None
 
 try:
-    # --- Cấu hình Firebase Admin SDK ---
     cred = None
-    # Ưu tiên lấy chuỗi JSON từ biến môi trường (cho môi trường production/deploy)
     firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
 
     if firebase_creds_json:
-        print("Khởi tạo Firebase từ biến môi trường...")
-        # Chuyển đổi chuỗi JSON thành dictionary
+        print("Initializing Firebase from environment variable...")
         firebase_creds_dict = json.loads(firebase_creds_json)
         cred = credentials.Certificate(firebase_creds_dict)
     else:
-        # Chế độ fallback cho môi trường phát triển cục bộ (local development)
-        print("Cảnh báo: Không tìm thấy biến môi trường FIREBASE_CREDENTIALS_JSON. Sử dụng tệp serviceAccountKey.json.")
-        try:
-            # Xây dựng đường dẫn tuyệt đối đến tệp khóa
-            # __file__ là đường dẫn đến tệp hiện tại (firebase_config.py)
-            # os.path.dirname lấy thư mục chứa tệp đó
-            # os.path.join kết hợp thư mục đó với tên tệp khóa
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            key_path = os.path.join(script_dir, 'serviceAccountKey.json')
-            
-            print(f"Đang thử tải tệp khóa từ: {key_path}")
+        # Fallback for local development
+        key_path = os.path.join(os.path.dirname(__file__), 'serviceAccountKey.json')
+        if os.path.exists(key_path):
+            print(f"Initializing Firebase from file: {key_path}")
             cred = credentials.Certificate(key_path)
+        else:
+            print("CRITICAL WARNING: Firebase credentials not found.")
+            print(" - For local dev, place 'serviceAccountKey.json' in the 'src/database/' directory.")
+            print(" - For deployment, set the 'FIREBASE_CREDENTIALS_JSON' environment variable.")
 
-        except FileNotFoundError:
-            print(f"LỖI NGHIÊM TRỌNG: Không tìm thấy tệp 'serviceAccountKey.json' tại đường dẫn mong đợi.")
-            print("Để chạy local, hãy đảm bảo tệp 'serviceAccountKey.json' của bạn nằm trong thư mục 'src/database'.")
-            print("Để deploy, hãy đặt biến môi trường FIREBASE_CREDENTIALS_JSON.")
-        except Exception as e:
-            print(f"Lỗi không xác định khi khởi tạo Firebase từ tệp: {e}")
-
-    # Khởi tạo ứng dụng Firebase chỉ khi `cred` đã được tạo thành công
+    # Initialize the app if credentials were found
     if cred and not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
         db = firestore.client()
-        print("Kết nối Firebase thành công.")
-    elif not cred:
-        print("Không thể khởi tạo Firebase do thiếu thông tin xác thực.")
+        print("Firebase connection successful.")
+    else:
+        # If no credentials, use the Mock client to prevent a server crash
+        print("Using Mock Firestore Client. The application will run in a degraded mode.")
+        db = MockFirestoreClient()
 
 except Exception as e:
-    print(f"Lỗi tổng thể trong quá trình cấu hình Firebase: {e}")
+    print(f"FATAL ERROR during Firebase initialization: {e}")
+    print("Using Mock Firestore Client as a fallback.")
+    db = MockFirestoreClient()

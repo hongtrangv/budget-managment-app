@@ -54,13 +54,28 @@ def get_management_data_tree():
                 month_id = month_doc.id                
                 months_list.append(month_id)
             
-            # Sắp xếp các tháng và thêm vào cây
             tree[year_id] = sorted(months_list)
         return dict(tree)
 
     except Exception as e:
         print(f"Lỗi khi lấy dữ liệu cây quản lý từ Firestore: {e}")
         return {}
+
+def get_items_for_month(year, month):
+    """Lấy tất cả các mục chi tiêu cho một tháng và năm cụ thể."""
+    try:
+        items_ref = db.collection('Year').document(str(year)).collection('Months').document(str(month)).collection('Items')
+        docs = items_ref.stream()
+        results = []
+        for doc in docs:
+            doc_data = doc.to_dict()
+            if doc_data is None: doc_data = {}
+            doc_data['id'] = doc.id
+            results.append(doc_data)
+        return results
+    except Exception as e:
+        print(f"An error occurred while fetching items for {year}-{month}: {e}")
+        return []
 
 def add_document_to_collection(collection_name, data):
     """

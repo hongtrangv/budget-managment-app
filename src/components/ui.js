@@ -254,7 +254,7 @@ function attachTableEventListeners() {
 }
 
 function attachManagementEventListeners() {
-    const container = document.getElementById('management-container');
+    const container = document.getElementById('management-tree'); // Corrected ID
     if (!container) return;
     container.addEventListener('click', function (event) {
         const target = event.target;

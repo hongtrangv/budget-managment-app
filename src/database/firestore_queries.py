@@ -64,7 +64,7 @@ def get_management_data_tree():
 def get_items_for_month(year, month):
     """Lấy tất cả các mục chi tiêu cho một tháng và năm cụ thể."""
     try:
-        items_ref = db.collection('Year').document(str(year)).collection('Months').document(str(month)).collection('Items')
+        items_ref = db.collection('Year').document(str(year)).collection('Months').document(str(month)).collection('Types')
         docs = items_ref.stream()
         results = []
         for doc in docs:

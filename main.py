@@ -4,6 +4,7 @@ from flask import Flask, send_file
 # Import các blueprint từ thư mục api
 from src.api.collections_api import collections_bp
 from src.api.management_api import management_bp
+from src.api.dashboard_api import report_bp
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -11,6 +12,7 @@ app.config['JSON_AS_ASCII'] = False
 # === ĐĂNG KÝ BLUEPRINTS ===
 app.register_blueprint(collections_bp)
 app.register_blueprint(management_bp)
+app.register_blueprint(report_bp)
 
 
 # === CÁC TUYẾN HIỂN THỊ TRANG (Views) ===

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from src.database.firestore_queries import ManagementTree
 
 # Tạo một Blueprint cho các API của trang quản lý
@@ -33,3 +33,40 @@ def get_items_type(year, month, type):
     except Exception as e:
         print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
         return jsonify({"error": "Failed to fetch items"}), 500
+
+@management_bp.route("/api/management/items", methods=['POST'])
+def add_new_item():
+    """Tạo một mục chi tiêu mới."""
+    try:
+        data = request.get_json()
+        year = data.get('year')
+        month = data.get('month')
+        type = data.get('Loại')
+        item_name = data.get('Tên')
+        amount_str = data.get('Số tiền')
+        date = data.get('date')
+        # --- VALIDATION LOGIC ---
+        if not amount_str:
+            return jsonify({"error": "Vui lòng nhập số tiền."}), 400
+        try:
+            # Cố gắng chuyển đổi sang số. Nếu thành công, nó sẽ được lưu trữ dưới dạng số.
+            amount = int(amount_str)
+        except (ValueError, TypeError):
+            # Nếu chuyển đổi thất bại, trả về lỗi.
+            return jsonify({"error": f"'Số tiền' phải là một số. Giá trị '{amount_str}' không hợp lệ."}), 400
+        # --- END VALIDATION ---
+
+        if not all([year, month, item_name, amount, date]):
+            return jsonify({"error": "Dữ liệu thiếu: year, month, Tên, Số tiền, hoặc date"}), 400
+
+        # Gọi hàm để thêm vào Firestore
+        new_item_id = ManagementTree.add_item(year, month, type, {
+            'name': item_name,
+            'amount': amount,
+            'date': date
+        })
+        
+        return jsonify({"success": True, "id": new_item_id}), 201
+    except Exception as e:
+        print(f"Lỗi khi tạo mục mới: {e}")
+        return jsonify({"error": "Failed to create new item"}), 500

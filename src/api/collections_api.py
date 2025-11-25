@@ -45,3 +45,15 @@ def document_route(collection_name, document_id):
             return jsonify({"success": True})
         else:
             return jsonify({"error": "Failed to delete document"}), 500
+@collections_bp.route("/api/items")
+def get_items_for_dropdown():
+    """
+    API endpoint để lấy tất cả các mục từ collection 'items'
+    để sử dụng cho dropdown trên trang Quản lý.
+    """
+    try:
+        items = DocumentHandler.get_all_documents_from_collection('items')
+        return jsonify(items)
+    except Exception as e:
+        print(f"Error fetching items: {e}")
+        return jsonify({"error": str(e)}), 500

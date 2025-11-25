@@ -1,5 +1,7 @@
 from src.database.firebase_config import db
 from collections import defaultdict
+from google.cloud import firestore 
+import uuid
 
 class DocumentHandler:
     """Lớp xử lý các hoạt động CRUD chung cho tài liệu và bộ sưu tập Firestore."""
@@ -50,18 +52,16 @@ class DocumentHandler:
         try:
             doc_id = data.get('Danh mục thu chi')
             if not doc_id:
-                print("Lỗi: Cần có ID tài liệu ('Danh mục thu chi').")
-                return False
+                 raise ValueError("Cần có ID tài liệu ('Danh mục thu chi').")
             doc_ref = db.collection(collection_name).document(doc_id)
             if doc_ref.get().exists:
-                print(f"Lỗi: Tài liệu với ID '{doc_id}' đã tồn tại.")
-                return False
+                 raise ValueError(f"Tài liệu với ID '{doc_id}' đã tồn tại.")
             document_content = {k: v for k, v in data.items() if k != 'Danh mục thu chi'}
             doc_ref.set(document_content)
-            return True
+            return doc_id
         except Exception as e:
             print(f"Lỗi khi thêm tài liệu: {e}")
-            return False
+            raise e
 
     @staticmethod
     def delete_document_from_collection(collection_name, document_id):
@@ -79,23 +79,20 @@ class DocumentHandler:
         try:
             new_doc_id = data_from_form.get('Danh mục thu chi')
             original_doc_ref = db.collection(collection_name).document(original_doc_id)
-
-            if not new_doc_id or new_doc_id == original_doc_id:
-                update_data = {k: v for k, v in data_from_form.items() if k != 'Danh mục thu chi'}
+            update_data = {k: v for k, v in data_from_form.items() if k != 'Danh mục thu chi'}
+            if not new_doc_id or new_doc_id == original_doc_id:               
                 original_doc_ref.update(update_data)
                 return True
             else:
                 new_doc_ref = db.collection(collection_name).document(new_doc_id)
                 if new_doc_ref.get().exists:
-                    print(f"Lỗi: Tài liệu với ID mới '{new_doc_id}' đã tồn tại.")
-                    return False
-                new_data_content = {k: v for k, v in data_from_form.items() if k != 'Danh mục thu chi'}
-                new_doc_ref.set(new_data_content)
+                    raise ValueError(f"Tài liệu với ID mới '{new_doc_id}' đã tồn tại.")
+                new_doc_ref.set(update_data)
                 original_doc_ref.delete()
-                return True
+            return new_doc_id
         except Exception as e:
             print(f"Lỗi khi cập nhật tài liệu: {e}")
-            return False
+            raise e
 
 class ManagementTree:
     """Lớp xử lý logic để lấy dữ liệu cho cây quản lý."""
@@ -123,9 +120,8 @@ class ManagementTree:
     def get_items_for_month(year, month):
         """Lấy tất cả các mục 'Chi' cho một tháng và năm cụ thể."""
         try:
-            # Phải đảm bảo "month" có dạng "Tháng X" để khớp với ID trong Firestore
-            month_id = month
-            items_ref = db.collection('Year').document(year).collection('Months').document(month_id).collection('Types')
+            # Phải đảm bảo "month" có dạng "Tháng X" để khớp với ID trong Firestore           
+            items_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types')
             docs = items_ref.stream()
            
             results = []
@@ -135,7 +131,7 @@ class ManagementTree:
                 doc_data['id'] = doc.id # Gán ID của tài liệu vào dữ liệu trả về
                 results.append(doc_data)
             
-            print(f"Tìm thấy {len(results)} mục chi cho {month_id}, {year}")
+            print(f"Tìm thấy {len(results)} mục chi cho {month}, {year}")
             return results
         except Exception as e:
             print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
@@ -162,4 +158,22 @@ class ManagementTree:
         except Exception as e:
             print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
             return []
-     
+    @staticmethod
+    def add_item(year, month,type, data):
+        """Thêm một khoản chi mới vào Firestore với ID tự động."""
+        try:
+            # Tạo tham chiếu đến collection Types, tự động tạo Year và Months nếu chưa có
+            doc_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document(type)
+            # Thêm document mới với ID tự sinh
+            # Thêm một ID duy nhất cho bản ghi trước khi thêm vào mảng
+            data['id'] = str(uuid.uuid4())
+            
+            # Sử dụng set với merge=True để tạo tài liệu nếu chưa có, và thêm vào mảng 'records'
+            doc_ref.set({
+                'records': firestore.ArrayUnion([data])
+            }, merge=True)           
+            print(f"Đã thêm mục mới với ID: {data['id']} vào {year}/{month}")
+            return data['id']
+        except Exception as e:
+            print(f"Lỗi khi thêm mục mới vào Firestore: {e}")
+            raise e

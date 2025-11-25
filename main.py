@@ -45,6 +45,9 @@ def management_page():
 def ui_js():
     return send_file('src/components/ui.js')
 
+@app.route('/src/styles/tree-view.css')
+def css():
+    return send_file('src/styles/tree-view.css')
 
 # === KHỞI CHẠY ỨNG DỤNG ===
 def main():

@@ -2,6 +2,7 @@ from src.database.firebase_config import db
 from collections import defaultdict
 from google.cloud import firestore 
 import uuid
+from datetime import datetime
 
 class DocumentHandler:
     """Lớp xử lý các hoạt động CRUD chung cho tài liệu và bộ sưu tập Firestore."""
@@ -177,3 +178,76 @@ class ManagementTree:
         except Exception as e:
             print(f"Lỗi khi thêm mục mới vào Firestore: {e}")
             raise e
+class Dashboard:
+    """Lớp xử lý logic để lấy dữ liệu cho dashboard và báo cáo."""
+    @staticmethod
+    def get_total_income_and_expense_year(year):
+            """
+            Tính tổng thu và chi trên toàn bộ cơ sở dữ liệu.
+            """
+            total_income = 0
+            total_expense = 0            
+            try:                                
+                month_docs = db.collection('Year').document(str(year)).collection('Months').stream()
+                for month_doc in month_docs:
+                    type_docs = month_doc.reference.collection('Types').stream()
+                    for type_doc in type_docs:
+                        type_id = type_doc.id
+                        doc_data = type_doc.to_dict()
+                        if 'records' in doc_data and isinstance(doc_data['records'], list):
+                            for record in doc_data['records']:
+                                if isinstance(record, dict) and 'amount' in record:
+                                    try:
+                                        amount = float(record['amount'])
+                                        if type_id == 'Thu':
+                                            total_income += amount
+                                        elif type_id == 'Chi':
+                                            total_expense += amount
+                                    except (ValueError, TypeError):
+                                        print(f"Bỏ qua bản ghi có số tiền không hợp lệ: {record}")
+                return {"income": total_income, "expense": total_expense}
+            except Exception as e:
+                print(f"Lỗi khi tính tổng thu chi: {e}")
+                return {"income": 0, "expense": 0}
+
+    @staticmethod
+    def get_total_income_and_expense_month(year,month):
+            """
+            Tính tổng thu và chi trên toàn bộ cơ sở dữ liệu.
+            """
+            total_income = 0
+            total_expense = 0
+            try:                               
+                type_docs = db.collection('Year').document(year).collection('Months').document(month).collection('Types').stream()                
+                for type_doc in type_docs:
+                    type_id = type_doc.id
+                    doc_data = type_doc.to_dict()
+                    if 'records' in doc_data and isinstance(doc_data['records'], list):
+                        for record in doc_data['records']:
+                            if isinstance(record, dict) and 'amount' in record:
+                                try:
+                                    amount = float(record['amount'])
+                                    if type_id == 'Thu':
+                                        total_income += amount
+                                    elif type_id == 'Chi':
+                                        total_expense += amount
+                                except (ValueError, TypeError):
+                                    print(f"Bỏ qua bản ghi có số tiền không hợp lệ: {record}")
+                return {"income": total_income, "expense": total_expense}
+            except Exception as e:
+                print(f"Lỗi khi tính tổng thu chi: {e}")
+                return {"income": 0, "expense": 0}
+    def get_year():
+        try:
+            results = [] 
+            year_docs = db.collection('Year').stream()       
+            for year_doc in year_docs:                 
+                print(f"Lấy các mục chi cho {year_doc.id}")
+                doc_data = year_doc.to_dict()
+                doc_data['id'] = year_doc.id # Gán ID của tài liệu vào dữ liệu trả về
+                results.append(doc_data)
+            return results                 
+            
+        except Exception as e:
+                print(f"Lỗi khi tính tổng thu chi: {e}")
+                return jsonify({"error": "Failed to get data"}), 500

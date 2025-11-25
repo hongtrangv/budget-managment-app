@@ -1,4 +1,16 @@
 <div class="text-center">
     <h1 class="text-4xl font-bold mb-4">Chào mừng bạn đến với Ứng dụng Quản lý Ngân sách</h1>
-    <p class="text-lg text-gray-600">Chọn một mục từ menu bên trái để bắt đầu.</p>
+    <p class="text-lg text-gray-600 mb-8">Xem tổng quan tài chính của bạn theo khoảng thời gian tùy chọn.</p>
+
+    <!-- BỘ LỌC NĂM/THÁNG -->
+    <div class="flex justify-center items-center gap-4 mb-4">
+        <select id="home-year-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+        <select id="home-month-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+    </div>
+
+    <!-- BIỂU ĐỒ -->
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg h-[70vh]">
+        <h2 class="text-2xl font-bold text-center mb-4">Tổng quan Thu & Chi  <span id="chart-period"></span></h2>
+        <canvas id="summary-chart"></canvas>
+    </div>
 </div>

@@ -80,7 +80,8 @@ def add_new_item():
             'amount': amount,
             'date': date_str,
             'rate': float(rate_str),
-            'term': float(term_str)            
+            'term': float(term_str),
+            'note': data.get('note')            
             })
         else:
             new_item_id = ManagementTree.add_item(year, month, type, {

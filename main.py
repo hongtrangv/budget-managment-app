@@ -51,9 +51,9 @@ def ui_js():
 def chart_js():
     return send_file('src/components/chartjs-plugin-datalabels.js')
 
-@app.route('/src/styles/tree-view.css')
+@app.route('/src/styles/styles.css')
 def css():
-    return send_file('src/styles/tree-view.css')
+    return send_file('src/styles/styles.css')
 
 # === KHỞI CHẠY ỨNG DỤNG ===
 def main():

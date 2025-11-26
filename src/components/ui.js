@@ -15,17 +15,62 @@ let mgmtState = { // State specifically for the Management page
     typeItems: [],
 };
 let homeChart = null;
+let chartActive = 'hone';
+/**
+ * Định dạng số thành chuỗi tiền tệ Việt Nam (VND).
+ * @param {number} number - Số cần định dạng.
+ * @returns {string} - Chuỗi đã định dạng (ví dụ: "1.234.567 ₫").
+ */
+const formatCurrency = (number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number || 0);
+
 // ==================================================
 //  LOGIC FOR THE "HOME" PAGE
 // ==================================================
+function switchDashboardView(viewId) {
+    // Ẩn tất cả các view
+    document.querySelectorAll('.dashboard-view').forEach(view => {
+        view.classList.add('hidden');
+    });
+
+    // Bỏ trạng thái active của tất cả các nút menu
+    document.querySelectorAll('.dashboard-menu-item').forEach(item => {
+        item.classList.remove('text-blue-600', 'border-blue-500');
+        item.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+    });
+
+    // Hiển thị view được chọn
+    const activeView = document.getElementById(viewId);
+    if (activeView) {
+        activeView.classList.remove('hidden');
+    }
+
+    // Thêm trạng thái active cho nút menu được chọn
+    const activeButton = document.querySelector(`.dashboard-menu-item[data-view='${viewId}']`);
+    if (activeButton) {
+        activeButton.classList.add('text-blue-600', 'border-blue-500');
+        activeButton.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+    }
+
+    // Dựa vào viewId, gọi hàm để vẽ biểu đồ tương ứng
+    if (viewId === 'content-overview') {
+        updateHomeChart();
+    } else if (viewId === 'content-expense-proportion') {
+        updatePieChart();
+    }
+}
 async function updatePieChart(){
     try {
+        chartActive = 'pie';
+        document.getElementById('content-expense-proportion').classList.remove('hidden');
+        document.getElementById('content-overview').classList.add('hidden'); 
+        document.getElementById('content-data-save').classList.add('hidden');        
         const yearSelect = document.getElementById('home-year-select').value;
         const monthSelect = document.getElementById('home-month-select').value;        
         const response = await fetch(`/api/dashboard/pie/${yearSelect}/${monthSelect}`);
         if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
         const data = await response.json();
-        const ctx = document.getElementById('expense-category-chart')?.getContext('2d');
+        const ctx = document.getElementById('expense-category-chart')?.getContext('2d');        
+        
         if (!ctx) return; // Canvas not found, do nothing
         // Nếu chart đã tồn tại → hủy chart cũ
         if (homeChart) {
@@ -33,13 +78,12 @@ async function updatePieChart(){
         }
         // Tách label + giá trị
         const labels = data.map(item => item.name);
-        const values = data.map(item => item.amount);
+        const values = data.map(item => item.value);
         const total = values.reduce((a, b) => a + b, 0);
        // Màu sắc
        const bgColors = values.map(() =>
         `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.7)`
-        );
-        console.log(data)
+        );       
         const borderColors = bgColors.map(c => c.replace("0.7", "1"));
         homeChart = new Chart(ctx, {
             type: 'doughnut',  // 🔥 CHART DẠNG TRÒN
@@ -56,13 +100,44 @@ async function updatePieChart(){
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true },
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 20,
+                            padding: 15,
+                            font: {
+                               size: 14,
+                               family: '"Be Vietnam Pro", sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${formatCurrency(value)}`;
+                            }
+                        }
+                    },
                     datalabels: {
                         color: 'white',
-                        font: { weight: 'bold', size: 14 },
+                        anchor: 'end',
+                        align: 'start',
+                        offset: -20,
+                        borderRadius: 4,
+                        backgroundColor: (ctx) => ctx.dataset.backgroundColor[ctx.dataIndex] + 'aa', // Thêm độ trong suốt
+                        font: { weight: 'bold' },
                         formatter: (value, ctx) => {
+                            // *** SỬA LỖI NaN% TẠI ĐÂY ***
                             const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return ((value / total) * 100).toFixed(1) + '%';
+                            // Nếu tổng là 0, trả về 0% để tránh lỗi NaN
+                            if (total === 0) {
+                                return '0.0%';
+                            }
+                            const percentage = (value / total) * 100;
+                            // Chỉ hiển thị nhãn nếu phần trăm lớn hơn 5%
+                            return percentage > 5 ? percentage.toFixed(1) + '%' : '';
                         }
                     }
                 }
@@ -77,6 +152,10 @@ async function updatePieChart(){
 }
 async function updateHomeChart () {
     try {
+        chartActive = 'home';
+        document.getElementById('content-expense-proportion').classList.add('hidden');
+        document.getElementById('content-overview').classList.remove('hidden');
+        document.getElementById('content-data-save').classList.add('hidden');         
         const yearSelect = document.getElementById('home-year-select').value;
         const monthSelect = document.getElementById('home-month-select').value;        
         const response = await fetch(`/api/dashboard/summary/${yearSelect}/${monthSelect}`);
@@ -126,7 +205,43 @@ async function updateHomeChart () {
         if (chartContainer) chartContainer.innerHTML = `<p class="text-center text-red-500">Không thể tải dữ liệu biểu đồ. Lỗi: ${error.message}</p>`;
     }
 }
-async function loadHomePage() {   
+async function updateSaveChart() {
+    const yearSelect = document.getElementById('home-year-select');
+    const monthSelect = document.getElementById('home-month-select');
+    document.getElementById('content-expense-proportion').classList.add('hidden');
+    document.getElementById('content-overview').classList.add('hidden');
+    document.getElementById('content-data-save').classList.remove('hidden');        
+    const response = await fetch(`/api/dashboard/save`);
+    if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
+    const data = await response.json();
+    let html = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-green">';
+    html += '<thead class="bg-green-600 text-white"><tr>';
+    for(let i = 0; i < data.length; i++){      
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Số tiền</th>';
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';  
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ngày gửi</th>';        
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ghi chú</th>';
+       
+    }   
+    // headers.forEach(key => { if (key !== 'id') html += `<th class="py-3 px-4 text-left uppercase font-semibold text-sm">${key}</th>`; });
+    html += '</thead><tbody class="text-gray-700">';
+    for(let i = 0; i < data.length; i++){
+        const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
+        html += `<tr class="${rowClass}" data-id="${data[i]['id']}">`;       
+        html += `<td class="py-3 px-4">${data[i]['amount']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['rate']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['term']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['date']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['note']|| ''}</td>`;
+        html += '</tr>';
+    }   
+    
+    html += '</tbody></table></div>';
+    document.getElementById('data-save').innerHTML=html;    
+}
+
+async function loadHomePage(type = 'home') {   
         const yearSelect = document.getElementById('home-year-select');
         const monthSelect = document.getElementById('home-month-select');
         try {
@@ -134,7 +249,7 @@ async function loadHomePage() {
             if (!response.ok) throw new Error('Could not fetch years');
             const years = await response.json();           
             const currentYear = new Date().getFullYear().toString();            
-            yearSelect.innerHTML = years.map(y => `<option value="${y.id}" ${y.id === currentYear ? 'selected' : ''}>Năm ${y.id}</option>`).join('');
+            yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>Năm ${y}</option>`).join('');
             let monthOptions = ''
             for (let i = 1; i <= 12; i++) {
                 monthOptions += `<option value="${i}" ${i === new Date().getMonth() + 1 ? 'selected' : ''}>Tháng ${i}</option>`;
@@ -145,8 +260,10 @@ async function loadHomePage() {
             monthSelect.addEventListener('change', loadChart);
 
             // Initial chart load
-            //await updateHomeChart();
-            await updatePieChart();                  
+            if (type === 'home') await updateHomeChart();
+            else if (type === 'pie') await updatePieChart(); 
+            else if (type === 'save') await updateSaveChart();
+                 
         } catch (error) {
             console.error('Failed to load home page filters:', error);
             yearSelect.innerHTML = '<option>Lỗi tải năm</option>';
@@ -154,8 +271,9 @@ async function loadHomePage() {
         
 }
 async function loadChart(){
-     //await updateHomeChart();
-     await updatePieChart();      
+    if (chartActive === 'home') await updateHomeChart();
+    else if (chartActive === 'pie') await updatePieChart();     
+     
 }
 // ==================================================
 //  LOGIC FOR THE "COLLECTIONS" PAGE
@@ -273,7 +391,7 @@ function renderNewItemForm(tabId) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Loại (Thu/Chi)</label>
-                    <select name="Loại" required class="input-field" onchange="toggleSavingsFields(this.value)" >
+                    <select name="Loại" required class="modern-select input-field" onchange="toggleSavingsFields(this.value)" >
                         <option value="Thu">Thu</option>
                         <option value="Chi">Chi</option>
                         <option value="Tiết kiệm">Tiết kiệm</option>
@@ -281,7 +399,7 @@ function renderNewItemForm(tabId) {
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Tên khoản</label>
-                    <select name="Tên" required class="input-field"><option value="" disabled selected>Chọn mục</option>${itemsHtml}</select>
+                    <select name="Tên" required class="modern-select input-field"><option value="" disabled selected>Chọn mục</option>${itemsHtml}</select>
                 </div>
                 <div >
                     <label class="block text-gray-700 text-sm font-bold mb-2">Số tiền (VND)</label>
@@ -295,6 +413,10 @@ function renderNewItemForm(tabId) {
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2">kỳ hạn</label>
                         <input type="numer" name="term" value="" required class="input-field">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Ghi chú</label>
+                        <input  name="note" value="" required class="input-field">
                     </div>
                 </div>
                 <div>
@@ -325,7 +447,8 @@ function renderRecordsTable(item) {
     if (item.id === "Tiết kiệm") {
         tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
         tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';
-        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lợi suất tính đến hôm nay</th>';
+        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">LS tính đến hôm nay</th>';
+        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ghi chú</th>';
     }
     tableHtml += '<th class="py-2 px-4 text-center uppercase font-semibold text-sm">Ngày</th>';
     tableHtml += '</tr></thead><tbody class="text-gray-700">';
@@ -349,6 +472,7 @@ function renderRecordsTable(item) {
             <td class="py-2 px-4">${rate || 'N/A'} </td>
             <td class="py-2 px-4">${term || 'N/A'}</td>
             <td class="py-2 px-4">${yield|| 'N/A'}</td>
+            <td class="py-2 px-4">${record['note']|| 'N/A'}</td>
             <td class="py-2 px-4 text-center">${record['date'] || 'N/A'}</td>
         </tr>`;
         }else
@@ -553,10 +677,27 @@ async function handleNav(path) {
 async function initialLoad() {
     try {
         const menuResponse = await fetch('/components/menu');
-        menuContainer.innerHTML = await menuResponse.text();
+        menuContainer.innerHTML = await menuResponse.text();   
         attachGlobalEventListeners();
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);
+        // Cập nhật năm ở footer
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+        
+        // --- LOGIC CHO DÒNG CHẠY THỜI GIAN ---
+        const tickerContent = document.getElementById('time-ticker-content');
+        const tickerClone = document.getElementById('time-ticker-content-clone');
+
+        if (tickerContent && tickerClone) {
+            const updateTime = () => {
+                const now = new Date();
+                const formattedTime = `Hôm nay: ${now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • Bây giờ là: ${now.toLocaleTimeString('vi-VN')}`;
+                tickerContent.textContent = formattedTime;
+                tickerClone.textContent = formattedTime;
+            };
+            setInterval(updateTime, 1000);
+            updateTime();
+        }
     } catch(e) {
         console.error("Initial load failed:", e);
         document.body.innerHTML = "<h1>Lỗi nghiêm trọng khi tải ứng dụng.</h1>";

@@ -216,7 +216,7 @@ async function updateSaveChart() {
     const data = await response.json();
     let html = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-green">';
     html += '<thead class="bg-green-600 text-white"><tr>';
-    for(let i = 0; i < data.length; i++){      
+    for(let i = 0; i < data.length; i++){    
         html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Số tiền</th>';
         html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
         html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';  

@@ -47,6 +47,10 @@ def management_page():
 def ui_js():
     return send_file('src/components/ui.js')
 
+@app.route('/src/components/chartjs-plugin-datalabels.js')
+def chart_js():
+    return send_file('src/components/chartjs-plugin-datalabels.js')
+
 @app.route('/src/styles/tree-view.css')
 def css():
     return send_file('src/styles/tree-view.css')

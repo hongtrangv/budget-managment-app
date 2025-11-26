@@ -252,8 +252,7 @@ class Dashboard:
         try:
             results = [] 
             year_docs = db.collection('Year').stream()       
-            for year_doc in year_docs:                 
-                print(f"Lấy các mục chi cho {year_doc.id}")
+            for year_doc in year_docs:                                 
                 doc_data = year_doc.to_dict()
                 doc_data['id'] = year_doc.id # Gán ID của tài liệu vào dữ liệu trả về
                 results.append(doc_data)
@@ -262,3 +261,36 @@ class Dashboard:
         except Exception as e:
                 print(f"Lỗi khi tính tổng thu chi: {e}")
                 return jsonify({"error": "Failed to get data"}), 500
+    
+    def get_piechart_for_month(year,month):
+        try:
+            # Sử dụng defaultdict để dễ dàng cộng dồn số tiền
+            aggregated_data = defaultdict(float)
+
+            # Lấy tài liệu 'Chi' cho tháng và năm cụ thể
+            chi_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document('Chi')
+            chi_doc = chi_ref.get()
+
+            # Kiểm tra xem tài liệu 'Chi' có tồn tại và có bản ghi không
+            if chi_doc.exists:
+                doc_data = chi_doc.to_dict()
+                if 'records' in doc_data and isinstance(doc_data['records'], list):
+                    # Lặp qua từng bản ghi trong mảng 'records'
+                    for record in doc_data['records']:
+                        if isinstance(record, dict) and 'name' in record and 'amount' in record:
+                            try:
+                                # Lấy tên và số tiền, sau đó cộng dồn
+                                name = record['name']
+                                amount = float(record['amount'])
+                                aggregated_data[name] += amount
+                            except (ValueError, TypeError):
+                                # Bỏ qua nếu 'amount' không phải là số hợp lệ
+                                print(f"Bỏ qua bản ghi có số tiền không hợp lệ: {record}")
+
+            # Chuyển đổi từ dict đã tổng hợp sang định dạng danh sách [{name: '...', value: ...}]
+            # mà thư viện biểu đồ có thể sử dụng
+            chart_data = [{'name': name, 'value': total_amount} for name, total_amount in aggregated_data.items()]
+            
+            return chart_data
+        except Exception as e:
+            return jsonify({""})

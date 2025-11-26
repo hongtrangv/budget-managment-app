@@ -46,7 +46,9 @@ def add_new_item():
         type = data.get('Loại')
         item_name = data.get('Tên')
         amount_str = data.get('Số tiền')
-        date_str = data.get('date')        
+        date_str = data.get('date')
+        rate_str = data.get('rate')
+        term_str = data.get('term')        
         # --- VALIDATION LOGIC ---
         if not amount_str:
             return jsonify({"error": "Vui lòng nhập số tiền."}), 400
@@ -72,7 +74,16 @@ def add_new_item():
             return jsonify({"error": "Dữ liệu thiếu: year, month, Tên, Số tiền, hoặc date"}), 400
 
         # Gọi hàm để thêm vào Firestore
-        new_item_id = ManagementTree.add_item(year, month, type, {
+        if (type == 'Tiết kiệm'):
+            new_item_id = ManagementTree.add_item(year, month, type, {
+            'name': item_name,
+            'amount': amount,
+            'date': date_str,
+            'rate': float(rate_str),
+            'term': float(term_str)            
+            })
+        else:
+            new_item_id = ManagementTree.add_item(year, month, type, {
             'name': item_name,
             'amount': amount,
             'date': date_str

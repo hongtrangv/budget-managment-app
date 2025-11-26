@@ -13,10 +13,10 @@
            <div class="bg-white p-4 shadow-lg rounded-lg h-full">
                <h2 class="text-xl font-bold mb-4">Tổng quan</h2>
                <nav id="dashboard-menu" class="space-y-2">
-                   <button data-tab="overview" class="w-full text-left p-2 rounded-md hover:bg-gray-200">
+                   <button data-tab="overview" class="w-full text-left p-2 rounded-md hover:bg-gray-200" >
                        Thu & Chi
                    </button>
-                   <button data-tab="expense-proportion" class="w-full text-left p-2 rounded-md hover:bg-gray-200">
+                   <button data-tab="expense-proportion" class="w-full text-left p-2 rounded-md hover:bg-gray-200" >
                        Tỷ lệ Chi
                    </button>                    
                </nav>
@@ -26,7 +26,7 @@
        <!-- BIỂU ĐỒ -->
        <div class="flex-1 bg-white p-6 rounded-lg shadow-lg flex flex-col">
            <!-- Tab Content: Overview -->
-           <div id="content-overview" class="flex flex-col flex-1 h-[70vh]">
+           <div id="content-overview" class="hidden flex-col flex-1 h-[70vh]">
                <h2 class="text-2xl font-bold text-center mb-4">Tổng quan Thu & Chi <span id="chart-period-overview"></span></h2>
                <div class="relative flex-1">
                    <canvas id="summary-chart"></canvas>
@@ -34,9 +34,9 @@
            </div>
 
            <!-- Tab Content: Expense Proportion -->
-           <div id="content-expense-proportion" class="hidden flex-col flex-1 h-[70vh]">
+           <div id="content-expense-proportion" class="flex flex-col">
                 <h2 class="text-2xl font-bold text-center mb-4">Tỷ lệ các danh mục Chi <span id="chart-period-expense"></span></h2>
-               <div class="relative flex-1">
+               <div class="relative h-[70vh]">
                    <canvas id="expense-category-chart"></canvas>
                </div>
            </div>

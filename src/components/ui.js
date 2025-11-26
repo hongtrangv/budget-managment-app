@@ -18,11 +18,67 @@ let homeChart = null;
 // ==================================================
 //  LOGIC FOR THE "HOME" PAGE
 // ==================================================
+async function updatePieChart(){
+    try {
+        const yearSelect = document.getElementById('home-year-select').value;
+        const monthSelect = document.getElementById('home-month-select').value;        
+        const response = await fetch(`/api/dashboard/pie/${yearSelect}/${monthSelect}`);
+        if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
+        const data = await response.json();
+        const ctx = document.getElementById('expense-category-chart')?.getContext('2d');
+        if (!ctx) return; // Canvas not found, do nothing
+        // Nếu chart đã tồn tại → hủy chart cũ
+        if (homeChart) {
+            homeChart.destroy();
+        }
+        // Tách label + giá trị
+        const labels = data.map(item => item.name);
+        const values = data.map(item => item.amount);
+        const total = values.reduce((a, b) => a + b, 0);
+       // Màu sắc
+       const bgColors = values.map(() =>
+        `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.7)`
+        );
+        console.log(data)
+        const borderColors = bgColors.map(c => c.replace("0.7", "1"));
+        homeChart = new Chart(ctx, {
+            type: 'doughnut',  // 🔥 CHART DẠNG TRÒN
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: bgColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true },
+                    datalabels: {
+                        color: 'white',
+                        font: { weight: 'bold', size: 14 },
+                        formatter: (value, ctx) => {
+                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            return ((value / total) * 100).toFixed(1) + '%';
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+    } catch (error) {
+        console.error("Error rendering expense-category-chart:", error);
+        const chartContainer = document.getElementById('expense-category-chart')?.parentElement;
+        if (chartContainer) chartContainer.innerHTML = `<p class="text-center text-red-500">Không thể tải dữ liệu biểu đồ. Lỗi: ${error.message}</p>`;
+    }
+}
 async function updateHomeChart () {
     try {
         const yearSelect = document.getElementById('home-year-select').value;
-        const monthSelect = document.getElementById('home-month-select').value;
-        console.error("Error rendering summary chart:", yearSelect,monthSelect);
+        const monthSelect = document.getElementById('home-month-select').value;        
         const response = await fetch(`/api/dashboard/summary/${yearSelect}/${monthSelect}`);
         if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
         const data = await response.json();
@@ -85,19 +141,22 @@ async function loadHomePage() {
             }
             monthSelect.innerHTML = monthOptions;
 
-            yearSelect.addEventListener('change', updateHomeChart);
-            monthSelect.addEventListener('change', updateHomeChart);
+            yearSelect.addEventListener('change', loadChart);
+            monthSelect.addEventListener('change', loadChart);
 
             // Initial chart load
-            await updateHomeChart();
-
+            //await updateHomeChart();
+            await updatePieChart();                  
         } catch (error) {
             console.error('Failed to load home page filters:', error);
             yearSelect.innerHTML = '<option>Lỗi tải năm</option>';
         }
         
 }
-
+async function loadChart(){
+     //await updateHomeChart();
+     await updatePieChart();      
+}
 // ==================================================
 //  LOGIC FOR THE "COLLECTIONS" PAGE
 // ==================================================
@@ -214,7 +273,7 @@ function renderNewItemForm(tabId) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Loại (Thu/Chi)</label>
-                    <select name="Loại" required class="input-field">
+                    <select name="Loại" required class="input-field" onchange="toggleSavingsFields(this.value)" >
                         <option value="Thu">Thu</option>
                         <option value="Chi">Chi</option>
                         <option value="Tiết kiệm">Tiết kiệm</option>
@@ -224,9 +283,19 @@ function renderNewItemForm(tabId) {
                     <label class="block text-gray-700 text-sm font-bold mb-2">Tên khoản</label>
                     <select name="Tên" required class="input-field"><option value="" disabled selected>Chọn mục</option>${itemsHtml}</select>
                 </div>
-                <div>
+                <div >
                     <label class="block text-gray-700 text-sm font-bold mb-2">Số tiền (VND)</label>
                     <input type="number" name="Số tiền" required class="input-field">
+                </div>
+                <div id="saving-fields" style="display:none">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Lãi suất</label>
+                        <input type="numer" name="rate" value="" required class="input-field">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">kỳ hạn</label>
+                        <input type="numer" name="term" value="" required class="input-field">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Ngày</label>
@@ -238,7 +307,13 @@ function renderNewItemForm(tabId) {
             </div>
         </form>`;
 }
-
+function toggleSavingsFields(value){
+    const savingFields = document.getElementById('saving-fields');
+    if (value === 'Tiết kiệm') {
+        savingFields.style.display = 'block';
+    }else
+        savingFields.style.display = 'none';        
+}
 function renderRecordsTable(item) {
     if (!item || !item.records || item.records.length === 0) return '<p class="text-center text-gray-500 p-4">Không có dữ liệu cho mục này.</p>';
     let tableHtml = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-white">';
@@ -247,12 +322,36 @@ function renderRecordsTable(item) {
     tableHtml += '<th class="py-3 px-4 text-center uppercase font-semibold text-sm">STT</th>';
     tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Tên</th>';
     tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Số tiền</th>';
+    if (item.id === "Tiết kiệm") {
+        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
+        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';
+        tableHtml += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lợi suất tính đến hôm nay</th>';
+    }
     tableHtml += '<th class="py-2 px-4 text-center uppercase font-semibold text-sm">Ngày</th>';
     tableHtml += '</tr></thead><tbody class="text-gray-700">';
     item.records.forEach((record, i) => {
         const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
         const amount = typeof record['amount'] === 'number' ? record['amount'].toLocaleString('vi-VN') + ' VND' : record['amount'];
+        
         // FIXED: Corrected data fields
+        if (item.id === "Tiết kiệm") {
+            const rate = record['rate'];
+            const term = record['term'];
+            // tính số ngày số ngày nắm giữ từ khi gửi đến hôm nay
+            const today = new Date();
+            const recordDate = new Date(record['date']);
+            const days = Math.ceil((today - recordDate) / (1000 * 60 * 60 * 24));
+            const yield = Math.round(record['amount'] * rate * days / 36500,0);
+            tableHtml += `<tr class="${rowClass}">
+            <td class="py-2 px-4 text-center">${i + 1}</td>
+            <td class="py-2 px-4">${record['name'] || 'N/A'}</td>
+            <td class="py-2 px-4">${amount || 'N/A'}</td>
+            <td class="py-2 px-4">${rate || 'N/A'} </td>
+            <td class="py-2 px-4">${term || 'N/A'}</td>
+            <td class="py-2 px-4">${yield|| 'N/A'}</td>
+            <td class="py-2 px-4 text-center">${record['date'] || 'N/A'}</td>
+        </tr>`;
+        }else
         tableHtml += `<tr class="${rowClass}">
             <td class="py-2 px-4 text-center">${i + 1}</td>
             <td class="py-2 px-4">${record['name'] || 'N/A'}</td>

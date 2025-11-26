@@ -77,12 +77,11 @@ async function loadHomePage() {
             const response = await fetch(`/api/dashboard/years`);
             if (!response.ok) throw new Error('Could not fetch years');
             const years = await response.json();           
-            const currentYear = new Date().getFullYear().toString();
-            console.error(years);
+            const currentYear = new Date().getFullYear().toString();            
             yearSelect.innerHTML = years.map(y => `<option value="${y.id}" ${y.id === currentYear ? 'selected' : ''}>Năm ${y.id}</option>`).join('');
             let monthOptions = ''
             for (let i = 1; i <= 12; i++) {
-                monthOptions += `<option value="${i}">Tháng ${i}</option>`;
+                monthOptions += `<option value="${i}" ${i === new Date().getMonth() + 1 ? 'selected' : ''}>Tháng ${i}</option>`;
             }
             monthSelect.innerHTML = monthOptions;
 
@@ -215,7 +214,11 @@ function renderNewItemForm(tabId) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Loại (Thu/Chi)</label>
-                    <select name="Loại" required class="input-field">${typesHtml}</select>
+                    <select name="Loại" required class="input-field">
+                        <option value="Thu">Thu</option>
+                        <option value="Chi">Chi</option>
+                        <option value="Tiết kiệm">Tiết kiệm</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Tên khoản</label>

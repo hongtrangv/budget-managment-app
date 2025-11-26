@@ -159,25 +159,36 @@ class ManagementTree:
         except Exception as e:
             print(f"Lỗi khi lấy các mục chi cho {year}-{month}: {e}")
             return []
+    
     @staticmethod
-    def add_item(year, month,type, data):
-        """Thêm một khoản chi mới vào Firestore với ID tự động."""
+    def add_item(year, month, item_type, data):
+        """Thêm một khoản chi mới vào Firestore, đảm bảo các tài liệu cha tồn tại."""
         try:
-            # Tạo tham chiếu đến collection Types, tự động tạo Year và Months nếu chưa có
-            doc_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document(type)
-            # Thêm document mới với ID tự sinh
-            # Thêm một ID duy nhất cho bản ghi trước khi thêm vào mảng
+            # 1. Tạo các tham chiếu
+            year_ref = db.collection('Year').document(year)
+            month_ref = year_ref.collection('Months').document(month)
+            type_ref = month_ref.collection('Types').document(item_type)
+
+            # 2. Đảm bảo các tài liệu cha tồn tại bằng cách đặt một trường trống
+            # Thao tác này sẽ tạo tài liệu nếu chưa có, và không làm gì nếu đã có.
+            year_ref.set({}, merge=True)
+            month_ref.set({}, merge=True)
+            type_ref.set({}, merge=True)
+            # 3. Thêm một ID duy nhất cho bản ghi mới
             data['id'] = str(uuid.uuid4())
             
-            # Sử dụng set với merge=True để tạo tài liệu nếu chưa có, và thêm vào mảng 'records'
-            doc_ref.set({
+            # 4. Sử dụng set với merge=True để tạo tài liệu loại nếu chưa có, 
+            # và thêm bản ghi mới vào mảng 'records'
+            type_ref.set({
                 'records': firestore.ArrayUnion([data])
-            }, merge=True)           
-            print(f"Đã thêm mục mới với ID: {data['id']} vào {year}/{month}")
+            }, merge=True)
+            
+            print(f"Đã thêm mục mới với ID: {data['id']} vào {year}/{month}/{item_type}")
             return data['id']
         except Exception as e:
             print(f"Lỗi khi thêm mục mới vào Firestore: {e}")
             raise e
+
 class Dashboard:
     """Lớp xử lý logic để lấy dữ liệu cho dashboard và báo cáo."""
     @staticmethod

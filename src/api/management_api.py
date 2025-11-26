@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from src.database.firestore_queries import ManagementTree
+from datetime import datetime
 
 # Tạo một Blueprint cho các API của trang quản lý
 management_bp = Blueprint('management_api', __name__)
@@ -39,31 +40,42 @@ def add_new_item():
     """Tạo một mục chi tiêu mới."""
     try:
         data = request.get_json()
-        year = data.get('year')
-        month = data.get('month')
+        # chuyển lại cách lấy year và month từ thông tin ngày
+        # year = data.get('year')
+        # month = data.get('month')
         type = data.get('Loại')
         item_name = data.get('Tên')
         amount_str = data.get('Số tiền')
-        date = data.get('date')
+        date_str = data.get('date')        
         # --- VALIDATION LOGIC ---
         if not amount_str:
             return jsonify({"error": "Vui lòng nhập số tiền."}), 400
+        if not date_str:
+            return jsonify({"error": "Vui lòng nhập ngày chi."})
         try:
             # Cố gắng chuyển đổi sang số. Nếu thành công, nó sẽ được lưu trữ dưới dạng số.
             amount = int(amount_str)
         except (ValueError, TypeError):
             # Nếu chuyển đổi thất bại, trả về lỗi.
             return jsonify({"error": f"'Số tiền' phải là một số. Giá trị '{amount_str}' không hợp lệ."}), 400
-        # --- END VALIDATION ---
-
-        if not all([year, month, item_name, amount, date]):
+        
+        try:
+            # Cố gắng chuyển đổi sang ngày tháng. Nếu thành công, nó sẽ được lưu trữ dưới dạng date.
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            year = str(date_obj.year)
+            month = str(date_obj.month).zfill(2) # Đảm bảo tháng có 2 chữ số (01, 02,...)
+        except (ValueError, TypeError):
+            # Nếu chuyển đổi thất bại, trả về lỗi.
+            return jsonify({"error": f"'Ngày tháng' phải đúng định dạng. Giá trị '{date_str}' không hợp lệ."}), 400
+        
+        if not all([year, month, item_name, amount, date_str]):
             return jsonify({"error": "Dữ liệu thiếu: year, month, Tên, Số tiền, hoặc date"}), 400
 
         # Gọi hàm để thêm vào Firestore
         new_item_id = ManagementTree.add_item(year, month, type, {
             'name': item_name,
             'amount': amount,
-            'date': date
+            'date': date_str
         })
         
         return jsonify({"success": True, "id": new_item_id}), 201

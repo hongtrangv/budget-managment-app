@@ -1,16 +1,64 @@
-<div class="text-center">
-    <h1 class="text-4xl font-bold mb-4">Chào mừng bạn đến với Ứng dụng Quản lý Ngân sách</h1>
-    <p class="text-lg text-gray-600 mb-8">Xem tổng quan tài chính của bạn theo khoảng thời gian tùy chọn.</p>
-
+<!-- src/pages/home.html -->
+<div class="container mx-auto p-4">
     <!-- BỘ LỌC NĂM/THÁNG -->
     <div class="flex justify-center items-center gap-4 mb-4">
-        <select id="home-year-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
-        <select id="home-month-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
-    </div>
+       <select id="home-year-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+       <select id="home-month-select" class="input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+   </div>
+   <!-- Main content -->
+   <div class="flex flex-col md:flex-row gap-6">
 
-    <!-- BIỂU ĐỒ -->
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg h-[70vh]">
-        <h2 class="text-2xl font-bold text-center mb-4">Tổng quan Thu & Chi  <span id="chart-period"></span></h2>
-        <canvas id="summary-chart"></canvas>
-    </div>
+       <!-- Cột menu -->
+       <div class="md:w-1/4">
+           <div class="bg-white p-4 shadow-lg rounded-lg h-full">
+               <h2 class="text-xl font-bold mb-4">Tổng quan</h2>
+               <nav id="dashboard-menu" class="space-y-2">
+                   <button data-tab="overview" class="w-full text-left p-2 rounded-md hover:bg-gray-200">
+                       Thu & Chi
+                   </button>
+                   <button data-tab="expense-proportion" class="w-full text-left p-2 rounded-md hover:bg-gray-200">
+                       Tỷ lệ Chi
+                   </button>                    
+               </nav>
+           </div>
+       </div>
+
+       <!-- BIỂU ĐỒ -->
+       <div class="flex-1 bg-white p-6 rounded-lg shadow-lg flex flex-col">
+           <!-- Tab Content: Overview -->
+           <div id="content-overview" class="flex flex-col flex-1 h-[70vh]">
+               <h2 class="text-2xl font-bold text-center mb-4">Tổng quan Thu & Chi <span id="chart-period-overview"></span></h2>
+               <div class="relative flex-1">
+                   <canvas id="summary-chart"></canvas>
+               </div>
+           </div>
+
+           <!-- Tab Content: Expense Proportion -->
+           <div id="content-expense-proportion" class="hidden flex-col flex-1 h-[70vh]">
+                <h2 class="text-2xl font-bold text-center mb-4">Tỷ lệ các danh mục Chi <span id="chart-period-expense"></span></h2>
+               <div class="relative flex-1">
+                   <canvas id="expense-category-chart"></canvas>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <!-- Modal xuất Excel -->
+   <!-- <div id="export-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
+       <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+           <h2 class="text-lg font-bold mb-4">Chọn tháng để xuất Excel</h2>
+           <div class="flex gap-4">
+               <select id="export-month" class="p-2 border rounded w-full">
+                   <!-- Options sẽ được thêm bằng JS -->
+               <!-- </select>
+               <select id="export-year" class="p-2 border rounded w-full">
+                   <!-- Options sẽ được thêm bằng JS -->
+               <!-- </select>
+           </div>
+           <div class="mt-4 flex justify-end gap-4">
+               <button id="btn-cancel-export" class="p-2 rounded bg-gray-300 hover:bg-gray-400">Hủy</button>
+               <button id="btn-confirm-export" class="p-2 rounded bg-blue-500 text-white hover:bg-blue-600">Xuất</button>
+           </div> 
+       </div> 
+   </div> -->
 </div>

@@ -408,15 +408,15 @@ function renderNewItemForm(tabId) {
                 <div id="saving-fields" style="display:none">
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2">Lãi suất</label>
-                        <input type="numer" name="rate" value="" required class="input-field">
+                        <input type="numer" name="rate" value="" class="input-field">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2">kỳ hạn</label>
-                        <input type="numer" name="term" value="" required class="input-field">
+                        <input type="numer" name="term" value="" class="input-field">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2">Ghi chú</label>
-                        <input  name="note" value="" required class="input-field">
+                        <input  name="note" value="" class="input-field">
                     </div>
                 </div>
                 <div>

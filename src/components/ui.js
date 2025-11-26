@@ -216,14 +216,27 @@ async function updateSaveChart() {
     const data = await response.json();
     let html = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-green">';
     html += '<thead class="bg-green-600 text-white"><tr>';
+    for(let i = 0; i < data.length; i++){      
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Số tiền</th>';
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';  
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ngày gửi</th>';        
+        html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ghi chú</th>';
+       
+    }   
     // headers.forEach(key => { if (key !== 'id') html += `<th class="py-3 px-4 text-left uppercase font-semibold text-sm">${key}</th>`; });
-    // html += '<th class="py-3 px-4 text-right uppercase font-semibold text-sm">Hành động</th></tr></thead><tbody class="text-gray-700">';
-    data.forEach((doc, index) => {
-        const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
-        html += `<tr class="${rowClass}" data-id="${doc['id']}">`;
-        //headers.forEach(header => { if (header !== 'id') html += `<td class="py-3 px-4">${doc[header] || ''}</td>`; });
-        
-    });
+    html += '</thead><tbody class="text-gray-700">';
+    for(let i = 0; i < data.length; i++){
+        const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
+        html += `<tr class="${rowClass}" data-id="${data[i]['id']}">`;       
+        html += `<td class="py-3 px-4">${data[i]['amount']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['rate']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['term']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['date']}</td>`;
+        html += `<td class="py-3 px-4">${data[i]['note']|| ''}</td>`;
+        html += '</tr>';
+    }   
+    
     html += '</tbody></table></div>';
     document.getElementById('data-save').innerHTML=html;    
 }

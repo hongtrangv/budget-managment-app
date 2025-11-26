@@ -43,13 +43,20 @@ def get_years():
 
 @report_bp.route("/api/dashboard/pie/<string:year>/<string:month>")
 def get_report_piechart_for_month(year,month):
-    try:
-        print(f"Lỗi khi lấy dữ liệu tổng quan")
+    try:        
         # LƯU Ý: Phương thức này chưa được tạo. Tôi sẽ để lại đây để bạn phát triển sau.
         summary = Dashboard.get_piechart_for_month(year,month)
-        return jsonify(summary)
-        # Tạm thời trả về lỗi để tránh nhầm lẫn
-        #return jsonify({"error": "API endpoint này chưa được hoàn thiện."}), 501
+        return jsonify(summary)       
     except Exception as e:
         print(f"Lỗi khi lấy dữ liệu tổng quan: {e}")
         return jsonify({"error": "Failed to get summary data"}), 500
+
+@report_bp.route("/api/dashboard/save")
+def get_total_saving():
+    try:
+        summary = Dashboard.get_total_saving()
+        print(f"Lỗi khi lấy dữ liệu tổng quan get_total_saving: {summary}")
+        return jsonify(summary)  
+    except Exception as e:
+        print(f"d",{e})
+        return jsonify({"error": "Failed to get_total_saving"}), 500

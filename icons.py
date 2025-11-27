@@ -1,4 +1,4 @@
-mai h"""
+"""
 A central repository for SVG icons used throughout the application.
 
 This file defines a class `Icon` that contains SVG strings as class attributes.

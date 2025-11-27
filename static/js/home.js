@@ -162,6 +162,7 @@ async function renderSavingsTable() {
                         <th class="py-3 px-4 text-left">Lãi suất</th>
                         <th class="py-3 px-4 text-left">Kỳ hạn</th>
                         <th class="py-3 px-4 text-left">Ngày gửi</th>
+                        <th class="py-3 px-4 text-left">Lợi tức (VND) </th>
                         <th class="py-3 px-4 text-left">Ghi chú</th>
                         <th class="py-3 px-4 text-left">Trạng thái</th>
                  </tr></thead><tbody>`;
@@ -182,8 +183,11 @@ async function renderSavingsTable() {
 
             let statusText;
             let statusClass;
-
+            const rate = item.rate;           
+            const days = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24));;
+            
             if (dayDiff < 0) {
+                days = Math.ceil((expiryDate - startDate) / (1000 * 60 * 60 * 24));
                 statusText = 'Quá hạn tất toán';
                 statusClass = 'text-red-600 font-bold';
             } else if (dayDiff <= 5) {
@@ -193,12 +197,13 @@ async function renderSavingsTable() {
                 statusText = 'Chưa đến hạn';
                 statusClass = 'text-green-600';
             }
-            
+            const interestYield = Math.round(item.amount * rate * days / 36500,0).toLocaleString('vi-VN');
             html += `<tr class="${index % 2 === 0 ? 'bg-white' : 'bg-green-50'}">`;
             html += `<td class="py-3 px-4">${formatCurrency(item.amount)}</td>`;
             html += `<td class="py-3 px-4">${item.rate}%</td>`;
             html += `<td class="py-3 px-4">${item.term} tháng</td>`;
             html += `<td class="py-3 px-4">${item.date}</td>`;
+            html += `<td class="py-3 px-4">${interestYield}</td>`;
             html += `<td class="py-3 px-4">${item.note || ''}</td>`;
             html += `<td class="py-3 px-4 ${statusClass}">${statusText}</td>`;
             html += '</tr>';

@@ -317,3 +317,19 @@ h2 {
 }
 
 
+.menu-item {
+    color: #4b5563;              /* text-gray-600 */
+    padding: 0.5rem 0.75rem;     /* py-2 px-3 */
+    border-radius: 0.5rem;       /* rounded-lg */
+    font-size: 0.875rem;         /* text-sm */
+    font-weight: 500;            /* font-medium */
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-item:hover {
+    background: #f3f4f6;         /* bg-gray-100 */
+    color: #111827;              /* text-gray-900 */
+}
+
+
+

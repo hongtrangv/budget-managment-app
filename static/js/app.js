@@ -1,35 +1,34 @@
 import { loadHomePage } from './home.js';
 import { loadCollectionData } from './collections.js';
 import { loadManagementPage } from './management.js';
-import { loadChatbotPage } from './chatbot.js'; // <-- IMPORT CHATBOT LOADER
+import { initializeChatbotWidget } from './chatbot.js'; // Import the widget initializer
 import { showAlert } from './utils.js';
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
 
-// Add the new route for the chatbot
 const routes = {
     '/': { page: '/pages/home.html', loader: loadHomePage },
     '/collections': { page: '/pages/collections.html', loader: loadCollectionData },
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
-    '/chatbot': { page: '/pages/chatbot.html', loader: loadChatbotPage } // <-- ADD CHATBOT ROUTE
 };
 
 function attachGlobalEventListeners() {
-    // This logic is now more robust. It finds the menu once and attaches a single listener.
-    const menu = document.querySelector('nav'); // Target the nav inside the loaded menu
+    const menu = document.querySelector('nav');
     if (menu) {
+        // Handle navigation links
         menu.addEventListener('click', e => {
-            const link = e.target.closest('a[data-navigo]');
-            if (link) {
+            const navLink = e.target.closest('a[data-navigo]');
+            if (navLink) {
                 e.preventDefault();
-                const path = link.getAttribute('href');
+                const path = navLink.getAttribute('href');
                 history.pushState({ path }, '', path);
                 handleNav(path);
             }
         });
-    } else {
-        console.error('Navigation menu not found for event listener attachment.');
+
+        // The chatbot button is also in the menu, so we can attach its listener here too.
+        // Note: The actual initialization of the widget logic is separate.
     }
 }
 
@@ -56,11 +55,14 @@ async function initialLoad() {
         if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
         
-        attachGlobalEventListeners(); // Attach listeners AFTER menu is loaded
+        // Initialize the chatbot widget functionality right after the page loads.
+        // It will find its buttons and attach its own listeners.
+        initializeChatbotWidget();
+
+        attachGlobalEventListeners(); 
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);
         
-        // This seems to be footer logic, better to keep it if it exists.
         const footerYear = document.getElementById('footer-year');
         if (footerYear) {
             footerYear.textContent = new Date().getFullYear();

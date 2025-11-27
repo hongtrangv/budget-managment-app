@@ -330,6 +330,54 @@ h2 {
     background: #f3f4f6;         /* bg-gray-100 */
     color: #111827;              /* text-gray-900 */
 }
+/* CHATBOT WIDGET STYLES */
+#chatbot-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    max-width: 90vw;
+    height: 600px;
+    max-height: 80vh;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Start hidden, transition on transform and opacity */
+    transform: translateY(20px);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
+    z-index: 1000;
+}
 
+#chatbot-widget.is-open {
+    /* Become visible and slide up */
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
 
+#chatbot-history {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f9fafb; /* Light gray background */
+}
+
+/* Custom scrollbar for webkit browsers */
+#chatbot-history::-webkit-scrollbar {
+    width: 6px;
+}
+#chatbot-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+#chatbot-history::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+#chatbot-history::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 

@@ -1,3 +1,5 @@
+import { showAlert } from './utils.js';
+
 let currentCollection = 'Items';
 let currentDocuments = [];
 let currentHeaders = [];
@@ -94,10 +96,10 @@ async function handleFormSubmit(event) {
         if (!response.ok) throw new Error((await response.json()).error || 'Thao tác thất bại');
         closeModal();
         await loadDocuments(currentCollection);
-        alert('Thao tác thành công!');
+        showAlert('success', 'Thao tác thành công!');
     } catch (error) {
         console.error('Form submission error:', error);
-        alert(`Lỗi: ${error.message}`);
+        showAlert('error', `Lỗi: ${error.message}`);
     }
 }
 
@@ -107,10 +109,10 @@ async function handleDelete(docId) {
         const response = await fetch(`/api/collections/${currentCollection}/${docId}`, { method: 'DELETE' });
         if (!response.ok) throw new Error((await response.json()).error || 'Xóa thất bại.');
         await loadDocuments(currentCollection);
-        alert('Xóa thành công!');
+        showAlert('success', 'Xóa thành công!');
     } catch (error) {
         console.error('Delete error:', error);
-        alert(`Lỗi: ${error.message}`);
+        showAlert('error', `Lỗi: ${error.message}`);
     }
 }
 

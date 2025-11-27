@@ -1,3 +1,5 @@
+import { showAlert } from './utils.js';
+
 let mgmtState = { 
     activeMonthLink: null,
     activeYear: null,
@@ -202,6 +204,7 @@ async function loadMonthData(year, month, monthElement) {
 
     try {
         await loadTypeItems();
+        await loadExpenseItems();
         const response = await fetch(`/api/management/items/${year}/${month}`);
         if (!response.ok) throw new Error(`API call failed: ${response.status}`);
         const items = await response.json();
@@ -211,15 +214,27 @@ async function loadMonthData(year, month, monthElement) {
         let tabBarHtml = '';
         let contentHtml = '';
         const newTabId = 'new-item-tab';
-        tabBarHtml += `<div class="special-tab" data-tab-id="${newTabId}"><span>+</span></div>`;
+         // --- REDESIGNED "ADD NEW" BUTTON ---
+         
+        //tabBarHtml += `<div class="special-tab" data-tab-id="${newTabId}"><span></span></div>`;
         contentHtml += `<div class="item-tab-content" id="${newTabId}" style="display: none;">${renderNewItemForm(newTabId)}</div>`;
 
         items.forEach(item => {
             const tabId = `tab-${item.id}`;
-            tabBarHtml += `<div class="item-tab" data-tab-id="${tabId}"><span>${item['Tên'] || item.id}</span></div>`;
+            const itemTypeClass = item.type === 'thu' ? 'tab-thu' : 'tab-chi';
+            tabBarHtml += `<div class="item-tab ${itemTypeClass}" data-tab-id="${tabId}"><span>${item['Tên'] || item.id}</span></div>`;
             contentHtml += `<div class="item-tab-content" id="${tabId}" style="display: none;">${renderRecordsTable(item)}</div>`;
         });
-
+        tabBarHtml += `
+                    <div class="flex-shrink-0 p-2 border-r border-gray-200">
+                        <button class="flex items-center justify-center w-full h-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" data-tab-id="${newTabId}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Thêm khoản mục
+                        </button>
+                    </div>
+                    `;     
         tabBar.innerHTML = tabBarHtml;
         contentContainer.innerHTML = contentHtml;
         
@@ -244,7 +259,7 @@ async function loadMonthData(year, month, monthElement) {
 async function handleMgmtFormSubmit(event) {
     event.preventDefault();
     if (!mgmtState.activeYear || !mgmtState.activeMonth) {
-        alert("Vui lòng chọn một tháng từ menu.");
+        showAlert('error', "Vui lòng chọn một tháng từ menu.");
         return;
     }
     const data = Object.fromEntries(new FormData(event.target));
@@ -254,11 +269,11 @@ async function handleMgmtFormSubmit(event) {
     try {
         const response = await fetch('/api/management/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
         if (!response.ok) throw new Error((await response.json()).error || 'Không thể tạo mục mới.');
-        alert('Tạo mục mới thành công!');
+        showAlert('success', 'Tạo mục mới thành công!');
         await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
     } catch (error) {
         console.error('New item form submission error:', error);
-        alert(`Lỗi: ${error.message}`);
+        showAlert('error', `Lỗi: ${error.message}`);
     }
 }
 
@@ -266,7 +281,7 @@ export async function loadManagementPage() {
     const treeContainer = document.getElementById('management-tree');
     if (!treeContainer) return;
     try {
-        await loadExpenseItems();
+        //await loadExpenseItems();
         const response = await fetch('/api/management/tree');
         if (!response.ok) throw new Error(`API call failed: ${response.status}`);
         const structure = await response.json();

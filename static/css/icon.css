@@ -1,0 +1,48 @@
+/* ========== ICON BASE ========== */
+.icon {
+    display: inline-block;
+    fill: currentColor;
+    vertical-align: middle;
+}
+
+/* ========== KÍCH THƯỚC CƠ BẢN ========== */
+.icon-sm { width: 16px; height: 16px; }
+.icon-md { width: 20px; height: 20px; }
+.icon-lg { width: 24px; height: 24px; }
+.icon-xl { width: 32px; height: 32px; }
+
+/* ========== KÍCH THƯỚC RESPONSIVE ========== */
+/* Dùng cho layout mobile–tablet–desktop */
+.icon-responsive {
+    width: 20px;
+    height: 20px;
+}
+
+@media (min-width: 640px) {
+    .icon-responsive {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .icon-responsive {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* ========== MÀU THEO CHỨC NĂNG ========== */
+.icon-blue { color: #2563eb; }     /* Edit, link */
+.icon-red { color: #dc2626; }      /* Delete, remove */
+.icon-green { color: #16a34a; }    /* Success, view */
+.icon-yellow { color: #ca8a04; }   /* Warning */
+.icon-gray { color: #6b7280; }     /* Neutral */
+
+/* ========== MÀU THEO NGỮ NGHĨA ========== */
+.icon-primary { color: #3b82f6; }
+.icon-secondary { color: #64748b; }
+.icon-danger { color: #ef4444; }
+.icon-success { color: #22c55e; }
+.icon-warning { color: #f59e0b; }
+.icon-info { color: #0ea5e9; }

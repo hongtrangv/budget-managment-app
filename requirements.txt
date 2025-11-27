@@ -6,3 +6,4 @@ autopep8
 flask
 firebase-admin
 gunicorn
+openai

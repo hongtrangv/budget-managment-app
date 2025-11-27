@@ -1,0 +1,122 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    user-select: none;
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.btn-outline {
+    background: transparent;
+    color: #2563eb;
+    border: 2px solid #2563eb;
+}
+.btn-outline:hover {
+    background: #2563eb;
+    color: white;
+}
+.btn-primary {
+    background: #2563eb;       /* xanh */
+    color: white;
+}
+.btn-primary:hover {
+    background: #1e4fcf;
+}
+.btn-primary:active {
+    transform: scale(0.96);
+}
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+.btn-danger:hover {
+    background: #b91c1c;
+}
+.btn-danger:active {
+    transform: scale(0.96);
+}
+.btn-ghost {
+    background: transparent;
+    color: #374151;
+}
+.btn-ghost:hover {
+    background: rgba(0,0,0,0.05);
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+}
+/* CSS cho button */
+.btn-save {
+    padding: 0.5rem 1rem;          /* px-4 py-2 */
+    background-color: #22c55e;     /* bg-green-500 */
+    color: #fff;                   /* text-white */
+    font-size: 1rem;               /* text-base */
+    font-weight: 500;              /* font-medium */
+    border-radius: 0.375rem;       /* rounded-md */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);  /* shadow-sm */
+    outline: none;                 /* focus:outline-none */
+    border: none;
+    cursor: pointer;
+}
+
+/* Hover */
+.btn-save:hover {
+    background-color: #15803d;     /* hover:bg-green-700 */
+}
+
+/* Focus */
+.btn-save:focus {
+    box-shadow: 0 0 0 2px #86efac; /* focus:ring-2 + focus:ring-green-300 */
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* khoảng cách giữa icon và text */
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    user-select: none;
+}
+
+.btn .btn-icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon-only {
+    padding: 8px;
+    width: 36px;
+    height: 36px;
+}
+.btn-sm .btn-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.btn-lg .btn-icon svg {
+    width: 20px;
+    height: 20px;
+}
+

@@ -1,6 +1,7 @@
 import { loadHomePage } from './home.js';
 import { loadCollectionData } from './collections.js';
 import { loadManagementPage } from './management.js';
+import { showAlert } from './utils.js'; // Import the showAlert function
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
@@ -13,7 +14,7 @@ const routes = {
 
 function attachGlobalEventListeners() {
     menuContainer.addEventListener('click', e => {
-        const link = e.target.closest('a'); // Changed to be more general
+        const link = e.target.closest('a');
         if (link && link.getAttribute('href')) {
             e.preventDefault();
             const path = link.getAttribute('href');
@@ -25,11 +26,10 @@ function attachGlobalEventListeners() {
 
 async function handleNav(path) {
     const routePath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
-    const route = routes[routePath] || routes['/'];
-
+    const route = routes[routePath] || routes['/'];    
     try {
         const response = await fetch(route.page);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} for path ${route.page}`);
         content.innerHTML = await response.text();
         
         if (route.loader) {
@@ -38,35 +38,26 @@ async function handleNav(path) {
 
     } catch (e) {
         console.error("Error handling navigation:", e);
-        content.innerHTML = `<div class="text-center p-8"><h1 class="text-2xl font-bold text-red-600">Page Not Found</h1><p class="text-gray-500">Could not load content for ${path}.</p></div>`;
+        // Instead of wiping the content, show a user-friendly alert
+        showAlert('error', `Không thể tải trang: ${path}. Vui lòng thử lại.`);
     }
 }
 
 async function initialLoad() {
     try {
-        const menuResponse = await fetch('/components/menu.html'); // Updated path
+        const menuResponse = await fetch('/components/menu.html');
+        if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
+        
         attachGlobalEventListeners();
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);
         document.getElementById('footer-year').textContent = new Date().getFullYear();
-        
-        const tickerContent = document.getElementById('time-ticker-content');
-        const tickerClone = document.getElementById('time-ticker-content-clone');
 
-        if (tickerContent && tickerClone) {
-            const updateTime = () => {
-                const now = new Date();
-                const formattedTime = `Hôm nay: ${now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • Bây giờ là: ${now.toLocaleTimeString('vi-VN')}`;
-                tickerContent.textContent = formattedTime;
-                tickerClone.textContent = formattedTime;
-            };
-            setInterval(updateTime, 1000);
-            updateTime();
-        }
     } catch(e) {
         console.error("Initial load failed:", e);
-        document.body.innerHTML = "<h1>Lỗi nghiêm trọng khi tải ứng dụng.</h1>";
+        // Show a critical error alert without wiping the page
+        showAlert('error', 'Lỗi nghiêm trọng: Không thể tải các thành phần giao diện chính.', 10000);
     }
 }
 

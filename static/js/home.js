@@ -1,114 +1,69 @@
-import { formatCurrency } from './utils.js';
+import { formatCurrency, showAlert } from './utils.js';
 
-let homeChart = null;
-let chartActive = 'home';
+// Store chart instance to prevent memory leaks
+let currentChart = null;
 
-function setupEventListeners() {
-    document.querySelector('button[data-tab="overview"]').addEventListener('click', () => loadHomePage('home'));
-    document.querySelector('button[data-tab="expense-proportion"]').addEventListener('click', () => loadHomePage('pie'));
-    document.querySelector('button[data-tab="save-detail"]').addEventListener('click', () => loadHomePage('save'));
-}
-
-function switchDashboardView(viewId) {
-    document.querySelectorAll('.dashboard-view').forEach(view => view.classList.add('hidden'));
-    document.querySelectorAll('.dashboard-menu-item').forEach(item => {
-        item.classList.remove('text-blue-600', 'border-blue-500');
-        item.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+/**
+ * Switches the visible tab and updates its content by toggling the 'hidden' class.
+ * @param {string} tabId The data-tab attribute of the target tab ('overview', 'expense-proportion', 'save-detail')
+ */
+async function switchTab(tabId) {
+    // Hide all tab panes by adding the 'hidden' class
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.add('hidden');
     });
-    const activeView = document.getElementById(viewId);
-    if (activeView) activeView.classList.remove('hidden');
-    const activeButton = document.querySelector(`.dashboard-menu-item[data-view='${viewId}']`);
+
+    // Deactivate all menu buttons
+    document.querySelectorAll('.dashboard-menu-item').forEach(button => {
+        button.classList.remove('active-tab-button'); 
+    });
+
+    // Show the target tab pane by removing the 'hidden' class
+    const activePane = document.querySelector(`.tab-pane[data-tab='${tabId}']`);
+    if (activePane) {
+        activePane.classList.remove('hidden');
+    }
+
+    // Activate the target menu button
+    const activeButton = document.querySelector(`.dashboard-menu-item[data-tab='${tabId}']`);
     if (activeButton) {
-        activeButton.classList.add('text-blue-600', 'border-blue-500');
-        activeButton.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+        activeButton.classList.add('active-tab-button');
     }
-    if (viewId === 'content-overview') updateHomeChart();
-    else if (viewId === 'content-expense-proportion') updatePieChart();
-}
 
-async function updatePieChart() {
-    try {
-        chartActive = 'pie';
-        document.getElementById('content-expense-proportion').classList.remove('hidden');
-        document.getElementById('content-overview').classList.add('hidden');
-        document.getElementById('content-data-save').classList.add('hidden');
-        const yearSelect = document.getElementById('home-year-select').value;
-        const monthSelect = document.getElementById('home-month-select').value;
-        const response = await fetch(`/api/dashboard/pie/${yearSelect}/${monthSelect}`);
-        if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
-        const data = await response.json();
-        const ctx = document.getElementById('expense-category-chart')?.getContext('2d');
-        if (!ctx) return;
-        if (homeChart) homeChart.destroy();
-        const labels = data.map(item => item.name);
-        const values = data.map(item => item.value);
-        const total = values.reduce((a, b) => a + b, 0);
-        const bgColors = values.map(() => `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.7)`);
-        const borderColors = bgColors.map(c => c.replace("0.7", "1"));
-        homeChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: bgColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { boxWidth: 20, padding: 15, font: { size: 14, family: '\"Be Vietnam Pro\", sans-serif' } }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => `${context.label || ''}: ${formatCurrency(context.raw || 0)}`
-                        }
-                    },
-                    datalabels: {
-                        color: 'white',
-                        anchor: 'end',
-                        align: 'start',
-                        offset: -20,
-                        borderRadius: 4,
-                        backgroundColor: (ctx) => ctx.dataset.backgroundColor[ctx.dataIndex] + 'aa',
-                        font: { weight: 'bold' },
-                        formatter: (value, ctx) => {
-                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            if (total === 0) return '0.0%';
-                            const percentage = (value / total) * 100;
-                            return percentage > 5 ? percentage.toFixed(1) + '%' : '';
-                        }
-                    }
-                }
-            }
-        });
-    } catch (error) {
-        console.error("Error rendering expense-category-chart:", error);
-        const chartContainer = document.getElementById('expense-category-chart')?.parentElement;
-        if (chartContainer) chartContainer.innerHTML = `<p class="text-center text-red-500">Không thể tải dữ liệu biểu đồ. Lỗi: ${error.message}</p>`;
+    // Destroy the previous chart before loading new data to prevent conflicts
+    if (currentChart) {
+        currentChart.destroy();
+        currentChart = null;
+    }
+
+    // Load the data for the activated tab
+    switch (tabId) {
+        case 'overview':
+            await renderSummaryChart();
+            break;
+        case 'expense-proportion':
+            await renderExpensePieChart();
+            break;
+        case 'save-detail':
+            await renderSavingsTable();
+            break;
     }
 }
 
-async function updateHomeChart() {
+/**
+ * Fetches data and renders the main income/expense bar chart.
+ */
+async function renderSummaryChart() {
     try {
-        chartActive = 'home';
-        document.getElementById('content-expense-proportion').classList.add('hidden');
-        document.getElementById('content-overview').classList.remove('hidden');
-        document.getElementById('content-data-save').classList.add('hidden');
-        const yearSelect = document.getElementById('home-year-select').value;
-        const monthSelect = document.getElementById('home-month-select').value;
-        const response = await fetch(`/api/dashboard/summary/${yearSelect}/${monthSelect}`);
-        if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
+        const year = document.getElementById('home-year-select').value;
+        const month = document.getElementById('home-month-select').value;
+        const response = await fetch(`/api/dashboard/summary/${year}/${month}`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
         const data = await response.json();
-        const ctx = document.getElementById('summary-chart')?.getContext('2d');
-        if (!ctx) return;
-        if (homeChart) homeChart.destroy();
-        homeChart = new Chart(ctx, {
+        
+        const ctx = document.getElementById('summary-chart').getContext('2d');
+        
+        currentChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: ['Tổng Thu', 'Tổng Chi'],
@@ -124,88 +79,191 @@ async function updateHomeChart() {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true, ticks: { callback: value => formatCurrency(value) } } },
-                plugins: {
-                    legend: { display: false },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        const outstanding = data.income - data.expense;
+        document.getElementById('outstanding').textContent = formatCurrency(outstanding);
+        document.getElementById('chart-period-overview').textContent = `(Tháng ${month}/${year})`;
+
+    } catch (error) {
+        console.error("Error rendering summary chart:", error);
+        showAlert('error', `Không thể tải biểu đồ Thu/Chi: ${error.message}`);
+    }
+}
+
+/**
+ * Fetches data and renders the expense category pie chart.
+ */
+async function renderExpensePieChart() {
+     try {
+        const year = document.getElementById('home-year-select').value;
+        const month = document.getElementById('home-month-select').value;
+        const response = await fetch(`/api/dashboard/pie/${year}/${month}`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        const data = await response.json();
+
+        const ctx = document.getElementById('expense-category-chart').getContext('2d');
+
+        currentChart = new Chart(ctx, {
+             type: 'doughnut',
+            data: {
+                labels: data.map(item => item.name),
+                datasets: [{
+                    data: data.map(item => item.value),
+                    backgroundColor: data.map(() => `rgba(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255}, 0.7)`),
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                 plugins: {
+                    legend: {
+                        position: 'right',
+                    },
                     tooltip: {
                         callbacks: {
-                            label: context => {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) label += formatCurrency(context.parsed.y);
-                                return label;
-                            }
+                            label: (context) => `${context.label || ''}: ${formatCurrency(context.raw || 0)}`
+                        }
+                    },
+                    datalabels: {
+                        color: 'white',
+                        formatter: (value, ctx) => {
+                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? (value / total) * 100 : 0;
+                            return percentage > 5 ? percentage.toFixed(1) + '%' : '';
                         }
                     }
                 }
             }
         });
+         document.getElementById('chart-period-expense').textContent = `(Tháng ${month}/${year})`;
+
     } catch (error) {
-        console.error("Error rendering summary chart:", error);
-        const chartContainer = document.getElementById('summary-chart')?.parentElement;
-        if (chartContainer) chartContainer.innerHTML = `<p class="text-center text-red-500">Không thể tải dữ liệu biểu đồ. Lỗi: ${error.message}</p>`;
+        console.error("Error rendering expense pie chart:", error);
+        showAlert('error', `Không thể tải biểu đồ tỷ trọng chi: ${error.message}`);
     }
 }
 
-async function updateSaveChart() {
-    document.getElementById('content-expense-proportion').classList.add('hidden');
-    document.getElementById('content-overview').classList.add('hidden');
-    document.getElementById('content-data-save').classList.remove('hidden');
-    const response = await fetch(`/api/dashboard/save`);
-    if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
-    const data = await response.json();
-    let html = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-green">';
-    html += '<thead class="bg-green-600 text-white"><tr>';
-    html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Số tiền</th>';
-    html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Lãi suất (%/năm)</th>';
-    html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Kỳ hạn (Tháng)</th>';
-    html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ngày gửi</th>';
-    html += '<th class="py-3 px-4 text-left uppercase font-semibold text-sm">Ghi chú</th>';
-    html += '</thead><tbody class="text-gray-700">';
-    for (let i = 0; i < data.length; i++) {
-        const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
-        html += `<tr class="${rowClass}" data-id="${data[i]['id']}">`;
-        html += `<td class="py-3 px-4">${data[i]['amount']}</td>`;
-        html += `<td class="py-3 px-4">${data[i]['rate']}</td>`;
-        html += `<td class="py-3 px-4">${data[i]['term']}</td>`;
-        html += `<td class="py-3 px-4">${data[i]['date']}</td>`;
-        html += `<td class="py-3 px-4">${data[i]['note'] || ''}</td>`;
-        html += '</tr>';
-    }
-    html += '</tbody></table></div>';
-    document.getElementById('data-save').innerHTML = html;
-}
-
-async function loadChart() {
-    if (chartActive === 'home') await updateHomeChart();
-    else if (chartActive === 'pie') await updatePieChart();
-}
-
-export async function loadHomePage(type = 'home') {
-    const yearSelect = document.getElementById('home-year-select');
-    const monthSelect = document.getElementById('home-month-select');
+/**
+ * Fetches data and renders the savings table with expiry status.
+ */
+async function renderSavingsTable() {
     try {
+        const year = document.getElementById('home-year-select').value;
+        const response = await fetch(`/api/dashboard/save`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        const data = await response.json();
+        
+        let html = '<div class="overflow-x-auto shadow-lg rounded-lg"><table class="min-w-full bg-white">';
+        html += `<thead class="bg-green-600 text-white"><tr>
+                        <th class="py-3 px-4 text-left">Số tiền</th>
+                        <th class="py-3 px-4 text-left">Lãi suất</th>
+                        <th class="py-3 px-4 text-left">Kỳ hạn</th>
+                        <th class="py-3 px-4 text-left">Ngày gửi</th>
+                        <th class="py-3 px-4 text-left">Ghi chú</th>
+                        <th class="py-3 px-4 text-left">Trạng thái</th>
+                 </tr></thead><tbody>`;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to midnight for accurate date comparison
+
+        data.forEach((item, index) => {
+            const startDate = new Date(item.date); // Assumes date format is parseable by new Date() e.g., 'YYYY-MM-DD'
+            const termInMonths = parseInt(item.term, 10);
+            
+            const expiryDate = new Date(startDate);
+            expiryDate.setMonth(expiryDate.getMonth() + termInMonths);
+            expiryDate.setHours(0, 0, 0, 0);
+
+            const timeDiff = expiryDate.getTime() - today.getTime();
+            const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+            let statusText;
+            let statusClass;
+
+            if (dayDiff < 0) {
+                statusText = 'Quá hạn tất toán';
+                statusClass = 'text-red-600 font-bold';
+            } else if (dayDiff <= 5) {
+                statusText = `Sắp đáo hạn (còn ${dayDiff} ngày)`;
+                statusClass = 'text-yellow-600 font-bold';
+            } else {
+                statusText = 'Chưa đến hạn';
+                statusClass = 'text-green-600';
+            }
+            
+            html += `<tr class="${index % 2 === 0 ? 'bg-white' : 'bg-green-50'}">`;
+            html += `<td class="py-3 px-4">${formatCurrency(item.amount)}</td>`;
+            html += `<td class="py-3 px-4">${item.rate}%</td>`;
+            html += `<td class="py-3 px-4">${item.term} tháng</td>`;
+            html += `<td class="py-3 px-4">${item.date}</td>`;
+            html += `<td class="py-3 px-4">${item.note || ''}</td>`;
+            html += `<td class="py-3 px-4 ${statusClass}">${statusText}</td>`;
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('data-save').innerHTML = html;
+        document.getElementById('chart-period-save').textContent = `(Năm ${year})`;
+
+    } catch (error) {
+        console.error("Error rendering savings table:", error);
+        showAlert('error', `Không thể tải bảng tiết kiệm: ${error.message}`);
+    }
+}
+
+
+/**
+ * Main function to initialize the home page.
+ * Sets up filters, attaches event listeners ONCE, and loads the default tab.
+ */
+export async function loadHomePage() {
+    try {
+        // --- Setup Filters ---
+        const yearSelect = document.getElementById('home-year-select');
+        const monthSelect = document.getElementById('home-month-select');
+
         const response = await fetch(`/api/dashboard/years`);
         if (!response.ok) throw new Error('Could not fetch years');
         const years = await response.json();
         const currentYear = new Date().getFullYear().toString();
         yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>Năm ${y}</option>`).join('');
-        let monthOptions = ''
+        
+        let monthOptions = '';
         for (let i = 1; i <= 12; i++) {
             monthOptions += `<option value="${i}" ${i === new Date().getMonth() + 1 ? 'selected' : ''}>Tháng ${i}</option>`;
         }
         monthSelect.innerHTML = monthOptions;
 
-        yearSelect.addEventListener('change', loadChart);
-        monthSelect.addEventListener('change', loadChart);
+        // --- Attach Event Listeners ONCE ---
+        const dashboardMenu = document.getElementById('dashboard-menu');
+        if (!dashboardMenu.dataset.eventsAttached) {
+            dashboardMenu.addEventListener('click', (e) => {
+                const button = e.target.closest('.dashboard-menu-item');
+                if (button && button.dataset.tab) {
+                    switchTab(button.dataset.tab);
+                }
+            });
+            
+            const handleFilterChange = () => {
+                const activeButton = document.querySelector('.dashboard-menu-item.active-tab-button');
+                if (activeButton) {
+                    switchTab(activeButton.dataset.tab);
+                }
+            };
 
-        setupEventListeners();
+            yearSelect.addEventListener('change', handleFilterChange);
+            monthSelect.addEventListener('change', handleFilterChange);
 
-        if (type === 'home') await updateHomeChart();
-        else if (type === 'pie') await updatePieChart();
-        else if (type === 'save') await updateSaveChart();
+            dashboardMenu.dataset.eventsAttached = 'true'; // Mark as attached
+        }
+
+        // --- Load Initial Tab ---
+        await switchTab('overview');
 
     } catch (error) {
-        console.error('Failed to load home page filters:', error);
-        yearSelect.innerHTML = '<option>Lỗi tải năm</option>';
+        console.error('Failed to initialize home page:', error);
+        showAlert('error', `Lỗi khởi tạo trang chủ: ${error.message}`);
     }
 }

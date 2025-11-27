@@ -1,15 +1,14 @@
-<!-- src/pages/home.html -->
+<!-- REFACTORED: Added data-tab attributes and a common 'tab-pane' class for easier and more reliable tab switching in JS -->
 <div class="container mx-auto p-4 dashboard-container">
-    <h2>Tổng tải sản hiện tại</h2>
-    <!-- BỘ LỌC NĂM/THÁNG -->
+    <h2 class="text-xl font-semibold text-center mb-4">Tổng tài sản hiện tại</h2>
+    <!-- FILTER CONTROLS -->
     <div class="flex justify-center items-center gap-4 mb-4">
        <select id="home-year-select" class="modern-select input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
        <select id="home-month-select" class="modern-select input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
    </div>
-   <!-- Main content -->
-   <div class="flex flex-col md:flex-row gap-6">
-
-       <!-- Cột menu -->
+   <!-- MAIN CONTENT -->
+   <div class="flex flex-col md:flex-row gap-6">    
+       <!-- TABS MENU -->
        <div class="md:w-1/6">
            <div class="bg-white p-4 shadow-lg rounded-lg h-full">
                <h2 class="text-xl font-bold mb-4">Tổng quan</h2>
@@ -21,37 +20,41 @@
                        Tỷ trọng Chi
                    </button>
                    <button data-tab="save-detail" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
-                    Tiết kiệm
-                </button>                     
+                       Tiết kiệm
+                   </button>                     
                </nav>
            </div>
        </div>
 
-       <!-- BIỂU ĐỒ -->
-       <div class="chart-card">
-           <!-- Tab Content: Overview -->
-           <div id="content-overview" class="hidden flex-col flex-1 h-[70vh]">
-               <h2 class="text-2xl font-bold text-center mb-4">Tổng quan Thu & Chi <span id="chart-period-overview"></span></h2>
-               <div class="relative flex-1">
+       <!-- TABS CONTENT -->
+       <div class="chart-card flex-1">
+           <!-- Tab Pane: Overview -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-overview" class="tab-pane hidden flex flex-col flex-1" data-tab="overview">
+                <h2 class="text-2xl font-bold text-center mb-2">Tổng quan Thu & Chi <span id="chart-period-overview"></span></h2>
+                <h3 class="text-lg text-center text-gray-600 mb-4">Tổng dư nợ trong tháng: <span id="outstanding" class="font-semibold"></span></h3>
+                <div class="relative flex-1 h-[60vh]">
                    <canvas id="summary-chart"></canvas>
-               </div>
+                </div>
            </div>
 
-           <!-- Tab Content: Expense Proportion -->
-           <div id="content-expense-proportion" class="flex flex-col">
+           <!-- Tab Pane: Expense Proportion -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-expense-proportion" class="tab-pane hidden flex flex-col" data-tab="expense-proportion">
                 <h2 class="text-2xl font-bold text-center mb-4">Phân bổ tỷ trọng Chi <span id="chart-period-expense"></span></h2>
                <div class="relative h-[70vh]">
                    <canvas id="expense-category-chart"></canvas>
                </div>
            </div>
            
-           <!-- Tab Content: Save Detail -->
-           <div class="hidden flex flex-col" id="content-data-save">
-            <h2 class="text-2xl font-bold text-center mb-4">Chi tiết các khoản tiết kiệm <span id="chart-period-expense"></span></h2>
-           <div id="data-save">
-               
+           <!-- Tab Pane: Save Detail -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-data-save" class="tab-pane hidden flex flex-col" data-tab="save-detail">
+                <h2 class="text-2xl font-bold text-center mb-4">Chi tiết các khoản tiết kiệm <span id="chart-period-save"></span></h2>
+               <div id="data-save">
+                   <!-- Data will be injected here -->
+               </div>
            </div>
-       </div>
        </div>
    </div>
 </div>

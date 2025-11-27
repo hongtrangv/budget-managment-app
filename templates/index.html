@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/icon.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}">
+
+    <!-- === START: CHATBOT WIDGET STYLES === -->
+    <style>
+       
+    </style>
+    <!-- === END: CHATBOT WIDGET STYLES === -->
+
 </head>
 <body class="bg-gray-100">
     <div id="alert-container" data-position="top-right"></div>
@@ -23,12 +30,34 @@
                 <p class="text-xs mt-1">Phát triển bởi Trần Xuân Hải</p>
             </div>
         </footer>
-    </div> 
-  
-       
-    <!-- FINAL FIX: Moved script to the end of the body -->
-    <!-- This ensures all HTML elements are loaded before the script runs. -->
+    </div>
+
+    <!-- === START: CHATBOT WIDGET HTML === -->
+    <div id="chatbot-widget" class="bg-white">
+        <!-- Widget Header -->
+        <div class="flex items-center justify-between p-4 bg-green-600 text-white border-b border-green-700">
+            <h3 class="text-lg font-semibold">Trợ lý Tài chính</h3>
+            <button id="close-chatbot-widget" class="text-white hover:text-green-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Chat History -->
+        <div id="chatbot-history" class="flex-grow p-4 bg-gray-50 overflow-y-auto"></div>
+
+        <!-- Input Form -->
+        <div class="p-4 bg-white border-t border-gray-200">
+            <div class="flex items-center">
+                <input type="text" id="chatbot-input" placeholder="Nhập câu hỏi của bạn..." class="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button id="chatbot-send-btn" class="px-4 py-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700 disabled:bg-gray-400">
+                    Gửi
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- === END: CHATBOT WIDGET HTML === -->
+
     <script src="https://cdn.jsdelivr.net/npm/navigo@8.11.1/lib/navigo.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}?v=1.2"></script> <!-- Cache-busting version incremented -->    
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}?v=1.2"></script>
 </body>
 </html>

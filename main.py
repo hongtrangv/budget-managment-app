@@ -8,7 +8,7 @@ from icons import Icon
 from src.api.collections_api import collections_bp
 from src.api.management_api import management_bp
 from src.api.dashboard_api import report_bp
-from src.api.chatbot_api import chatbot_bp # <-- IMPORT THE NEW BLUEPRINT
+from src.api.chatbot_api import chatbot_bp
 
 app = Flask(__name__,
             template_folder='templates',
@@ -28,15 +28,15 @@ def inject_icons():
 app.register_blueprint(collections_bp)
 app.register_blueprint(management_bp)
 app.register_blueprint(report_bp)
-app.register_blueprint(chatbot_bp) # <-- REGISTER THE NEW BLUEPRINT
+app.register_blueprint(chatbot_bp)
 
 
 # === VIEW ROUTES ===
 
+# These routes all serve the single-page application's entry point.
 @app.route("/")
 @app.route('/collections')
 @app.route('/management')
-@app.route('/chatbot')
 def index():
     """Serves the main index.html file, which is the entry point for the SPA."""
     return render_template('index.html')

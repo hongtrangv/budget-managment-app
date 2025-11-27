@@ -34,7 +34,7 @@ def handle_chat():
     try:
         # 1. Get bot's reply from OpenAI
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful financial assistant for a personal finance app."},
                 {"role": "user", "content": user_message}

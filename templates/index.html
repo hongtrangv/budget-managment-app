@@ -5,25 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trình quản lý ngân sách</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    
-    <link rel="stylesheet" href="src/styles/styles.css">
-     
-   
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Sửa lỗi: Tải plugin datalabels từ CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/icon.css') }}">
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto flex flex-col min-h-screen bg-white shadow-lg">
         <div id="menu-container" class="relative justify-center bg-white shadow-sm border-b border-gray-200"></div>
         <main id="content" class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8"></main>
-        <!-- CHÂN TRANG (FOOTER) -->
         <footer class="py-4 border-t border-gray-200">
-            <div class="-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+            <div class="px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
                 <p>&copy; <span id="footer-year"></span> Quản lý tài chính. Đã đăng ký bản quyền.</p>
                 <p class="text-xs mt-1">Phát triển bởi Trần Xuân Hải</p>
             </div>
         </footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/navigo@8.11.1/lib/navigo.min.js"></script>
-    <script src="src/components/chartjs-plugin-datalabels.js"></script>
-    <script src="src/components/ui.js?v=1.21"> </script>      
+    <!-- Xóa dòng script bị hỏng trỏ đến tệp cục bộ -->
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}?v=1.1"></script> <!-- Thêm ?v=1.1 để tránh cache -->
 </body>
 </html>

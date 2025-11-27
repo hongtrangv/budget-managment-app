@@ -1,61 +1,59 @@
 import os
-from flask import Flask, send_file
+from flask import Flask, render_template
 
-# Import các blueprint từ thư mục api
+# Import a class that holds icon SVGs
+from icons import Icon
+
+# Import blueprints from the api directory
 from src.api.collections_api import collections_bp
 from src.api.management_api import management_bp
 from src.api.dashboard_api import report_bp
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder='templates',
+            static_folder='static')
+
 app.config['JSON_AS_ASCII'] = False
 
-# === ĐĂNG KÝ BLUEPRINTS ===
+# === CONTEXT PROCESSORS ===
+
+@app.context_processor
+def inject_icons():
+    """Injects the Icon class into Jinja2 templates."""
+    # Return a dictionary of icon SVGs. The class attributes of the Icon class
+    # are dictionaries, so we can just return the class itself.
+    return dict(icons=Icon)
+
+
+# === REGISTER BLUEPRINTS ===
 app.register_blueprint(collections_bp)
 app.register_blueprint(management_bp)
 app.register_blueprint(report_bp)
 
 
-# === CÁC TUYẾN HIỂN THỊ TRANG (Views) ===
+# === VIEW ROUTES ===
 
-# Các route chính của ứng dụng single-page.
-# Chúng đều trả về trang index.html, và JavaScript phía client sẽ xử lý việc hiển thị trang con phù hợp.
 @app.route("/")
 @app.route('/collections')
 @app.route('/management')
 def index():
-    """Phục vụ file HTML chính của ứng dụng (Single Page Application shell)."""
-    return send_file('src/index.html')
+    """Serves the main index.html file, which is the entry point for the SPA."""
+    return render_template('index.html')
 
-# Các route dưới đây hoạt động như một API, cung cấp các mảnh HTML (partials) cho client.
-@app.route('/components/menu')
-def menu():
-    return send_file('src/components/menu.html')
+@app.route('/components/<path:filename>')
+def components(filename):
+    """Serves components like the menu."""
+    return render_template(os.path.join('components', filename))
 
-@app.route('/pages/home')
-def home():
-    return send_file('src/pages/home.html')
+@app.route('/pages/<path:filename>')
+def pages(filename):
+    """Serves the different pages for the SPA."""
+    return render_template(os.path.join('pages', filename))
 
-@app.route('/pages/collections')
-def collections_page():
-    return send_file('src/pages/collections.html')
+# Note: Routes for static files (js, css) are now handled automatically by Flask
+# because we've configured the 'static_folder'. We no longer need routes for them.
 
-@app.route('/pages/management')
-def management_page():
-    return send_file('src/pages/management.html')
-
-@app.route('/src/components/ui.js')
-def ui_js():
-    return send_file('src/components/ui.js')
-
-@app.route('/src/components/chartjs-plugin-datalabels.js')
-def chart_js():
-    return send_file('src/components/chartjs-plugin-datalabels.js')
-
-@app.route('/src/styles/styles.css')
-def css():
-    return send_file('src/styles/styles.css')
-
-# === KHỞI CHẠY ỨNG DỤNG ===
+# === START APPLICATION ===
 def main():
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
 

@@ -120,8 +120,7 @@ class ManagementTree:
             year_ref.set({}, merge=True)
             month_ref.set({}, merge=True)
             
-            type_ref.set({
-                'records': firestore.ArrayUnion([data])
+            type_ref.set({'records': firestore.ArrayUnion([data])
             }, merge=True)
             
             return data.get('id')
@@ -179,7 +178,6 @@ class ManagementTree:
         except Exception as e:
             print(f"Error updating record {record_id}: {e}")
             raise e
-
 
 class Dashboard:
     @staticmethod
@@ -323,4 +321,34 @@ class Dashboard:
             return saving_data
         except Exception as e:
             print(f"Error getting total savings: {e}")
+            return []
+
+class Loan:
+    @staticmethod
+    def get_list_loan():
+        try:
+            results = []
+            loan_docs = db.collection('Loan').stream()
+            for doc in loan_docs:
+                doc_data = doc.to_dict()
+                doc_data['id'] = doc.id
+                results.append(doc_data)
+            return results
+        except Exception as e:
+            print(f"Error getting loan list: {e}")
+            return []
+
+    @staticmethod
+    def get_loan_payments(loan_id):
+        """Fetches the payment history for a specific loan."""
+        try:
+            payments_ref = db.collection('Loan').document(loan_id).collection('repayments').stream()
+            payments = []
+            for payment in payments_ref:
+                payment_data = payment.to_dict()
+                payment_data['id'] = payment.id
+                payments.append(payment_data)
+            return payments
+        except Exception as e:
+            print(f"Error getting loan payments: {e}")
             return []

@@ -36,7 +36,7 @@ def handle_chat():
         completion = client.chat.completions.create(
             model=os.environ.get("OPENAI_MODEL"),
             messages=[
-                {"role": "system", "content": "You are a helpful financial assistant for a personal finance app."},
+                {"role": "system", "content": "Bạn là chuyên gia AI. Chuyên tư vấn và giải đáp các thắc mắc về tài chính học tập"},
                 {"role": "user", "content": user_message}
             ]
         )

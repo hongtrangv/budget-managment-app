@@ -21,7 +21,10 @@
                    </button>
                    <button data-tab="save-detail" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
                        Tiết kiệm
-                   </button>                     
+                   </button> 
+                   <button data-tab="loan-detail" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
+                    Khoản vay
+                    </button>                       
                </nav>
            </div>
        </div>
@@ -55,6 +58,46 @@
                    <!-- Data will be injected here -->
                </div>
            </div>
+           <!-- Tab Pane: Loan Detail -->
+           <div id="content-data-loan" class="tab-pane hidden flex flex-col" data-tab="loan-detail">
+                <h2 class="text-2xl font-bold text-center mb-4">Chi tiết các khoản vay</h2>
+                <div id="data-loan" class="overflow-x-auto shadow-lg rounded-lg">
+                    <table id="loan-table" class="min-w-full bg-white">
+                        <thead class="bg-green-600 text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Tên khoản vay</th>
+                                <th class="py-3 px-4 text-left">Số tiền vay</th>
+                                <th class="py-3 px-4 text-left">Kỳ hạn (Tháng)</th>
+                                <th class="py-3 px-4 text-left">Ngày vay</th>
+                                <th class="py-3 px-4 text-left">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loan data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div> 
        </div>
    </div>
+</div>
+
+<!-- Modal for viewing payment history -->
+<div id="payments-modal" class="modal fixed w-full h-full top-0 left-0 flex items-center justify-center hidden">
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+    <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">Lịch sử trả lãi</p>
+                <div class="modal-close cursor-pointer z-50">
+                    <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                        <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div id="modal-payment-history">
+                <!-- Payment history will be populated here -->
+            </div>
+        </div>
+    </div>
 </div>

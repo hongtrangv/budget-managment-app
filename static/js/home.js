@@ -47,6 +47,9 @@ async function switchTab(tabId) {
         case 'save-detail':
             await renderSavingsTable();
             break;
+        case 'loan-detail':
+            await renderLoansTable();
+            break;
     }
 }
 
@@ -218,6 +221,83 @@ async function renderSavingsTable() {
     }
 }
 
+async function renderLoansTable() {
+    try {
+        const response = await fetch(`/api/dashboard/loan`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        const data = await response.json();
+
+        const tableBody = document.querySelector("#loan-table tbody");
+        tableBody.innerHTML = ""; // Clear existing rows
+
+        data.forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.className = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
+            row.innerHTML = `
+                <td class="py-3 px-4 text-center">${item.borrowerName}</td>
+                <td class="py-3 px-4 text-left">${formatCurrency(item.principalAmount)}</td>
+                <td class="py-3 px-4 text-left">${item.term}</td>
+                <td class="py-3 px-4 text-center">${item.startDate}</td>
+                <td class="py-3 px-4 text-center"><button class="p-1 hover:bg-gray-200 rounded-full view-payments-btn" data-loan-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-hidden="false" focusable="false">
+                    <title>View</title>
+                    <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                            d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" fill="none"/>
+                    </svg>
+                </button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        // Add event listeners to the "Xem" buttons
+        document.querySelectorAll('.view-payments-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const loanId = button.dataset.loanId;
+                openPaymentsModal(loanId);
+            });
+        });
+
+    } catch (error) {
+        console.error("Error rendering loan table:", error);
+        showAlert('error', `Không thể tải bảng chi tiết khoản vay: ${error.message}`);
+    }
+}
+
+async function openPaymentsModal(loanId) {
+    try {
+        const response = await fetch(`/api/dashboard/loan/${loanId}/payments`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        const payments = await response.json();
+
+        const modalPaymentHistory = document.getElementById("modal-payment-history");
+        modalPaymentHistory.innerHTML = ""; // Clear previous content
+
+        if (payments.length === 0) {
+            modalPaymentHistory.innerHTML = "<p>Không có lịch sử trả lãi cho khoản vay này.</p>";
+        } else {
+            payments.forEach(payment => {
+                const paymentDiv = document.createElement("div");
+                paymentDiv.className = "py-2 border-b";
+                paymentDiv.innerHTML = `
+                    <p><strong>Ngày trả:</strong> ${payment.paidDate}</p>
+                    <p><strong>Số tiền gốc:</strong> ${formatCurrency(payment.principalPaid)}</p>
+                    <p><strong>Số tiền lãi:</strong> ${formatCurrency(payment.interestPaid)}</p>
+                    <p><strong>Tổng số tiền phải trả:</strong> ${formatCurrency(payment.totalPaid)}</p>
+                `;                
+                modalPaymentHistory.appendChild(paymentDiv);
+            });
+        }
+
+        // Show the modal
+        const modal = document.getElementById("payments-modal");
+        modal.classList.remove('hidden');
+
+    } catch (error) {
+        console.error("Error fetching loan payments:", error);
+        showAlert('error', `Không thể tải lịch sử trả lãi: ${error.message}`);
+    }
+}
+
 
 /**
  * Main function to initialize the home page.
@@ -263,6 +343,16 @@ export async function loadHomePage() {
 
             dashboardMenu.dataset.eventsAttached = 'true'; // Mark as attached
         }
+
+        // --- Modal Close --- 
+        const modal = document.getElementById('payments-modal');
+        const closeButton = modal.querySelector(".modal-close");
+        const overlay = modal.querySelector(".modal-overlay");
+
+        const closeModal = () => modal.classList.add('hidden');
+
+        closeButton.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
 
         // --- Load Initial Tab ---
         await switchTab('overview');

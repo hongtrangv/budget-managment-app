@@ -3,6 +3,8 @@ from collections import defaultdict
 from google.cloud import firestore
 import uuid
 from datetime import datetime
+import math
+
 
 class DocumentHandler:
     """Handles generic CRUD operations for Firestore documents and collections."""
@@ -24,20 +26,67 @@ class DocumentHandler:
         except Exception as e:
             print(f"Error getting all documents: {e}")
             return []
-
+            
     @staticmethod
+    def get_paginated_documents(collection_name, page_size=10, start_after_doc_id=None, order_by_field='id'):
+        """
+        Fetches a paginated list of documents, including total records and total pages.
+        """
+        try:
+            collection_ref = db.collection(collection_name)
+            
+            # 1. Get total number of records efficiently
+            count_query = collection_ref.count()
+            total_records_result = count_query.get()
+            total_records = total_records_result[0][0].value
+
+            # 2. Calculate total pages
+            total_pages = math.ceil(total_records / page_size) if page_size > 0 else 0
+            
+            # 3. Build the pagination query
+            # Order by document ID by default for stable pagination
+            order_key = firestore.Client.field_path('__name__') if order_by_field == 'id' else order_by_field
+            query = collection_ref.order_by(order_key)
+
+            if start_after_doc_id:
+                start_after_doc = collection_ref.document(start_after_doc_id).get()
+                if not start_after_doc.exists:
+                    # Return empty data but with correct totals if cursor is invalid
+                    return {
+                        'data': [], 'last_doc_id': None,
+                        'total_records': total_records, 'total_pages': total_pages
+                    }
+                query = query.start_after(start_after_doc)
+
+            docs_snapshot = query.limit(page_size).stream()
+
+            results = []
+            last_doc_id = None
+            for doc in docs_snapshot:
+                doc_data = doc.to_dict()
+                doc_data['id'] = doc.id
+                results.append(doc_data)
+                last_doc_id = doc.id
+
+            # 4. Return the enhanced dictionary
+            return {
+                'data': results, 
+                'last_doc_id': last_doc_id,
+                'total_records': total_records,
+                'total_pages': total_pages
+            }
+        except Exception as e:
+            print(f"Error getting paginated documents from {collection_name}: {e}")
+            return {'data': [], 'last_doc_id': None, 'total_records': 0, 'total_pages': 0}
+
+    @staticmethod    
     def add_document_to_collection(collection_name, data):
         """Adds a new document with a specified ID."""
-        try:
-            doc_id = data.get('Danh mục thu chi')
-            if not doc_id:
-                raise ValueError("Document ID ('Danh mục thu chi') is required.")
-            doc_ref = db.collection(collection_name).document(doc_id)
-            if doc_ref.get().exists:
-                raise ValueError(f"Document with ID '{doc_id}' already exists.")
-            document_content = {k: v for k, v in data.items() if k != 'Danh mục thu chi'}
-            doc_ref.set(document_content)
+        try:           
+            doc_id = str(uuid.uuid4())
+            doc_ref = db.collection("items").document(doc_id).set(data)                                
             return doc_id
+
         except Exception as e:
             print(f"Error adding document: {e}")
             raise e
@@ -56,19 +105,9 @@ class DocumentHandler:
     def update_document_in_collection(collection_name, original_doc_id, data_from_form):
         """Updates a document, handling ID changes as well."""
         try:
-            new_doc_id = data_from_form.get('Danh mục thu chi')
             original_doc_ref = db.collection(collection_name).document(original_doc_id)
-            update_data = {k: v for k, v in data_from_form.items() if k != 'Danh mục thu chi'}
-            if not new_doc_id or new_doc_id == original_doc_id:
-                original_doc_ref.update(update_data)
-                return True
-            else:
-                new_doc_ref = db.collection(collection_name).document(new_doc_id)
-                if new_doc_ref.get().exists:
-                    raise ValueError(f"Document with new ID '{new_doc_id}' already exists.")
-                new_doc_ref.set(update_data)
-                original_doc_ref.delete()
-            return new_doc_id
+            original_doc_ref.update(data_from_form)            
+            return original_doc_id
         except Exception as e:
             print(f"Error updating document: {e}")
             raise e
@@ -325,18 +364,34 @@ class Dashboard:
 
 class Loan:
     @staticmethod
-    def get_list_loan():
+    def get_list_loan(page_size=5, start_after_doc_id=None):
+        """Fetches a paginated list of loans."""
         try:
+            # Sorting by a field is required for cursor-based pagination
+            query = db.collection('Loan').order_by('startDate')
+
+            if start_after_doc_id:
+                start_after_doc = db.collection('Loan').document(start_after_doc_id).get()
+                if not start_after_doc.exists:
+                    # Handle case where the cursor document might have been deleted
+                    return {'data': [], 'last_doc_id': None}
+                query = query.start_after(start_after_doc)
+
+            query = query.limit(page_size)
+            docs_snapshot = query.stream()
+
             results = []
-            loan_docs = db.collection('Loan').stream()
-            for doc in loan_docs:
+            last_doc_id = None
+            for doc in docs_snapshot:
                 doc_data = doc.to_dict()
                 doc_data['id'] = doc.id
                 results.append(doc_data)
-            return results
+                last_doc_id = doc.id  # Keep track of the last document
+
+            return {'data': results, 'last_doc_id': last_doc_id}
         except Exception as e:
-            print(f"Error getting loan list: {e}")
-            return []
+            print(f"Error getting paginated loan list: {e}")
+            return {'data': [], 'last_doc_id': None}
 
     @staticmethod
     def get_loan_payments(loan_id):
@@ -352,3 +407,54 @@ class Loan:
         except Exception as e:
             print(f"Error getting loan payments: {e}")
             return []
+
+    @staticmethod
+    @firestore.transactional
+    def add_payment(transaction, loan_id, paidDate, principalPaid, interestPaid):
+        """
+        Adds a new payment record and updates the loan's outstanding balance within a transaction.
+        Note: This method must be called within a transaction context.
+        """
+        try:
+            loan_ref = db.collection('Loan').document(loan_id)
+            payment_id = str(uuid.uuid4())
+            payment_ref = loan_ref.collection('repayments').document(payment_id)
+
+            # 1. Get the current loan data from the transaction
+            loan_snapshot = loan_ref.get(transaction=transaction)
+            if not loan_snapshot.exists:
+                raise ValueError(f"Loan with ID {loan_id} not found.")
+            
+            current_outstanding = loan_snapshot.get('outstanding')
+
+            # Ensure 'outstanding' is a number
+            if not isinstance(current_outstanding, (int, float)):
+                raise TypeError("The 'outstanding' field in the loan document is not a number.")
+
+            # 2. Calculate the new outstanding balance
+            new_outstanding = current_outstanding - principalPaid
+            if new_outstanding < 0:
+                new_outstanding = 0 # Prevent negative balance
+
+            # 3. Prepare the new payment data
+            payment_date = datetime.strptime(paidDate, '%Y-%m-%d')
+            payment_data = {
+                "paidDate": payment_date,
+                "principalPaid": principalPaid,
+                "interestPaid": interestPaid,
+                "created_at": datetime.utcnow(),
+                "totalPaid": principalPaid + interestPaid
+            }
+
+            # 4. Set the new payment document in the transaction
+            transaction.set(payment_ref, payment_data)
+            
+            # 5. Update the outstanding balance in the loan document
+            transaction.update(loan_ref, {
+                'outstanding': new_outstanding
+            })
+            
+            return payment_id
+        except Exception as e:
+            print(f"Error during add_payment transaction for loan {loan_id}: {e}")
+            raise  # Re-raise the exception to ensure the transaction is rolled back

@@ -1,4 +1,4 @@
-import { showAlert } from './utils.js';
+import { showAlert, formatDate } from './utils.js';
 
 let mgmtState = { 
     activeMonthLink: null,
@@ -52,7 +52,7 @@ function attachFormEventListeners(tabId) {
 
 function renderNewItemForm(tabId) {
     const today = new Date().toISOString().split('T')[0];
-    const itemsHtml = mgmtState.expenseItems.map(item => `<option value="${item['id']}">${item['id']}</option>`).join('');
+    const itemsHtml = mgmtState.expenseItems.map(item => `<option value="${item['name']}">${item['name']}</option>`).join('');
     return `
         <form class="item-form p-4 bg-gray-50 rounded" data-tab-id="${tabId}">
             <h3 class="text-lg font-bold mb-4">Tạo khoản thu/chi mới</h3>
@@ -148,7 +148,7 @@ function renderRecordsTable(item) {
                 <td class="py-2 px-4 text-center">${i + 1}</td>
                 <td class="py-2 px-4">${record['name'] || 'N/A'}</td>
                 <td class="py-2 px-4">${amount || 'N/A'}</td>
-                <td class="py-2 px-4 text-center">${record['date'] || 'N/A'}</td>`;
+                <td class="py-2 px-4 text-center">${formatDate(record['date']) || 'N/A'}</td>`;
         }
         tableHtml += `<td class="py-3 px-4 flex items-center justify-end space-x-2">
             <button class="p-1 hover:bg-gray-200 rounded-full edit-btn" data-id="${item.id}" title="Sửa"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>

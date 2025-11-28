@@ -39,6 +39,7 @@ app.register_blueprint(loan_bp)
 @app.route("/")
 @app.route('/collections')
 @app.route('/management')
+@app.route('/loan-payment') # Add this route for the new page
 def index():
     """Serves the main index.html file, which is the entry point for the SPA."""
     return render_template('index.html')

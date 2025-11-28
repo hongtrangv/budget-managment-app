@@ -1,7 +1,8 @@
 import { loadHomePage } from './home.js';
-import { loadCollectionData } from './collections.js';
+import { loadCategoryPage } from './collections.js'; // Fix: Use the new function name
 import { loadManagementPage } from './management.js';
-import { initializeChatbotWidget } from './chatbot.js'; // Import the widget initializer
+import { loadLoanPaymentPage } from './loan_payment.js';
+import { initializeChatbotWidget } from './chatbot.js';
 import { showAlert } from './utils.js';
 
 const content = document.getElementById('content');
@@ -9,14 +10,14 @@ const menuContainer = document.getElementById('menu-container');
 
 const routes = {
     '/': { page: '/pages/home.html', loader: loadHomePage },
-    '/collections': { page: '/pages/collections.html', loader: loadCollectionData },
+    '/collections': { page: '/pages/collections.html', loader: loadCategoryPage }, // Fix: Use the new function name
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
+    '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
 };
 
 function attachGlobalEventListeners() {
     const menu = document.querySelector('nav');
     if (menu) {
-        // Handle navigation links
         menu.addEventListener('click', e => {
             const navLink = e.target.closest('a[data-navigo]');
             if (navLink) {
@@ -26,9 +27,6 @@ function attachGlobalEventListeners() {
                 handleNav(path);
             }
         });
-
-        // The chatbot button is also in the menu, so we can attach its listener here too.
-        // Note: The actual initialization of the widget logic is separate.
     }
 }
 
@@ -55,10 +53,7 @@ async function initialLoad() {
         if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
         
-        // Initialize the chatbot widget functionality right after the page loads.
-        // It will find its buttons and attach its own listeners.
         initializeChatbotWidget();
-
         attachGlobalEventListeners(); 
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);
@@ -68,7 +63,6 @@ async function initialLoad() {
             footerYear.textContent = new Date().getFullYear();
         }
 
-        // --- TIME TICKER LOGIC ---
         const tickerContent = document.getElementById('time-ticker-content');
         const tickerClone = document.getElementById('time-ticker-content-clone');
         if (tickerContent && tickerClone) {

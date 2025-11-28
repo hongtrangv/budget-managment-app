@@ -1,42 +1,41 @@
-import { formatCurrency, showAlert } from './utils.js';
+import { createCategoryChart, createSummaryChart } from './charts.js';
+import { formatCurrency, showAlert,formatDate,formatDateToYMD } from './utils.js';
 
-// Store chart instance to prevent memory leaks
+// Chart instance
 let currentChart = null;
 
+// --- LOAN PAGINATION STATE ---
+let loanCurrentPage = 1;
+const LOAN_PAGE_SIZE = 5; // Display 5 loans per page
+// An array to store the document ID of the first item of each page.
+// pageStartDocs[0] is always null (for the first page)
+// pageStartDocs[1] is the ID of the first doc on page 2, etc.
+let loanPageStartDocs = [null]; 
+
+
 /**
- * Switches the visible tab and updates its content by toggling the 'hidden' class.
- * @param {string} tabId The data-tab attribute of the target tab ('overview', 'expense-proportion', 'save-detail')
+ * Switches the visible tab and updates its content.
+ * @param {string} tabId The data-tab attribute of the target tab.
  */
 async function switchTab(tabId) {
-    // Hide all tab panes by adding the 'hidden' class
     document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.add('hidden');
     });
-
-    // Deactivate all menu buttons
     document.querySelectorAll('.dashboard-menu-item').forEach(button => {
-        button.classList.remove('active-tab-button'); 
+        button.classList.remove('active');
     });
 
-    // Show the target tab pane by removing the 'hidden' class
     const activePane = document.querySelector(`.tab-pane[data-tab='${tabId}']`);
-    if (activePane) {
-        activePane.classList.remove('hidden');
-    }
+    if (activePane) activePane.classList.remove('hidden');
 
-    // Activate the target menu button
     const activeButton = document.querySelector(`.dashboard-menu-item[data-tab='${tabId}']`);
-    if (activeButton) {
-        activeButton.classList.add('active-tab-button');
-    }
+    if (activeButton) activeButton.classList.add('active');
 
-    // Destroy the previous chart before loading new data to prevent conflicts
     if (currentChart) {
         currentChart.destroy();
         currentChart = null;
     }
 
-    // Load the data for the activated tab
     switch (tabId) {
         case 'overview':
             await renderSummaryChart();
@@ -48,7 +47,10 @@ async function switchTab(tabId) {
             await renderSavingsTable();
             break;
         case 'loan-detail':
-            await renderLoansTable();
+            // When switching to the loan tab, always reset and load the first page.
+            loanCurrentPage = 1;
+            loanPageStartDocs = [null];
+            await loadAndRenderLoans('first');
             break;
     }
 }
@@ -221,23 +223,48 @@ async function renderSavingsTable() {
     }
 }
 
-async function renderLoansTable() {
+/**
+ * Fetches and renders a specific page of the loans table.
+ * @param {'first' | 'next' | 'prev'} direction - The direction to paginate.
+ */
+async function loadAndRenderLoans(direction) {
+    const prevButton = document.getElementById('loan-prev-page');
+    const nextButton = document.getElementById('loan-next-page');
+
+    let startAfterDocId = null;
+
+    if (direction === 'next') {
+        loanCurrentPage++;
+        startAfterDocId = loanPageStartDocs[loanCurrentPage -1];
+    } else if (direction === 'prev') {
+        loanCurrentPage--;
+        startAfterDocId = loanPageStartDocs[loanCurrentPage-1];
+    } else { // 'first'
+        loanCurrentPage = 1;
+        loanPageStartDocs = [null];
+        startAfterDocId = null;
+    }
+
     try {
-        const response = await fetch(`/api/dashboard/loan`);
+        const url = `/api/dashboard/loan?pageSize=${LOAN_PAGE_SIZE}` + (startAfterDocId ? `&startAfter=${startAfterDocId}` : '');
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`API error: ${response.statusText}`);
-        const data = await response.json();
+        const result = await response.json();
+        const loans = result.data;
+        const lastDocId = result.last_doc_id;
 
         const tableBody = document.querySelector("#loan-table tbody");
         tableBody.innerHTML = ""; // Clear existing rows
 
-        data.forEach((item, index) => {
+        loans.forEach((item, index) => {
             const row = document.createElement("tr");
             row.className = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
             row.innerHTML = `
                 <td class="py-3 px-4 text-center">${item.borrowerName}</td>
-                <td class="py-3 px-4 text-left">${formatCurrency(item.principalAmount)}</td>
-                <td class="py-3 px-4 text-left">${item.term}</td>
-                <td class="py-3 px-4 text-center">${item.startDate}</td>
+                <td class="py-3 px-4 text-right">${formatCurrency(item.principalAmount)}</td>
+                <td class="py-3 px-4 text-right">${item.term}</td>                
+                <td class="py-3 px-4 text-center">${formatDate(item.startDate)}</td>
+                <td class="py-3 px-4 text-right">${formatCurrency(item.outstanding)}</td>
                 <td class="py-3 px-4 text-center"><button class="p-1 hover:bg-gray-200 rounded-full view-payments-btn" data-loan-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-hidden="false" focusable="false">
                     <title>View</title>
                     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
@@ -249,17 +276,28 @@ async function renderLoansTable() {
             tableBody.appendChild(row);
         });
 
-        // Add event listeners to the "Xem" buttons
+        // Set the start ID for the *next* page if it doesn't already exist
+        if (lastDocId && loanPageStartDocs.length <= loanCurrentPage) {
+            loanPageStartDocs.push(lastDocId);
+        }
+
+        // Update button states
+        prevButton.disabled = loanCurrentPage <= 1;
+        // Disable 'next' if we received fewer items than the page size, meaning we're on the last page.
+        nextButton.disabled = loans.length < LOAN_PAGE_SIZE;
+
+        // Add event listeners to the new "View" buttons
         document.querySelectorAll('.view-payments-btn').forEach(button => {
             button.addEventListener('click', () => {
-                const loanId = button.dataset.loanId;
-                openPaymentsModal(loanId);
+                openPaymentsModal(button.dataset.loanId);
             });
         });
 
     } catch (error) {
         console.error("Error rendering loan table:", error);
         showAlert('error', `Không thể tải bảng chi tiết khoản vay: ${error.message}`);
+        prevButton.disabled = true;
+        nextButton.disabled = true;
     }
 }
 
@@ -269,26 +307,24 @@ async function openPaymentsModal(loanId) {
         if (!response.ok) throw new Error(`API error: ${response.statusText}`);
         const payments = await response.json();
 
-        const modalPaymentHistory = document.getElementById("modal-payment-history");
-        modalPaymentHistory.innerHTML = ""; // Clear previous content
+        const paymentHistoryBody = document.getElementById("payment-history-table-body");
+        paymentHistoryBody.innerHTML = ""; // Clear previous content
 
         if (payments.length === 0) {
-            modalPaymentHistory.innerHTML = "<p>Không có lịch sử trả lãi cho khoản vay này.</p>";
+            paymentHistoryBody.innerHTML = "<tr><td colspan='4' class='text-center p-4'>Không có lịch sử trả lãi cho khoản vay này.</td></tr>";
         } else {
             payments.forEach(payment => {
-                const paymentDiv = document.createElement("div");
-                paymentDiv.className = "py-2 border-b";
-                paymentDiv.innerHTML = `
-                    <p><strong>Ngày trả:</strong> ${payment.paidDate}</p>
-                    <p><strong>Số tiền gốc:</strong> ${formatCurrency(payment.principalPaid)}</p>
-                    <p><strong>Số tiền lãi:</strong> ${formatCurrency(payment.interestPaid)}</p>
-                    <p><strong>Tổng số tiền phải trả:</strong> ${formatCurrency(payment.totalPaid)}</p>
-                `;                
-                modalPaymentHistory.appendChild(paymentDiv);
+                 const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b text-left">${formatDateToYMD(payment.paidDate)}</td>
+                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.principalPaid)}</td>
+                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.interestPaid)}</td>
+                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.totalPaid)}</td>
+                `;
+                paymentHistoryBody.appendChild(row);
             });
         }
 
-        // Show the modal
         const modal = document.getElementById("payments-modal");
         modal.classList.remove('hidden');
 
@@ -301,7 +337,6 @@ async function openPaymentsModal(loanId) {
 
 /**
  * Main function to initialize the home page.
- * Sets up filters, attaches event listeners ONCE, and loads the default tab.
  */
 export async function loadHomePage() {
     try {
@@ -321,7 +356,7 @@ export async function loadHomePage() {
         }
         monthSelect.innerHTML = monthOptions;
 
-        // --- Attach Event Listeners ONCE ---
+        // --- Attach Event Listeners ---
         const dashboardMenu = document.getElementById('dashboard-menu');
         if (!dashboardMenu.dataset.eventsAttached) {
             dashboardMenu.addEventListener('click', (e) => {
@@ -332,7 +367,7 @@ export async function loadHomePage() {
             });
             
             const handleFilterChange = () => {
-                const activeButton = document.querySelector('.dashboard-menu-item.active-tab-button');
+                const activeButton = document.querySelector('.dashboard-menu-item.active');
                 if (activeButton) {
                     switchTab(activeButton.dataset.tab);
                 }
@@ -340,19 +375,20 @@ export async function loadHomePage() {
 
             yearSelect.addEventListener('change', handleFilterChange);
             monthSelect.addEventListener('change', handleFilterChange);
+            
+            // Loan pagination listeners
+            document.getElementById('loan-prev-page').addEventListener('click', () => loadAndRenderLoans('prev'));
+            document.getElementById('loan-next-page').addEventListener('click', () => loadAndRenderLoans('next'));
 
-            dashboardMenu.dataset.eventsAttached = 'true'; // Mark as attached
+
+            dashboardMenu.dataset.eventsAttached = 'true';
         }
 
         // --- Modal Close --- 
         const modal = document.getElementById('payments-modal');
-        const closeButton = modal.querySelector(".modal-close");
-        const overlay = modal.querySelector(".modal-overlay");
-
-        const closeModal = () => modal.classList.add('hidden');
-
-        closeButton.addEventListener('click', closeModal);
-        overlay.addEventListener('click', closeModal);
+        modal.querySelectorAll('.modal-close, .modal-overlay, .modal-close-btn').forEach(el => {
+            el.addEventListener('click', () => modal.classList.add('hidden'));
+        });
 
         // --- Load Initial Tab ---
         await switchTab('overview');

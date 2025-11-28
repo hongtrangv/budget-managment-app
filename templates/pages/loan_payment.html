@@ -1,0 +1,45 @@
+<!-- /templates/pages/loan_payment.html -->
+<div class="container mx-auto p-6 bg-white shadow-lg rounded-lg">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Ghi nhận Trả Lãi/Gốc Khoản Vay</h1>
+
+    <form id="payment-form" class="space-y-6">
+        <!-- Loan Selection -->
+        <div>
+            <label for="loan-select" class="block text-sm font-medium text-gray-700 mb-1">Chọn khoản vay</label>
+            <select id="loan-select" name="loan_id" class="mt-1 block w-full input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Đang tải danh sách khoản vay...</option>
+            </select>
+        </div>
+
+        <!-- Payment Date -->
+        <div>
+            <label for="payment-date" class="block text-sm font-medium text-gray-700 mb-1">Ngày trả</label>
+            <input type="date" id="payment-date" name="payment_date" class="mt-1 block w-full input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500">
+        </div>
+
+        <!-- Principal Paid -->
+        <div>
+            <label for="principal-paid" class="block text-sm font-medium text-gray-700 mb-1">Số tiền gốc đã trả</label>
+            <input type="number" id="principal-paid" name="principal_paid" placeholder="Nhập số tiền gốc" class="mt-1 block w-full input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500" min="0" value="0">
+        </div>
+
+        <!-- Interest Paid -->
+        <div>
+            <label for="interest-paid" class="block text-sm font-medium text-gray-700 mb-1">Số tiền lãi đã trả</label>
+            <input type="number" id="interest-paid" name="interest_paid" placeholder="Nhập số tiền lãi" class="mt-1 block w-full input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500" min="0"  value="0">
+        </div>
+        
+        <!-- Total Amount (Read-only) -->
+        <div>
+            <label for="total-amount" class="block text-sm font-medium text-gray-700 mb-1">Tổng cộng</label>
+            <input type="text" id="total-amount" name="total_amount" class="mt-1 block w-full bg-gray-100 border border-gray-300 rounded-md py-2 px-3" readonly>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end">
+            <button type="submit" id="submit-payment-btn" class="button-common button-success">
+                Ghi nhận
+            </button>
+        </div>
+    </form>
+</div>

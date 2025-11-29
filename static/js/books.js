@@ -181,10 +181,8 @@ let areListenersInitialized = false;
 function setupGlobalEventListeners() {
     if (areListenersInitialized) return;
 
-    // *** FIX: Use a more generic selector for all close buttons ***
     document.querySelectorAll('.modal-close-btn, .modal-close-btn-add').forEach(btn => {
         btn.onclick = (e) => {
-            // Find the closest parent modal and hide it by its ID
             const modal = e.target.closest('.book-modal');
             if (modal) {
                 hideModal(modal.id);
@@ -192,7 +190,6 @@ function setupGlobalEventListeners() {
         };
     });
 
-    // Hide modal if clicking on the backdrop
     window.addEventListener('click', function(event) {
         if (event.target.classList.contains('book-modal')) {
             hideModal(event.target.id);
@@ -201,11 +198,7 @@ function setupGlobalEventListeners() {
 
     document.getElementById('add-book-form').addEventListener('submit', handleFormSubmit);
 
-    document.getElementById('add-book-anywhere-btn').addEventListener('click', () => {
-        // Reset location for a generic add
-        showAddBookModal(0, 0, 0);
-        document.getElementById('form-location-text').textContent = 'Vị trí bất kỳ';
-    });
+    // The event listener for the now-removed button is also removed.
 
     areListenersInitialized = true;
 }

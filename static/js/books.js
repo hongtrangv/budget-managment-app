@@ -4,6 +4,17 @@
 let currentLibraryData = { layout: [], books: [] };
 
 /**
+ * NEW: Updates the statistics in the header.
+ */
+function updateStats() {
+    const totalBooksCountEl = document.getElementById('total-books-count');
+    if (totalBooksCountEl) {
+        // Update the text content with the number of books
+        totalBooksCountEl.textContent = currentLibraryData.books.length;
+    }
+}
+
+/**
  * Creates a single book element.
  */
 function createBookElement(bookData, unitType) {
@@ -77,6 +88,9 @@ function renderBookshelf() {
         });
         libraryContainer.appendChild(rowEl);
     });
+    
+    // After rendering, update the stats
+    updateStats();
 }
 
 /**
@@ -97,7 +111,7 @@ export async function loadAndRenderLibrary() {
         currentLibraryData.layout = await layoutResponse.json();
         currentLibraryData.books = await booksResponse.json();
 
-        renderBookshelf();
+        renderBookshelf(); // This will now also call updateStats()
         setupGlobalEventListeners();
 
     } catch (error) {
@@ -133,7 +147,7 @@ async function handleFormSubmit(event) {
         const newBook = await response.json();
         
         currentLibraryData.books.push(newBook);
-        renderBookshelf();
+        renderBookshelf(); // Re-render the shelf, which also updates stats
         hideModal('add-book-modal');
 
     } catch (error) {
@@ -198,7 +212,8 @@ function setupGlobalEventListeners() {
 
     document.getElementById('add-book-form').addEventListener('submit', handleFormSubmit);
 
-    // The event listener for the now-removed button is also removed.
-
     areListenersInitialized = true;
 }
+
+// Initialize the library rendering when the script is loaded
+loadAndRenderLibrary();

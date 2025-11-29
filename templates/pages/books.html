@@ -1,0 +1,82 @@
+
+<!-- Link to the specific CSS for this page -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/books.css') }}">
+
+<div class="library-header">
+    <h1 class="library-title">Thư Viện Sách</h1>
+    <p class="library-subtitle">Nơi lưu giữ tri thức và những câu chuyện</p>
+    <button id="add-book-anywhere-btn" class="btn-add-book">+ Thêm Sách</button> 
+</div>
+
+<!-- The main container where the bookshelf units will be rendered by JavaScript -->
+<main id="library-container" class="library-container"></main>
+
+<!-- Modal for displaying book details (hidden by default) -->
+<div id="book-info-modal" class="book-modal">
+    <div class="modal-content-info">
+        <button class="modal-close-btn">&times;</button>
+        <div class="modal-body">
+            <img id="modal-book-cover" src="" alt="Book Cover" class="modal-book-cover">
+            <div class="modal-book-info">
+                <h2 id="modal-book-title" class="modal-book-title"></h2>
+                <p id="modal-book-author" class="modal-book-author"></p>
+                <p id="modal-book-description" class="modal-book-description"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding a New Book (hidden by default) -->
+<div id="add-book-modal" class="book-modal">
+    <div class="modal-content-add">
+        <!-- Modal Header -->
+        <div class="modal-header-add">
+            <div>
+                <h3 class="modal-title-add">Thêm Sách Mới</h3>
+                <p class="modal-subtitle-add">Thêm vào vị trí: <strong id="form-location-text"></strong></p>
+            </div>
+            <button type="button" class="modal-close-btn-add">&times;</button>
+        </div>
+
+        <!-- Modal Body - Form -->
+        <form id="add-book-form" class="modal-form-add">
+            <!-- Hidden fields -->
+            <input type="hidden" id="form-row-index" name="rowIndex">
+            <input type="hidden" id="form-unit-index" name="unitIndex">
+            <input type="hidden" id="form-comp-index" name="compIndex">
+
+            <!-- Form Group -->
+            <div class="form-group-add">
+                <label for="book-title" class="form-label-add">Tiêu đề</label>
+                <input type="text" id="book-title" name="title" required class="form-input-add">
+            </div>
+
+            <!-- Form Group -->
+            <div class="form-group-add">
+                <label for="book-author" class="form-label-add">Tác giả</label>
+                <input type="text" id="book-author" name="author" required class="form-input-add">
+            </div>
+
+            <!-- Form Group -->
+            <div class="form-group-add">
+                <label for="book-description" class="form-label-add">Mô tả</label>
+                <textarea id="book-description" name="description" rows="3" class="form-input-add"></textarea>
+            </div>
+
+            <!-- Form Group -->
+            <div class="form-group-add">
+                <label for="book-cover" class="form-label-add">URL Ảnh bìa</label>
+                <input type="url" id="book-cover" name="coverImage" class="form-input-add" placeholder="https://example.com/image.jpg">
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="modal-footer-add">
+                <button type="submit" class="form-submit-btn-add">Lưu Sách</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Link to the specific JavaScript for this page -->
+<script type="module" src="{{ url_for('static', filename='js/books.js') }}"></script>

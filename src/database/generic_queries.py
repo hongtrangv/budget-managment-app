@@ -1,17 +1,17 @@
 from flask import jsonify, request
 from .firebase_config import db
+import traceback
 
 class CRUDApi:
     """
-    Một lớp generic để xử lý các thao tác CRUD (Create, Read, Update, Delete)
-    cho bất kỳ collection nào trong Firestore.
+    A generic class to handle CRUD (Create, Read, Update, Delete) operations
+    for any collection in Firestore.
     """
     def __init__(self, collection_name):
-        """Khởi tạo với tên của collection."""
         self.collection = db.collection(collection_name)
 
     def get_all(self):
-        """Lấy tất cả các tài liệu từ collection."""
+        """Fetches all documents from the collection."""
         try:
             docs = self.collection.stream()
             all_docs = [{**doc.to_dict(), 'id': doc.id} for doc in docs]
@@ -20,34 +20,45 @@ class CRUDApi:
             return jsonify({"error": str(e)}), 500
 
     def create(self):
-        """Tạo một tài liệu mới dựa trên dữ liệu JSON từ request."""
+        """
+        Creates a new document from request JSON, and returns the document
+        augmented with its new ID.
+        """
         try:
             data = request.get_json()
             if not data:
-                return jsonify({"error": "Dữ liệu không hợp lệ"}), 400
+                return jsonify({"error": "Invalid data"}), 400
             
-            # Thêm tài liệu mới, Firestore sẽ tự động tạo ID
+            # Add the new document. The call to add() blocks until the write is complete.
             update_time, doc_ref = self.collection.add(data)
-            return jsonify({"success": True, "id": doc_ref.id}), 201
+            
+            # Instead of re-fetching, augment the original data with the new ID.
+            # This is more efficient and avoids potential race conditions.
+            data['id'] = doc_ref.id 
+            return jsonify(data), 201 # 201 Created
+
         except Exception as e:
+            # Log the full error to the server terminal for debugging
+            print(f"ERROR in CRUDApi.create: {e}")
+            traceback.print_exc() # Prints the full stack trace
             return jsonify({"error": str(e)}), 500
 
     def get_one(self, doc_id):
-        """Lấy một tài liệu cụ thể bằng ID."""
+        """Fetches a specific document by its ID."""
         try:
             doc = self.collection.document(doc_id).get()
             if not doc.exists:
-                return jsonify({"error": "Tài liệu không tồn tại"}), 404
+                return jsonify({"error": "Document not found"}), 404
             return jsonify({**doc.to_dict(), 'id': doc.id}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
     def update(self, doc_id):
-        """Cập nhật một tài liệu đã có bằng ID."""
+        """Updates an existing document by its ID."""
         try:
             data = request.get_json()
             if not data:
-                return jsonify({"error": "Dữ liệu không hợp lệ"}), 400
+                return jsonify({"error": "Invalid data"}), 400
             
             doc_ref = self.collection.document(doc_id)
             doc_ref.update(data)
@@ -56,9 +67,9 @@ class CRUDApi:
             return jsonify({"error": str(e)}), 500
 
     def delete(self, doc_id):
-        """Xóa một tài liệu bằng ID."""
+        """Deletes a document by its ID."""
         try:
             self.collection.document(doc_id).delete()
-            return jsonify({"success": True}), 200
+            return jsonify({"success": True}), 200 # Often returns 204 No Content
         except Exception as e:
             return jsonify({"error": str(e)}), 500

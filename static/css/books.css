@@ -11,30 +11,81 @@
 .library-title { font-size: 2.5rem; font-weight: 700; color: #343a40; }
 .library-subtitle { font-size: 1.1rem; color: #6c757d; margin-top: 0.5rem; }
 
-.btn-add-book {
+/* === NEW: Statistics Section in Header === */
+.library-stats {
     margin-top: 1.5rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    background-color: #86efac;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
 }
-.btn-add-book:hover { background-color: #86efac; }
 
-/* === Bookshelf Layout === */
+.stat-item {
+    background-color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #4f46e5; /* Indigo color to match buttons */
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+
+/* === BOOKSHELF LAYOUT (Light Wood Grain) === */
 .library-container { display: flex; flex-direction: column; gap: 2.5rem; padding: 1.5rem; }
 .library-row { display: flex; gap: 2.5rem; align-items: stretch; }
-.unit { display: flex; background: linear-gradient(to right, #C9A87C, #B89362 30%, #A8814B 50%, #B89362 70%, #C9A87C 100%); border: 8px solid #85623C; border-radius: 10px; padding: 10px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5); }
+
+/* Light Wood Style */
+.unit {
+    display: flex;
+    /* A lighter, warmer wood grain effect */
+    background: linear-gradient(to right, #D9B88C, #C8A372 30%, #B8915B 50%, #C8A372 70%, #D9B88C 100%);
+    border: 8px solid #95724C; /* A lighter brown for the frame */
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* A slightly softer shadow */
+}
+
 .unit-vertical { flex-direction: column-reverse; min-width: 200px; }
-.unit-vertical .compartment { display: flex; align-items: flex-end; gap: 10px; padding: 0 10px; border-bottom: 12px solid #85623C; height: 180px; cursor: pointer; }
+.unit-vertical .compartment {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 0 10px;
+    border-bottom: 12px solid #95724C; /* Matching lighter wood shelf color */
+    height: 180px;
+    cursor: pointer;
+}
 .unit-vertical .compartment:first-child { border-bottom: none; }
+
 .unit-horizontal { flex-direction: row; }
-.unit-horizontal .compartment { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 5px; padding: 5px; border-right: 12px solid #85623C; flex: 1; min-height: 180px; cursor: pointer; }
+.unit-horizontal .compartment {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border-right: 12px solid #95724C; /* Matching lighter wood divider color */
+    flex: 1;
+    min-height: 180px;
+    cursor: pointer;
+}
 .unit-horizontal .compartment:last-child { border-right: none; }
+
 
 /* === Book Styling === */
 .book { cursor: pointer; transition: transform 0.2s ease-out, filter 0.2s ease-out; box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2); color: white; font-size: 10px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -49,33 +100,25 @@
 /* === ADD BOOK MODAL (Modern, Self-Contained) === */
 .modal-content-add { background-color: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease; }
 .book-modal.show .modal-content-add { transform: scale(1); }
-
 .modal-header-add { display: flex; justify-content: space-between; align-items: flex-start; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
 .modal-title-add { font-size: 1.25rem; font-weight: 600; color: #111827; margin: 0; }
 .modal-subtitle-add { font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0; }
-
 .modal-close-btn-add { font-size: 1.5rem; font-weight: bold; color: #9ca3af; background: none; border: none; cursor: pointer; line-height: 1; padding: 0.5rem; margin: -0.5rem; }
 .modal-close-btn-add:hover { color: #111827; }
-
 .modal-form-add { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
 .form-group-add { display: flex; flex-direction: column; }
 .form-label-add { margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
-
 .form-input-add { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
 .form-input-add:focus { border-color: #4f46e5; outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
-
 .modal-footer-add { padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; text-align: right; }
-
 .form-submit-btn-add { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 600; color: #fff; background-color: #4f46e5; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; }
 .form-submit-btn-add:hover { background-color: #4338ca; }
 
 /* === INFO BOOK MODAL (Original) === */
 .modal-content-info { background-color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-width: 600px; width: 90%; position: relative; transform: scale(0.95); transition: transform 0.3s ease; }
 .book-modal.show .modal-content-info { transform: scale(1); }
-
 .modal-close-btn { position: absolute; top: 10px; right: 15px; font-size: 2rem; font-weight: bold; color: #aaa; background: none; border: none; cursor: pointer; }
 .modal-close-btn:hover { color: #333; }
-
 .modal-body { display: flex; gap: 20px; }
 .modal-book-cover { width: 150px; height: auto; object-fit: cover; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .modal-book-info { flex: 1; }

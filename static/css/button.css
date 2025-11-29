@@ -1,122 +1,104 @@
+
+/* ========================================================================
+   COMPONENT: BUTTONS
+======================================================================== */
+
+/* Base button style */
 .btn {
     display: inline-flex;
-    align-items: center;
     justify-content: center;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
+    align-items: center;
+    padding: 0.625rem 1.25rem; /* ~py-2.5 px-5 */
+    border-radius: 0.5rem; /* rounded-lg */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600; /* font-semibold */
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
     user-select: none;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
 }
-.btn:disabled {
+
+/* Primary (Green) button style */
+.btn-primary {
+    color: #ffffff; /* text-white */
+    background-color: #16a34a; /* bg-green-600 */
+    border-color: #16a34a;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+}
+
+.btn-primary:hover {
+    background-color: #15803d; /* hover:bg-green-700 */
+    border-color: #15803d;
+}
+
+.btn-primary:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.4); /* focus:ring-4 focus:ring-green-300 */
+}
+
+.btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
-.btn-outline {
-    background: transparent;
-    color: #2563eb;
-    border: 2px solid #2563eb;
+
+/* Secondary (Gray) button style */
+.btn-secondary {
+    color: #374151; /* text-gray-700 */
+    background-color: #f3f4f6; /* bg-gray-100 */
+    border-color: #d1d5db; /* border-gray-300 */
 }
-.btn-outline:hover {
-    background: #2563eb;
-    color: white;
+
+.btn-secondary:hover {
+    background-color: #e5e7eb; /* hover:bg-gray-200 */
+    border-color: #9ca3af;
 }
-.btn-primary {
-    background: #2563eb;       /* xanh */
-    color: white;
+
+.btn-secondary:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(209, 213, 219, 0.5); 
 }
-.btn-primary:hover {
-    background: #1e4fcf;
-}
-.btn-primary:active {
-    transform: scale(0.96);
-}
+
+/* Danger (Red) button style */
 .btn-danger {
-    background: #dc2626;
-    color: white;
+    color: #ffffff; /* text-white */
+    background-color: #dc2626; /* bg-red-600 */
+    border-color: #dc2626;
 }
+
 .btn-danger:hover {
-    background: #b91c1c;
-}
-.btn-danger:active {
-    transform: scale(0.96);
-}
-.btn-ghost {
-    background: transparent;
-    color: #374151;
-}
-.btn-ghost:hover {
-    background: rgba(0,0,0,0.05);
-}
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 12px;
+    background-color: #b91c1c; /* hover:bg-red-700 */
+    border-color: #b91c1c;
 }
 
-.btn-lg {
-    padding: 12px 24px;
-    font-size: 16px;
+.btn-danger:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.4); /* focus:ring-4 focus:ring-red-300 */
 }
-/* CSS cho button */
+
+
+/* Save Button Modifier (Icon) */
 .btn-save {
-    padding: 0.5rem 1rem;          /* px-4 py-2 */
-    background-color: #22c55e;     /* bg-green-500 */
-    color: #fff;                   /* text-white */
-    font-size: 1rem;               /* text-base */
-    font-weight: 500;              /* font-medium */
-    border-radius: 0.375rem;       /* rounded-md */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);  /* shadow-sm */
-    outline: none;                 /* focus:outline-none */
-    border: none;
-    cursor: pointer;
+    position: relative;
+    padding-left: 2.75rem;
 }
 
-/* Hover */
-.btn-save:hover {
-    background-color: #15803d;     /* hover:bg-green-700 */
+.btn-save::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.25rem;
+    width: 1.25rem;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 448 512' fill='currentColor' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M433.941 129.941l-83.882-83.882A48 48 0 00316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V163.882a48 48 0 00-14.059-33.941zM224 416c-35.346 0-64-28.654-64-64s28.654-64 64-64 64 28.654 64 64-28.654 64-64 64zm96-304.52V212c0 6.627-5.373 12-12 12H76c-6.627 0-12-5.373-12-12V108c0-6.627 5.373-12 12-12h228.52c3.183 0 6.235 1.264 8.485 3.515l3.48 3.48A11.996 11.996 0 01320 111.48z'%3E%3C/path%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 448 512' fill='currentColor' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M433.941 129.941l-83.882-83.882A48 48 0 00316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V163.882a48 48 0 00-14.059-33.941zM224 416c-35.346 0-64-28.654-64-64s28.654-64 64-64 64 28.654 64 64-28.654 64-64 64zm96-304.52V212c0 6.627-5.373 12-12 12H76c-6.627 0-12-5.373-12-12V108c0-6.627 5.373-12 12-12h228.52c3.183 0 6.235 1.264 8.485 3.515l3.48 3.48A11.996 11.996 0 01320 111.48z'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
 }
-
-/* Focus */
-.btn-save:focus {
-    box-shadow: 0 0 0 2px #86efac; /* focus:ring-2 + focus:ring-green-300 */
-}
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px; /* khoảng cách giữa icon và text */
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    user-select: none;
-}
-
-.btn .btn-icon {
-    display: inline-flex;
-    width: 18px;
-    height: 18px;
-    align-items: center;
-    justify-content: center;
-}
-.btn-icon-only {
-    padding: 8px;
-    width: 36px;
-    height: 36px;
-}
-.btn-sm .btn-icon svg {
-    width: 14px;
-    height: 14px;
-}
-
-.btn-lg .btn-icon svg {
-    width: 20px;
-    height: 20px;
-}
-

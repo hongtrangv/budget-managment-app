@@ -364,6 +364,21 @@ class Dashboard:
 
 class Loan:
     @staticmethod
+    def get_all_loans():
+        """Fetches all documents from the 'Loan' collection."""
+        try:
+            docs = db.collection('Loan').stream()
+            results = []
+            for doc in docs:
+                doc_data = doc.to_dict()
+                doc_data['id'] = doc.id
+                results.append(doc_data)
+            return results
+        except Exception as e:
+            print(f"Error getting all loans: {e}")
+            return [] # Return empty list on error
+
+    @staticmethod
     def get_list_loan(page_size=5, start_after_doc_id=None):
         """Fetches a paginated list of loans."""
         try:
@@ -376,8 +391,8 @@ class Loan:
                     # Handle case where the cursor document might have been deleted
                     return {'data': [], 'last_doc_id': None}
                 query = query.start_after(start_after_doc)
-
-            query = query.limit(page_size)
+            if page_size > 0 :
+                query = query.limit(page_size)
             docs_snapshot = query.stream()
 
             results = []
@@ -463,9 +478,13 @@ class BookStore:
     @staticmethod
     def get_all_books():
         try:
-            tree = defaultdict(list)
-            book_docs = db.collection('Books').stream()           
-            return dict(book_docs)
+            docs = db.collection('Books').stream()
+            results = []
+            for doc in docs:
+                doc_data = doc.to_dict()
+                doc_data['id'] = doc.id
+                results.append(doc_data)
+            return results
         except Exception as e:
-            print(f"Error getting management data tree: {e}")
-            return {}
+            print(f"Error getting all books: {e}")
+            return []

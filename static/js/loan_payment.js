@@ -6,7 +6,7 @@ import { showAlert, formatCurrency,formatDateToYMD } from './utils.js';
  */
 async function fetchLoans() {
     try {
-        const response = await fetch('/api/dashboard/loan');
+        const response = await fetch('/api/loans/all');
         if (!response.ok) {
             throw new Error('Could not fetch loans.');
         }

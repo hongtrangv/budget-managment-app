@@ -93,7 +93,7 @@ function renderNewItemForm(tabId) {
                 </div>
             </div>
             <div class="form-actions mt-6 text-right">
-                 <button type="submit" class="btn-save">Lưu mới</button>
+                 <button type="submit" class="btn btn-primary btn-save">Lưu mới</button>
             </div>
         </form>`;
 }
@@ -227,7 +227,7 @@ async function loadMonthData(year, month, monthElement) {
         });
         tabBarHtml += `
                     <div class="flex-shrink-0 p-2 border-r border-gray-200">
-                        <button class="flex items-center justify-center w-full h-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" data-tab-id="${newTabId}">
+                        <button class="btn btn-primary" data-tab-id="${newTabId}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>

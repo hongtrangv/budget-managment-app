@@ -458,3 +458,14 @@ class Loan:
         except Exception as e:
             print(f"Error during add_payment transaction for loan {loan_id}: {e}")
             raise  # Re-raise the exception to ensure the transaction is rolled back
+
+class BookStore:
+    @staticmethod
+    def get_all_books():
+        try:
+            tree = defaultdict(list)
+            book_docs = db.collection('Books').stream()           
+            return dict(book_docs)
+        except Exception as e:
+            print(f"Error getting management data tree: {e}")
+            return {}

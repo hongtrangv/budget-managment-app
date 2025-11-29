@@ -3,6 +3,7 @@ import { loadCategoryPage } from './collections.js'; // Fix: Use the new functio
 import { loadManagementPage } from './management.js';
 import { loadLoanPaymentPage } from './loan_payment.js';
 import { initializeChatbotWidget } from './chatbot.js';
+import { loadAndRenderLibrary } from './books.js';
 import { showAlert } from './utils.js';
 
 const content = document.getElementById('content');
@@ -13,6 +14,7 @@ const routes = {
     '/collections': { page: '/pages/collections.html', loader: loadCategoryPage }, // Fix: Use the new function name
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
+    '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary }
 };
 
 function attachGlobalEventListeners() {

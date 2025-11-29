@@ -10,6 +10,7 @@ from src.api.management_api import management_bp
 from src.api.dashboard_api import report_bp
 from src.api.chatbot_api import chatbot_bp
 from src.api.loan_api import loan_bp
+from src.api.books_api import books_bp
 
 app = Flask(__name__,
             template_folder='templates',
@@ -31,6 +32,7 @@ app.register_blueprint(management_bp)
 app.register_blueprint(report_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(loan_bp)
+app.register_blueprint(books_bp)
 
 
 # === VIEW ROUTES ===
@@ -40,6 +42,7 @@ app.register_blueprint(loan_bp)
 @app.route('/collections')
 @app.route('/management')
 @app.route('/loan-payment') # Add this route for the new page
+@app.route('/bookstore')
 def index():
     """Serves the main index.html file, which is the entry point for the SPA."""
     return render_template('index.html')

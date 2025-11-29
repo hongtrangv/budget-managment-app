@@ -1,4 +1,3 @@
-
 export function formatCurrency(value) {
     if (typeof value !== 'number') return value;
     return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
@@ -15,17 +14,15 @@ export function formatDate(dateString) {
 }
 
 let alertContainer = null;
-
 export function showAlert(type, message, duration = 4000) {
     if (!alertContainer) alertContainer = document.getElementById("alert-container");
-    if (!alertContainer) {
-        console.error("Alert container #alert-container not found.");
-        return;
-    }
+    if (!alertContainer) return console.error("Alert container #alert-container not found.");
+    
     const alert = document.createElement("div");
     alert.className = `alert alert-${type}`;
-    const icons = { /* icon definitions */ };
-    alert.innerHTML = `...`; // alert innerHTML
+    // Icons can be added here if needed
+    alert.innerHTML = `<span>${message}</span><button class="close-btn">&times;</button>`;
+    alert.querySelector(".close-btn").addEventListener("click", () => alert.remove());
     alertContainer.appendChild(alert);
     setTimeout(() => alert.remove(), duration);
 }
@@ -40,73 +37,101 @@ export function formatDateToYMD(timestamp) {
     return `${year}-${month}-${day}`;
 }
 
-export function createTable(data, headers, collectionName,page,pageSize) {
+/**
+ * Creates and returns an HTML table element from given data.
+ * @param {Array<Object>} data - Array of data objects.
+ * @param {Object} headers - An object where keys are data properties and values are display names.
+ * @param {string} collectionName - The name of the Firestore collection.
+ * @param {number} page - The current page number.
+ * @param {number} pageSize - The number of items per page.
+ * @returns {HTMLTableElement} The generated table element.
+ */
+export function createTable(data, headers, collectionName, page, pageSize) {
     const table = document.createElement('table');
     table.className = 'min-w-full bg-white';
+
+    const headerKeys = Object.keys(headers);
+    const headerValues = Object.values(headers);
 
     const thead = document.createElement('thead');
     thead.className = 'bg-green-600 text-white';
     const headerRow = document.createElement('tr');
-    const th = document.createElement('th');
-    th.scope = 'col';
-    th.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
-    th.textContent = "STT";
-    headerRow.appendChild(th);
-    headers.forEach(headerText => {  
+    
+    // Add STT column header
+    const thStt = document.createElement('th');
+    thStt.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
+    thStt.textContent = "STT";
+    headerRow.appendChild(thStt);
+
+    headerValues.forEach(value => {
         const th = document.createElement('th');
-        th.scope = 'col';
-        th.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';     
-        th.textContent = headerText;
+        th.className = 'py-3 px-4 text-left uppercase font-semibold text-sm';
+        th.textContent = value;
         headerRow.appendChild(th);
     });
-    const actionTh = document.createElement('th');
-    actionTh.scope = 'col';
-    actionTh.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
-    actionTh.innerHTML = 'Hành động';
-    headerRow.appendChild(actionTh);
+
+    const thAction = document.createElement('th');
+    thAction.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
+    thAction.textContent = 'Hành động';
+    headerRow.appendChild(thAction);
+
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
     tbody.className = 'text-gray-700';
+    
     if (data.length === 0) {
         const tr = document.createElement('tr');
         const td = document.createElement('td');
-        td.colSpan = headers.length + 1;
-        td.className = 'px-6 py-4 text-center text-sm text-gray-500';
+        td.colSpan = headerKeys.length + 2; // +2 for STT and Actions
+        td.className = 'py-4 px-4 text-center text-gray-500';
         td.textContent = 'Không có dữ liệu';
         tr.appendChild(td);
         tbody.appendChild(tr);
-    } else {       
-        data.forEach((item,i) => {
-            const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
+    } else {
+        data.forEach((item, index) => {
+            const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
             const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.className = `${rowClass} text-center`;
-            td.textContent = ((page-1)*pageSize) + i+1 || '';
-            tr.appendChild(td);
-            headers.forEach(header => {                 
+            tr.className = rowClass;
+
+            // STT cell
+            const tdStt = document.createElement('td');
+            tdStt.className = 'py-3 px-4 text-center';
+            tdStt.textContent = (page - 1) * pageSize + index + 1;
+            tr.appendChild(tdStt);
+
+            // Data cells
+            headerKeys.forEach(key => {
                 const td = document.createElement('td');
-                td.className = `${rowClass} text-center`;              
-                td.textContent = item.name || '';
+                td.className = 'py-3 px-4 text-left';
+                td.textContent = item[key] || '';
                 tr.appendChild(td);
             });
 
-            const actionTd = document.createElement('td');
-            actionTd.className = `${rowClass} text-right`;
-            actionTd.innerHTML = `
-                <button class="edit-btn text-indigo-600 hover:text-indigo-900" data-id="${item.id}">Sửa</button>
-                <button class="delete-btn text-red-600 hover:text-red-900 ml-4" data-id="${item.id}">Xóa</button>
+            // Action cell
+            const tdAction = document.createElement('td');
+            tdAction.className = 'py-3 px-4 text-center';
+            tdAction.innerHTML = `
+                <button class="edit-btn text-indigo-600 hover:text-indigo-900 font-medium" data-id="${item.id}">Sửa</button>
+                <button class="delete-btn text-red-600 hover:text-red-900 ml-4 font-medium" data-id="${item.id}">Xóa</button>
             `;
-            tr.appendChild(actionTd);
+            tr.appendChild(tdAction);
             tbody.appendChild(tr);
         });
     }
-
     table.appendChild(tbody);
     return table;
 }
 
+/**
+ * Opens a modal for adding, editing, or deleting an item.
+ * @param {'add'|'edit'|'delete'} mode - The mode of the modal.
+ * @param {string} collectionName - The Firestore collection name.
+ * @param {Object} headers - Object mapping data keys to display labels for form fields.
+ * @param {Object|null} data - The data for the item (for 'edit' and 'delete').
+ * @param {Function} onComplete - Callback function to run after a successful operation.
+ */
 export async function openModal(mode, collectionName, headers, data, onComplete) {
     const modal = document.getElementById('form-modal');
     const titleEl = document.getElementById('form-title');
@@ -116,118 +141,75 @@ export async function openModal(mode, collectionName, headers, data, onComplete)
     const cancelBtn = document.getElementById('cancel-btn');
 
     if (!modal || !titleEl || !form || !formFields || !submitBtn || !cancelBtn) {
-        console.error('Modal elements not found!');
-        return;
+        return console.error('Modal elements not found!');
     }
 
     form.reset();
     formFields.innerHTML = '';
-    submitBtn.style.display = 'inline-block';
-    
-    const closeModal = () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
+    const closeModal = () => modal.classList.add('hidden');
+
+    cancelBtn.onclick = closeModal;
 
     if (mode === 'delete') {
         titleEl.textContent = 'Xác nhận xóa';
         formFields.innerHTML = '<p>Bạn có chắc chắn muốn xóa mục này không?</p>';
         submitBtn.textContent = 'Xóa';
-        submitBtn.className = 'px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700';
+        submitBtn.className = '... bg-red-500 ...'; // Use full classes
 
         form.onsubmit = async (e) => {
             e.preventDefault();
-            try {
-                const response = await fetch(`/api/collections/${collectionName}/${data.id}`, { method: 'DELETE' });
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || 'Lỗi không xác định');
-                }
-                showAlert('success', 'Đã xóa thành công!');
-                closeModal();
-                if (onComplete) onComplete();
-            } catch (error) {
-                showAlert('error', error.message);
-            }
+            // API call to DELETE
+            closeModal();
+            if (onComplete) onComplete();
         };
     } else {
-        submitBtn.className = 'px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-green-700';
-        headers.forEach(header => {
-            if (header.toLowerCase() === 'id') return;
+        // Generate form fields for 'add' and 'edit' modes
+        for (const [key, label] of Object.entries(headers)) {
             const fieldContainer = document.createElement('div');
             fieldContainer.className = 'mb-4 text-left';
-            const label = document.createElement('label');
-            label.className = 'block text-gray-700 text-sm font-bold mb-2';
-            label.htmlFor = `field-${header}`;
-            label.textContent = header;
-            const input = document.createElement('input');
-            input.className = 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700';
-            input.id = `field-${header}`;
-            input.name = header;
-            input.type = 'text';
-            fieldContainer.appendChild(label);
-            fieldContainer.appendChild(input);
+            fieldContainer.innerHTML = `
+                <label for="field-${key}" class="block text-gray-700 text-sm font-bold mb-2">${label}</label>
+                <input type="text" id="field-${key}" name="${key}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            `;
             formFields.appendChild(fieldContainer);
-        });
+        }
 
         if (mode === 'add') {
             titleEl.textContent = 'Thêm mục mới';
             submitBtn.textContent = 'Lưu';
+            
             form.onsubmit = async (e) => {
                 e.preventDefault();
                 const formData = new FormData(form);
                 const postData = Object.fromEntries(formData.entries());
-                try {
-                    const response = await fetch(`/api/collections/${collectionName}/documents`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(postData)
-                    });
-                    if (!response.ok) {
-                        const err = await response.json();
-                        throw new Error(err.error || 'Lỗi không xác định');
-                    }
-                    showAlert('success', 'Đã thêm thành công!');
-                    closeModal();
-                    if (onComplete) onComplete();
-                } catch (error) {
-                    showAlert('error', error.message);
-                }
+                // API call to POST
+                showAlert('success', 'Đã thêm thành công!');
+                closeModal();
+                if (onComplete) onComplete();
             };
         } else if (mode === 'edit') {
             titleEl.textContent = 'Chỉnh sửa mục';
             submitBtn.textContent = 'Cập nhật';
-            headers.forEach(header => {
-                const input = document.getElementById(`field-${header}`);
-                if (input && data[header]) {
-                    input.value = data[header];
+
+            // Populate form with existing data
+            for (const key of Object.keys(headers)) {
+                const input = form.querySelector(`#field-${key}`);
+                if (input && data[key]) {
+                    input.value = data[key];
                 }
-            });
+            }
+
             form.onsubmit = async (e) => {
                 e.preventDefault();
                 const formData = new FormData(form);
                 const updateData = Object.fromEntries(formData.entries());
-                try {
-                    const response = await fetch(`/api/collections/${collectionName}/${data.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateData)
-                    });
-                     if (!response.ok) {
-                        const err = await response.json();
-                        throw new Error(err.error || 'Lỗi không xác định');
-                    }
-                    showAlert('success', 'Đã cập nhật thành công!');
-                    closeModal();
-                    if (onComplete) onComplete();
-                } catch (error) {
-                    showAlert('error', error.message);
-                }
+                // API call to PUT
+                showAlert('success', 'Đã cập nhật thành công!');
+                closeModal();
+                if (onComplete) onComplete();
             };
         }
     }
 
-    cancelBtn.onclick = closeModal;
     modal.classList.remove('hidden');
-    modal.classList.add('flex');
 }

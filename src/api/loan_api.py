@@ -8,13 +8,26 @@ from datetime import datetime
 # Create a Blueprint for the loan APIs
 loan_bp = Blueprint('loan_api', __name__)
 
+@loan_bp.route("/api/loans/all")
+def get_all_loans():
+    """Fetches all loans without pagination."""
+    try:
+        all_loans = Loan.get_all_loans()
+        return jsonify(all_loans)
+    except Exception as e:
+        print(f"Error getting all loans: {e}")
+        return jsonify({"error": "Failed to get all loans"}), 500
+
 @loan_bp.route("/api/dashboard/loan")
 def get_list_loan():
     """Fetches a paginated list of loans."""
     try:
         page_size = request.args.get('pageSize', default=5, type=int)
+        # VALIDATION: Ensure page_size is a positive integer
+        if page_size <= 0:
+            return jsonify({"error": "pageSize must be a positive integer"}), 400
+
         start_after = request.args.get('startAfter', default=None, type=str)
-        
         result = Loan.get_list_loan(page_size=page_size, start_after_doc_id=start_after)
         return jsonify(result)
     except Exception as e:

@@ -92,7 +92,7 @@ body {
 }
 
 .dashboard-menu-item {
-    background: #f8f9fb;
+    background: white;
     border: 1px solid #e4e7ec;
     color: #374151;
     border-radius: 12px;
@@ -101,14 +101,14 @@ body {
 }
 
 .dashboard-menu-item:hover {
-    background: #eef2ff;
+    background: #F3F4F6;
     border-color: #c7d2fe;
     color: #4338ca;
     transform: translateX(4px);
 }
 
 .dashboard-menu-item.active {
-    background: #4f46e5;
+    background: #16A34A;
     border-color: #4f46e5;
     color: white;
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
@@ -419,3 +419,5 @@ h2 {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+

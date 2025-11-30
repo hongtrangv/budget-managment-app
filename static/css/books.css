@@ -127,7 +127,42 @@
 .modal-book-description { font-size: 0.95rem; color: #666; margin-top: 1rem; line-height: 1.6; max-height: 200px; overflow-y: auto; }
 
 @media (max-width: 768px) {
-    .modal-body { flex-direction: column; align-items: center; text-align: center; }
-    .modal-book-info { margin-top: 1rem; }
-    .form-submit-btn-add { width: 100%; }
+    .library-row {
+        flex-direction: column; /* Stack shelves vertically on smaller screens */
+        overflow-x: hidden; /* Disable horizontal scrolling on mobile */
+        padding-bottom: 0; /* Remove scrollbar padding on mobile */
+    }
+
+    .unit, .unit-vertical, .unit-horizontal {
+        width: 100%; /* Make shelves full width on mobile */
+    }
+
+    .unit-horizontal {
+        flex-direction: column; /* Stack horizontal compartments vertically */
+    }
+
+    .unit-horizontal .compartment {
+        border-right: none; /* Remove vertical divider */
+        border-bottom: 12px solid #95724C; /* Add horizontal shelf line */
+    }
+
+    .unit-horizontal .compartment:last-child {
+        border-bottom: none; /* Remove last shelf line */
+    }
+
+    .modal-body { 
+        flex-direction: column; 
+        align-items: center; 
+        text-align: center; 
+    }
+    
+    .modal-book-info { 
+        margin-top: 1rem; 
+    }
+}
+@media (max-width: 480px) {
+    .library-title { font-size: 2rem; }
+    .library-subtitle { font-size: 1rem; }
+    .stat-item { padding: 0.5rem 1rem; }
+    .stat-value { font-size: 1.5rem; }
 }

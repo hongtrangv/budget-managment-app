@@ -24,11 +24,13 @@ function updateStats() {
 
 /**
  * Creates a single book element robustly.
+ * It respects the shelf's orientation (unitType).
  */
 function createBookElement(bookData, unitType) {
     const bookEl = document.createElement('div');
     bookEl.className = 'book';
 
+    // Display books based on the shelf's orientation.
     if (unitType === 'vertical') {
         bookEl.classList.add('book-vertical');
     } else {

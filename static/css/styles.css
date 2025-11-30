@@ -116,7 +116,6 @@ body {
 
 /* Card tổng quan và biểu đồ */
 .chart-card {
-    width: 80%;
     background: white;
     border-radius: 20px;
     padding: 24px;

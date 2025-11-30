@@ -2,6 +2,38 @@
 <!-- Link to the specific CSS for this page -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/books.css') }}">
 
+<!-- Style for empty compartments -->
+<style>
+    .compartment--empty {
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #d1d5db;
+        border-radius: 4px;
+        opacity: 0.6;
+    }
+</style>
+
+<!-- Style for the book counter -->
+<style>
+    .compartment {
+        position: relative; /* Needed for absolute positioning of the counter */
+    }
+    .book-counter {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 5px;
+        border-radius: 99px;
+        z-index: 5; /* Ensure it's above the books */
+    }
+</style>
+
 <div class="library-header">
     <h1 class="library-title">Thư Viện Sách</h1>
     <p class="library-subtitle">Nơi lưu giữ tri thức và những câu chuyện</p>
@@ -16,23 +48,76 @@
     </div>
 </div>
 
-<!-- The main container where the bookshelf units will be rendered by JavaScript -->
-<main id="library-container" class="library-container"></main>
-
-<!-- Modal for displaying book details (hidden by default) -->
-<div id="book-info-modal" class="book-modal">
-    <div class="modal-content-info">
-        <button class="modal-close-btn">&times;</button>
-        <div class="modal-body">
-            <img id="modal-book-cover" src="" alt="Book Cover" class="modal-book-cover">
-            <div class="modal-book-info">
-                <h2 id="modal-book-title" class="modal-book-title"></h2>
-                <p id="modal-book-author" class="modal-book-author"></p>
-                <p id="modal-book-description" class="modal-book-description"></p>
-            </div>
+<!-- Search Section -->
+<div class="mb-6 px-4 md:px-0">
+    <div class="relative">
+        <input type="text" id="book-search-input" placeholder="Tìm kiếm theo tiêu đề hoặc tác giả..." class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
         </div>
     </div>
 </div>
+
+<!-- The main container where the bookshelf units will be rendered by JavaScript -->
+<main id="library-container" class="library-container"></main>
+
+<!-- UPDATED Modal for displaying/editing book details (hidden by default) -->
+<div id="book-info-modal" class="book-modal">
+    <div class="modal-content-info">
+        <button class="modal-close-btn">&times;</button>
+        
+        <!-- View Mode -->
+        <div id="modal-view-mode">
+            <div class="modal-body">
+                <img id="modal-book-cover-view" src="" alt="Book Cover" class="modal-book-cover">
+                <div class="modal-book-info">
+                    <h2 id="modal-book-title-view" class="modal-book-title"></h2>
+                    <p id="modal-book-author-view" class="modal-book-author"></p>
+                    <p id="modal-book-description-view" class="modal-book-description"></p>
+                </div>
+            </div>
+            <div class="modal-footer-add">
+                <button id="modal-edit-btn" class="btn btn-secondary">Chỉnh sửa</button>
+                <button id="modal-delete-btn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+
+        <!-- Edit Mode (hidden by default) -->
+        <div id="modal-edit-mode" style="display: none;">
+            <form id="edit-book-form" class="modal-form-add">
+                <input type="hidden" id="edit-book-id">
+                
+                <div class="form-group-add">
+                    <label for="edit-book-title" class="form-label-add">Tiêu đề</label>
+                    <input type="text" id="edit-book-title" name="title" required class="form-input-add">
+                </div>
+
+                <div class="form-group-add">
+                    <label for="edit-book-author" class="form-label-add">Tác giả</label>
+                    <input type="text" id="edit-book-author" name="author" required class="form-input-add">
+                </div>
+
+                <div class="form-group-add">
+                    <label for="edit-book-description" class="form-label-add">Mô tả</label>
+                    <textarea id="edit-book-description" name="description" rows="3" class="form-input-add"></textarea>
+                </div>
+
+                <div class="form-group-add">
+                    <label for="edit-book-cover" class="form-label-add">URL Ảnh bìa</label>
+                    <input type="url" id="edit-book-cover" name="coverImage" class="form-input-add" placeholder="https://example.com/image.jpg">
+                </div>
+
+                <div class="modal-footer-add">
+                    <button type="button" id="modal-cancel-btn" class="btn btn-secondary">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <!-- Modal for Adding a New Book (hidden by default) -->
 <div id="add-book-modal" class="book-modal">
@@ -84,7 +169,6 @@
         </form>
     </div>
 </div>
-
 
 <!-- Link to the specific JavaScript for this page -->
 <script type="module" src="{{ url_for('static', filename='js/books.js') }}"></script>

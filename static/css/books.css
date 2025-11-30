@@ -74,11 +74,11 @@
 .unit-horizontal { flex-direction: row; }
 .unit-horizontal .compartment {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 5px;
-    padding: 5px;
+    flex-direction: row; /* CORRECTED: Lay out books side-by-side */
+    justify-content: center; /* Center the group of books */
+    align-items: flex-end; /* Align books to the bottom of the compartment */
+    gap: 10px; /* Space between books */
+    padding: 10px;
     border-right: 12px solid #95724C; /* Matching lighter wood divider color */
     flex: 1;
     min-height: 180px;
@@ -91,7 +91,7 @@
 .book { cursor: pointer; transition: transform 0.2s ease-out, filter 0.2s ease-out; box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2); color: white; font-size: 10px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .book:hover { transform: translateY(-8px); filter: brightness(1.2); }
 .book-vertical { width: 30px; border-radius: 4px 4px 0 0; writing-mode: vertical-rl; text-orientation: mixed; padding-top: 8px; }
-.book-horizontal { width: 90%; max-width: 45px; border-radius: 4px 4px 2px 2px; padding: 5px 2px; }
+.book-horizontal { width: 30px; border-radius: 4px 4px 2px 2px; writing-mode: vertical-rl; text-orientation: mixed; padding: 5px 2px; }
 
 /* === GENERAL MODAL STYLES === */
 .book-modal { position: fixed; z-index: 1000; inset: 0; background-color: rgba(17, 24, 39, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }

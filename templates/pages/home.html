@@ -80,14 +80,29 @@
                     </table>
                 </div>
                 <!-- Pagination Controls -->
-                <div id="loan-pagination-controls" class="flex justify-end items-center mt-4">
-                    <button id="loan-prev-page" class="pagination-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50 disabled:cursor-not-allowed">
+                <div class="pagination-controls mt-4">
+                    <button id="loan-prev-page" class="pagination-button" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span></span>
+                    </button>
+                    <span id="category-page-info" class="pagination-info"></span>
+                    <button id="loan-next-page" class="pagination-button">
+                        <span></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- <div id="loan-pagination-controls" class="flex justify-end items-center mt-4">
+                    <button id="" class="pagination-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50 disabled:cursor-not-allowed">
                         Trang trước
                     </button>
                     <button id="loan-next-page" class="pagination-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50 disabled:cursor-not-allowed">
                         Trang sau
                     </button>
-                </div>
+                </div> -->
             </div> 
        </div>
    </div>
@@ -113,14 +128,14 @@
 
             <!-- Modal Body -->
             <div class="p-4">
-                <div id="modal-payment-history" class="max-h-96 overflow-y-auto">
+                <div id="modal-payment-history" class="overflow-x-auto shadow-lg rounded-lg">
                     <table class="min-w-full bg-white">
-                        <thead class="bg-gray-100 sticky top-0">
-                            <tr>
-                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">Ngày Trả</th>
-                                <th class="py-2 px-4 border-b text-right text-sm font-semibold text-gray-600">Gốc Đã Trả</th>
-                                <th class="py-2 px-4 border-b text-right text-sm font-semibold text-gray-600">Lãi Đã Trả</th>
-                                <th class="py-2 px-4 border-b text-right text-sm font-semibold text-gray-600">Tổng Cộng</th>
+                        <thead class="bg-green-600 text-white">
+                            <tr class="py-3 px-4 text-center uppercase font-semibold text-sm">
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Ngày Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Gốc Đã Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Lãi Đã Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Tổng Cộng</th>
                             </tr>
                         </thead>
                         <tbody id="payment-history-table-body">
@@ -128,12 +143,7 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="flex justify-end p-4 border-t">
-                <button class="modal-close-btn px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Đóng</button>
-            </div>
+            </div>           
         </div>
     </div>
 </div>

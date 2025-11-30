@@ -2,38 +2,48 @@
  * Global state to hold the library data.
  */
 let currentLibraryData = { layout: [], books: [] };
+/**
+ * Master list of all books, separate from the displayed list.
+ */
+let allBooks = [];
 
 /**
- * NEW: Updates the statistics in the header.
+ * A global variable to hold the currently selected book's data.
+ */
+let currentSelectedBook = null;
+
+/**
+ * Updates the statistics in the header.
  */
 function updateStats() {
     const totalBooksCountEl = document.getElementById('total-books-count');
     if (totalBooksCountEl) {
-        // Update the text content with the number of books
-        totalBooksCountEl.textContent = currentLibraryData.books.length;
+        totalBooksCountEl.textContent = allBooks.length; 
     }
 }
 
 /**
- * Creates a single book element.
+ * Creates a single book element robustly.
  */
 function createBookElement(bookData, unitType) {
     const bookEl = document.createElement('div');
     bookEl.className = 'book';
 
     if (unitType === 'vertical') {
-        bookEl.style.height = `${Math.floor(Math.random() * 40 + 100)}px`;
         bookEl.classList.add('book-vertical');
     } else {
-        bookEl.style.height = `${Math.floor(Math.random() * 30 + 70)}px`;
         bookEl.classList.add('book-horizontal');
     }
     
-    const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0);
-    bookEl.style.backgroundColor = `hsl(${hashCode(bookData.title) % 360}, 50%, 60%)`;
+    // Safely get title, providing a fallback.
+    const title = bookData.title || 'Untitled Book';
 
-    bookEl.textContent = bookData.title;
-    bookEl.dataset.bookId = bookData.id; // Store ID for later
+    const hashCode = s => s.split('').reduce((a,b) => (((a << 5) - a) + b.charCodeAt(0))|0, 0);
+    bookEl.style.backgroundColor = `hsl(${hashCode(title) % 360}, 50%, 60%)`;
+
+    bookEl.dataset.bookId = bookData.id;
+    bookEl.textContent = title; // Set text content safely.
+
     bookEl.addEventListener('click', (e) => {
         e.stopPropagation(); 
         showBookInfoModal(bookData);
@@ -43,16 +53,17 @@ function createBookElement(bookData, unitType) {
 }
 
 /**
- * Renders the entire bookshelf from global data.
+ * Renders the bookshelf.
  */
 function renderBookshelf() {
     const libraryContainer = document.getElementById('library-container');
     if (!libraryContainer) return;
 
-    libraryContainer.innerHTML = ''; 
+    libraryContainer.innerHTML = '';
     const { layout, books } = currentLibraryData;
-
     if (!layout || layout.length === 0) return;
+
+    const MAX_BOOKS_BEFORE_COUNTING = 10;
 
     layout.forEach((row, rowIndex) => {
         const rowEl = document.createElement('div');
@@ -73,10 +84,27 @@ function renderBookshelf() {
                     book.compIndex === compIndex
                 );
 
-                booksInCompartment.forEach(bookData => {
-                    const bookEl = createBookElement(bookData, unit.type);
-                    compEl.appendChild(bookEl);
-                });
+                if (booksInCompartment.length > 0) {
+                    if (booksInCompartment.length > MAX_BOOKS_BEFORE_COUNTING) {
+                        for (let i = 0; i < MAX_BOOKS_BEFORE_COUNTING; i++) {
+                            const bookData = booksInCompartment[i];
+                            const bookEl = createBookElement(bookData, unit.type);
+                            compEl.appendChild(bookEl);
+                        }
+
+                        const counter = document.createElement('div');
+                        counter.className = 'book-counter';
+                        counter.textContent = `+${booksInCompartment.length - MAX_BOOKS_BEFORE_COUNTING}`;
+                        compEl.appendChild(counter);
+                    } else {
+                        booksInCompartment.forEach(bookData => {
+                            const bookEl = createBookElement(bookData, unit.type);
+                            compEl.appendChild(bookEl);
+                        });
+                    }
+                } else {
+                    compEl.classList.add('compartment--empty');
+                }
 
                 compEl.addEventListener('click', () => {
                     showAddBookModal(rowIndex, unitIndex, compIndex);
@@ -89,15 +117,14 @@ function renderBookshelf() {
         libraryContainer.appendChild(rowEl);
     });
     
-    // After rendering, update the stats
     updateStats();
 }
 
+
 /**
- * Fetches data, renders the library, and sets up listeners.
+ * Fetches all necessary data from the server and initializes the view.
  */
 export async function loadAndRenderLibrary() {
-    const libraryContainer = document.getElementById('library-container');
     try {
         const [layoutResponse, booksResponse] = await Promise.all([
             fetch('/api/shelves'),
@@ -109,21 +136,24 @@ export async function loadAndRenderLibrary() {
         }
 
         currentLibraryData.layout = await layoutResponse.json();
-        currentLibraryData.books = await booksResponse.json();
+        const booksFromServer = await booksResponse.json();
 
-        renderBookshelf(); // This will now also call updateStats()
+        allBooks = [...booksFromServer];
+        
+        // Initial load uses all books
+        filterAndRender(); 
         setupGlobalEventListeners();
 
     } catch (error) {
         console.error("Failed to load library data:", error);
+        const libraryContainer = document.getElementById('library-container');
         if (libraryContainer) libraryContainer.innerHTML = `<p class="error-message">Could not load library.</p>`;
     }
 }
 
-/**
- * Handles the form submission for adding a new book.
- */
-async function handleFormSubmit(event) {
+// --- CRUD Operations --- //
+
+async function handleAddBook(event) {
     event.preventDefault();
     const form = document.getElementById('add-book-form');
     const formData = new FormData(form);
@@ -140,55 +170,147 @@ async function handleFormSubmit(event) {
             body: JSON.stringify(bookData)
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to add book.');
-        }
-
+        if (!response.ok) throw new Error('Failed to add book.');
         const newBook = await response.json();
-        
-        currentLibraryData.books.push(newBook);
-        renderBookshelf(); // Re-render the shelf, which also updates stats
+        allBooks.push(newBook);
+        filterAndRender();
         hideModal('add-book-modal');
-
     } catch (error) {
         console.error("Error adding book:", error);
         alert(error.message);
     }
 }
 
-// --- Modal Management --- //
+async function handleUpdateBook(event) {
+    event.preventDefault();
+    if (!currentSelectedBook) return;
+
+    const form = document.getElementById('edit-book-form');
+    const formData = new FormData(form);
+    const updatedData = Object.fromEntries(formData.entries());
+
+    updatedData.rowIndex = currentSelectedBook.rowIndex;
+    updatedData.unitIndex = currentSelectedBook.unitIndex;
+    updatedData.compIndex = currentSelectedBook.compIndex;
+
+    try {
+        const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) throw new Error('Failed to update book.');
+        const updatedBook = await response.json();
+
+        const index = allBooks.findIndex(b => b.id === updatedBook.id);
+        if (index !== -1) allBooks[index] = updatedBook;
+        
+        filterAndRender();
+        hideModal('book-info-modal');
+    } catch (error) {
+        console.error("Error updating book:", error);
+        alert(error.message);
+    }
+}
+
+async function handleDeleteBook() {
+    if (!currentSelectedBook) return;
+
+    if (confirm(`Bạn có chắc chắn muốn xóa sách "${(currentSelectedBook.title || 'Untitled Book')}"?`)) {
+        try {
+            const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete book.');
+
+            allBooks = allBooks.filter(b => b.id !== currentSelectedBook.id);
+            
+            filterAndRender();
+            hideModal('book-info-modal');
+        } catch (error) {
+            console.error("Error deleting book:", error);
+            alert(error.message);
+        }
+    }
+}
+
+// --- Modal Management & UI Logic --- //
 
 function showBookInfoModal(bookData) {
-    const modal = document.getElementById('book-info-modal');
-    if (!modal) return;
+    currentSelectedBook = bookData;
+    
+    document.getElementById('modal-view-mode').style.display = 'block';
+    document.getElementById('modal-edit-mode').style.display = 'none';
 
-    document.getElementById('modal-book-title').textContent = bookData.title;
-    document.getElementById('modal-book-author').textContent = `Tác giả: ${bookData.author}`;
-    document.getElementById('modal-book-description').textContent = bookData.description;
-    document.getElementById('modal-book-cover').src = bookData.coverImage || '';
+    document.getElementById('modal-book-title-view').textContent = bookData.title || 'Untitled Book';
+    document.getElementById('modal-book-author-view').textContent = `Tác giả: ${bookData.author || 'N/A'}`;
+    document.getElementById('modal-book-description-view').textContent = bookData.description || '';
+    document.getElementById('modal-book-cover-view').src = bookData.coverImage || '';
 
-    modal.classList.add('show');
+    showModal('book-info-modal');
+}
+
+function switchToEditMode() {
+    if (!currentSelectedBook) return;
+
+    document.getElementById('edit-book-id').value = currentSelectedBook.id;
+    document.getElementById('edit-book-title').value = currentSelectedBook.title || '';
+    document.getElementById('edit-book-author').value = currentSelectedBook.author || '';
+    document.getElementById('edit-book-description').value = currentSelectedBook.description || '';
+    document.getElementById('edit-book-cover').value = currentSelectedBook.coverImage || '';
+
+    document.getElementById('modal-view-mode').style.display = 'none';
+    document.getElementById('modal-edit-mode').style.display = 'block';
+}
+
+function cancelEditMode() {
+    document.getElementById('modal-view-mode').style.display = 'block';
+    document.getElementById('modal-edit-mode').style.display = 'none';
 }
 
 function showAddBookModal(rowIndex, unitIndex, compIndex) {
-    const modal = document.getElementById('add-book-modal');
-    if (!modal) return;
-
     document.getElementById('add-book-form').reset();
     document.getElementById('form-row-index').value = rowIndex;
     document.getElementById('form-unit-index').value = unitIndex;
     document.getElementById('form-comp-index').value = compIndex;
     document.getElementById('form-location-text').textContent = `Hàng ${rowIndex + 1}, Kệ ${unitIndex + 1}, Ngăn ${compIndex + 1}`;
-    
-    modal.classList.add('show');
+    showModal('add-book-modal');
+}
+
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('show');
 }
 
 function hideModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('show');
-    }
+    if (modal) modal.classList.remove('show');
+    currentSelectedBook = null; 
 }
+
+/**
+ * Filters the master book list based on search term and re-renders the bookshelf.
+ * This is now robust against missing title or author data.
+ */
+function filterAndRender() {
+    const searchInput = document.getElementById('book-search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    if (searchTerm.trim() === '') {
+        currentLibraryData.books = [...allBooks];
+    } else {
+        currentLibraryData.books = allBooks.filter(book => {
+            const title = (book.title || '').toLowerCase();
+            const author = (book.author || '').toLowerCase();
+            return title.includes(searchTerm) || author.includes(searchTerm);
+        });
+    }
+    renderBookshelf();
+}
+
+// --- Event Listeners Setup --- //
 
 let areListenersInitialized = false;
 
@@ -198,22 +320,27 @@ function setupGlobalEventListeners() {
     document.querySelectorAll('.modal-close-btn, .modal-close-btn-add').forEach(btn => {
         btn.onclick = (e) => {
             const modal = e.target.closest('.book-modal');
-            if (modal) {
-                hideModal(modal.id);
-            }
+            if (modal) hideModal(modal.id);
         };
     });
 
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', (event) => {
         if (event.target.classList.contains('book-modal')) {
             hideModal(event.target.id);
         }
     });
 
-    document.getElementById('add-book-form').addEventListener('submit', handleFormSubmit);
+    document.getElementById('add-book-form').addEventListener('submit', handleAddBook);
+    document.getElementById('edit-book-form').addEventListener('submit', handleUpdateBook);
+
+    document.getElementById('modal-edit-btn').addEventListener('click', switchToEditMode);
+    document.getElementById('modal-cancel-btn').addEventListener('click', cancelEditMode);
+    document.getElementById('modal-delete-btn').addEventListener('click', handleDeleteBook);
+
+    document.getElementById('book-search-input').addEventListener('input', filterAndRender);
 
     areListenersInitialized = true;
 }
 
-// Initialize the library rendering when the script is loaded
+// Initialize the library
 loadAndRenderLibrary();

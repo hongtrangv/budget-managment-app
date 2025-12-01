@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv() # Tải các biến môi trường từ file .env
+
 import os
 from flask import Flask, render_template
 
@@ -45,7 +48,9 @@ app.register_blueprint(books_bp)
 @app.route('/bookstore')
 def index():
     """Serves the main index.html file, which is the entry point for the SPA."""
-    return render_template('index.html')
+    # Lấy API key từ biến môi trường và truyền vào template
+    api_key = os.environ.get('API_SECRET_KEY')
+    return render_template('index.html', api_key=api_key)
 
 @app.route('/components/<path:filename>')
 def components(filename):

@@ -1,5 +1,5 @@
 import { loadHomePage } from './home.js';
-import { loadCategoryPage } from './collections.js'; // Fix: Use the new function name
+import { loadCategoryPage } from './collections.js';
 import { loadManagementPage } from './management.js';
 import { loadLoanPaymentPage } from './loan_payment.js';
 import { initializeChatbotWidget } from './chatbot.js';
@@ -11,11 +11,42 @@ const menuContainer = document.getElementById('menu-container');
 
 const routes = {
     '/': { page: '/pages/home.html', loader: loadHomePage },
-    '/collections': { page: '/pages/collections.html', loader: loadCategoryPage }, // Fix: Use the new function name
+    '/collections': { page: './pages/collections.html', loader: loadCategoryPage },
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
     '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary }
 };
+
+/**
+ * Sets up the event listener for the mobile menu button.
+ */
+function setupMobileMenu() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const openChatbotMobile = document.getElementById('open-chatbot-widget-mobile');
+
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    // Ensure menu closes when a link is clicked
+    mobileMenu.addEventListener('click', (e) => {
+        if (e.target.matches('a[data-navigo]') || e.target.closest('a[data-navigo]')) {
+            mobileMenu.classList.add('hidden');
+        }
+    });
+    
+    // Handle chatbot button inside mobile menu
+    if(openChatbotMobile) {
+        openChatbotMobile.addEventListener('click', () => {
+            const mainChatbotButton = document.getElementById('open-chatbot-widget');
+            if(mainChatbotButton) mainChatbotButton.click();
+            mobileMenu.classList.add('hidden');
+        });
+    }
+}
 
 function attachGlobalEventListeners() {
     const menu = document.querySelector('nav');
@@ -55,6 +86,9 @@ async function initialLoad() {
         if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
         
+        // NEW: Setup mobile menu listeners after menu is loaded
+        setupMobileMenu();
+
         initializeChatbotWidget();
         attachGlobalEventListeners(); 
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };

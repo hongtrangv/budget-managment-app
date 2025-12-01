@@ -313,13 +313,15 @@ async function openPaymentsModal(loanId) {
         if (payments.length === 0) {
             paymentHistoryBody.innerHTML = "<tr><td colspan='4' class='text-center p-4'>Không có lịch sử trả lãi cho khoản vay này.</td></tr>";
         } else {
-            payments.forEach(payment => {
-                 const row = document.createElement('tr');
+            payments.forEach((payment,index) => {
+                const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
+                const row = document.createElement('tr');
+                row.className = rowClass;
                 row.innerHTML = `
-                    <td class="py-2 px-4 border-b text-left">${formatDateToYMD(payment.paidDate)}</td>
-                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.principalPaid)}</td>
-                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.interestPaid)}</td>
-                    <td class="py-2 px-4 border-b text-right">${formatCurrency(payment.totalPaid)}</td>
+                    <td class="py-3 px-4 text-center">${formatDateToYMD(payment.paidDate)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(payment.principalPaid)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(payment.interestPaid)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(payment.totalPaid)}</td>
                 `;
                 paymentHistoryBody.appendChild(row);
             });
@@ -386,7 +388,7 @@ export async function loadHomePage() {
 
         // --- Modal Close --- 
         const modal = document.getElementById('payments-modal');
-        modal.querySelectorAll('.modal-close, .modal-overlay, .modal-close-btn').forEach(el => {
+        modal.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
             el.addEventListener('click', () => modal.classList.add('hidden'));
         });
 

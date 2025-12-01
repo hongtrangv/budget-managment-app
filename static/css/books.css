@@ -74,11 +74,11 @@
 .unit-horizontal { flex-direction: row; }
 .unit-horizontal .compartment {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 5px;
-    padding: 5px;
+    flex-direction: row; /* CORRECTED: Lay out books side-by-side */
+    justify-content: center; /* Center the group of books */
+    align-items: flex-end; /* Align books to the bottom of the compartment */
+    gap: 10px; /* Space between books */
+    padding: 10px;
     border-right: 12px solid #95724C; /* Matching lighter wood divider color */
     flex: 1;
     min-height: 180px;
@@ -91,7 +91,7 @@
 .book { cursor: pointer; transition: transform 0.2s ease-out, filter 0.2s ease-out; box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2); color: white; font-size: 10px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .book:hover { transform: translateY(-8px); filter: brightness(1.2); }
 .book-vertical { width: 30px; border-radius: 4px 4px 0 0; writing-mode: vertical-rl; text-orientation: mixed; padding-top: 8px; }
-.book-horizontal { width: 90%; max-width: 45px; border-radius: 4px 4px 2px 2px; padding: 5px 2px; }
+.book-horizontal { width: 30px; border-radius: 4px 4px 2px 2px; writing-mode: vertical-rl; text-orientation: mixed; padding: 5px 2px; }
 
 /* === GENERAL MODAL STYLES === */
 .book-modal { position: fixed; z-index: 1000; inset: 0; background-color: rgba(17, 24, 39, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }
@@ -127,7 +127,42 @@
 .modal-book-description { font-size: 0.95rem; color: #666; margin-top: 1rem; line-height: 1.6; max-height: 200px; overflow-y: auto; }
 
 @media (max-width: 768px) {
-    .modal-body { flex-direction: column; align-items: center; text-align: center; }
-    .modal-book-info { margin-top: 1rem; }
-    .form-submit-btn-add { width: 100%; }
+    .library-row {
+        flex-direction: column; /* Stack shelves vertically on smaller screens */
+        overflow-x: hidden; /* Disable horizontal scrolling on mobile */
+        padding-bottom: 0; /* Remove scrollbar padding on mobile */
+    }
+
+    .unit, .unit-vertical, .unit-horizontal {
+        width: 100%; /* Make shelves full width on mobile */
+    }
+
+    .unit-horizontal {
+        flex-direction: column; /* Stack horizontal compartments vertically */
+    }
+
+    .unit-horizontal .compartment {
+        border-right: none; /* Remove vertical divider */
+        border-bottom: 12px solid #95724C; /* Add horizontal shelf line */
+    }
+
+    .unit-horizontal .compartment:last-child {
+        border-bottom: none; /* Remove last shelf line */
+    }
+
+    .modal-body { 
+        flex-direction: column; 
+        align-items: center; 
+        text-align: center; 
+    }
+    
+    .modal-book-info { 
+        margin-top: 1rem; 
+    }
+}
+@media (max-width: 480px) {
+    .library-title { font-size: 2rem; }
+    .library-subtitle { font-size: 1rem; }
+    .stat-item { padding: 0.5rem 1rem; }
+    .stat-value { font-size: 1.5rem; }
 }

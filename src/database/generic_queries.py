@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from .firebase_config import db
 import traceback
+import bleach
 
 class CRUDApi:
     """
@@ -28,14 +29,17 @@ class CRUDApi:
             data = request.get_json()
             if not data:
                 return jsonify({"error": "Invalid data"}), 400
+
+            # Sanitize all string fields in the incoming data
+            sanitized_data = {key: bleach.clean(value) if isinstance(value, str) else value for key, value in data.items()}
             
             # Add the new document. The call to add() blocks until the write is complete.
-            update_time, doc_ref = self.collection.add(data)
+            update_time, doc_ref = self.collection.add(sanitized_data)
             
             # Instead of re-fetching, augment the original data with the new ID.
             # This is more efficient and avoids potential race conditions.
-            data['id'] = doc_ref.id 
-            return jsonify(data), 201 # 201 Created
+            sanitized_data['id'] = doc_ref.id 
+            return jsonify(sanitized_data), 201 # 201 Created
 
         except Exception as e:
             # Log the full error to the server terminal for debugging
@@ -60,8 +64,11 @@ class CRUDApi:
             if not data:
                 return jsonify({"error": "Invalid data"}), 400
             
+            # Sanitize all string fields in the incoming data
+            sanitized_data = {key: bleach.clean(value) if isinstance(value, str) else value for key, value in data.items()}
+
             doc_ref = self.collection.document(doc_id)
-            doc_ref.update(data)
+            doc_ref.update(sanitized_data)
             return jsonify({"success": True, "id": doc_id}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500

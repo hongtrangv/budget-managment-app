@@ -1,21 +1,12 @@
+# Firebase / Google Cloud
+.env
+serviceAccountKey.json
 
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
+.venv
 
-# Firebase
-src/database/*.json
-
-# IDE
+# IDE / Editor specific
 .vscode/
 .idea/
-
-# Other
-.DS_Store
-*.swp

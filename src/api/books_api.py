@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 from src.database.generic_queries import CRUDApi
 from src.database.firebase_config import db
+from src.api.auth import require_api_key # Import the decorator
 
 # Create a Blueprint for book and shelf management
 books_bp = Blueprint('books_bp', __name__)
@@ -59,6 +60,7 @@ def get_all_books():
     return books_crud.get_all()
 
 @books_bp.route('/api/books', methods=['POST'])
+@require_api_key # PROTECTED
 def add_new_book():
     return books_crud.create()
 
@@ -67,9 +69,11 @@ def get_one_book(doc_id):
     return books_crud.get_one(doc_id)
 
 @books_bp.route('/api/books/<string:doc_id>', methods=['PUT'])
+@require_api_key # PROTECTED
 def update_existing_book(doc_id):
     return books_crud.update(doc_id)
 
 @books_bp.route('/api/books/<string:doc_id>', methods=['DELETE'])
+@require_api_key # PROTECTED
 def delete_existing_book(doc_id):
     return books_crud.delete(doc_id)

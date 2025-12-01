@@ -168,7 +168,10 @@ async function handleAddBook(event) {
     try {
         const response = await fetch('/api/books', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-API-KEY': window.API_KEY
+             },
             body: JSON.stringify(bookData)
         });
 
@@ -198,7 +201,10 @@ async function handleUpdateBook(event) {
     try {
         const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-API-KEY': window.API_KEY
+            },
             body: JSON.stringify(updatedData)
         });
 
@@ -222,7 +228,10 @@ async function handleDeleteBook() {
     if (confirm(`Bạn có chắc chắn muốn xóa sách "${(currentSelectedBook.title || 'Untitled Book')}"?`)) {
         try {
             const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'X-API-KEY': window.API_KEY
+                }
             });
 
             if (!response.ok) throw new Error('Failed to delete book.');

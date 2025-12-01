@@ -4,7 +4,13 @@ from google.cloud import firestore
 import uuid
 from datetime import datetime
 import math
+import bleach
 
+# Helper function to sanitize dictionaries
+def sanitize_dict(data):
+    if not isinstance(data, dict):
+        return data
+    return {key: bleach.clean(str(value)) if isinstance(value, str) else value for key, value in data.items()}
 
 class DocumentHandler:
     """Handles generic CRUD operations for Firestore documents and collections."""
@@ -82,9 +88,10 @@ class DocumentHandler:
     @staticmethod    
     def add_document_to_collection(collection_name, data):
         """Adds a new document with a specified ID."""
-        try:           
+        try:
+            sanitized_data = sanitize_dict(data)
             doc_id = str(uuid.uuid4())
-            doc_ref = db.collection("items").document(doc_id).set(data)                                
+            doc_ref = db.collection("items").document(doc_id).set(sanitized_data)
             return doc_id
 
         except Exception as e:
@@ -105,8 +112,9 @@ class DocumentHandler:
     def update_document_in_collection(collection_name, original_doc_id, data_from_form):
         """Updates a document, handling ID changes as well."""
         try:
+            sanitized_data = sanitize_dict(data_from_form)
             original_doc_ref = db.collection(collection_name).document(original_doc_id)
-            original_doc_ref.update(data_from_form)            
+            original_doc_ref.update(sanitized_data)
             return original_doc_id
         except Exception as e:
             print(f"Error updating document: {e}")
@@ -152,6 +160,7 @@ class ManagementTree:
     def add_item(year, month, item_type, data):
         """Adds a new record to a type document in Firestore, ensuring parent documents exist."""
         try:
+            sanitized_data = sanitize_dict(data)
             year_ref = db.collection('Year').document(year)
             month_ref = year_ref.collection('Months').document(month)
             type_ref = month_ref.collection('Types').document(item_type)
@@ -159,10 +168,10 @@ class ManagementTree:
             year_ref.set({}, merge=True)
             month_ref.set({}, merge=True)
             
-            type_ref.set({'records': firestore.ArrayUnion([data])
+            type_ref.set({'records': firestore.ArrayUnion([sanitized_data])
             }, merge=True)
             
-            return data.get('id')
+            return sanitized_data.get('id')
         except Exception as e:
             print(f"Error adding new item to Firestore: {e}")
             raise e
@@ -178,7 +187,7 @@ class ManagementTree:
 
             records = doc.to_dict().get('records', [])
             # Create a new list excluding the record to be deleted
-            updated_records = [record for record in records if record.get['id'] != record_id]
+            updated_records = [record for record in records if record.get('id') != record_id]
 
             # Update the document with the new array
             type_ref.update({'records': updated_records})
@@ -192,6 +201,7 @@ class ManagementTree:
     def update_record(year, month, type_id, record_id, new_data):
         """Updates a record within the 'records' array of a type document."""
         try:
+            sanitized_new_data = sanitize_dict(new_data)
             type_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document(type_id)
             doc = type_ref.get()
             if not doc.exists:
@@ -203,9 +213,13 @@ class ManagementTree:
 
             for record in records:
                 if record.get('id') == record_id:
-                    record.update(new_data) # Update the dictionary in place
+                    # Sanitize existing record fields before updating
+                    sanitized_record = sanitize_dict(record)
+                    sanitized_record.update(sanitized_new_data)
+                    updated_records.append(sanitized_record)
                     record_found = True
-                updated_records.append(record)
+                else:
+                    updated_records.append(record)
 
             if not record_found:
                 raise Exception("Record with specified ID not found in document")
@@ -460,9 +474,11 @@ class Loan:
                 "created_at": datetime.utcnow(),
                 "totalPaid": principalPaid + interestPaid
             }
+            # Sanitize data before setting
+            sanitized_payment_data = sanitize_dict(payment_data)
 
             # 4. Set the new payment document in the transaction
-            transaction.set(payment_ref, payment_data)
+            transaction.set(payment_ref, sanitized_payment_data)
             
             # 5. Update the outstanding balance in the loan document
             transaction.update(loan_ref, {

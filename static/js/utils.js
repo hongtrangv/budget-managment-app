@@ -1,3 +1,5 @@
+import { ICONS } from './icons.js';
+
 export function formatCurrency(value) {
     if (typeof value !== 'number') return value;
     return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
@@ -12,21 +14,6 @@ export function formatDate(dateString) {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 }
-
-let alertContainer = null;
-export function showAlert(type, message, duration = 4000) {
-    if (!alertContainer) alertContainer = document.getElementById("alert-container");
-    if (!alertContainer) return console.error("Alert container #alert-container not found.");
-    
-    const alert = document.createElement("div");
-    alert.className = `alert alert-${type}`;
-    // Icons can be added here if needed
-    alert.innerHTML = `<span>${message}</span><button class="close-btn">&times;</button>`;
-    alert.querySelector(".close-btn").addEventListener("click", () => alert.remove());
-    alertContainer.appendChild(alert);
-    setTimeout(() => alert.remove(), duration);
-}
-
 export function formatDateToYMD(timestamp) {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -35,205 +22,345 @@ export function formatDateToYMD(timestamp) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+	 
+}
+/**
+ * Fetches the API secret key from the server.
+ * Stores the key in a local variable for subsequent requests.
+ * @returns {Promise<string>} The API secret key.
+ */
+let apiSecretKey = window.API_KEY;
+async function getApiSecretKey() {
+    if (apiSecretKey) {
+        return apiSecretKey;
+    }
+    try {
+        const response = await fetch('/api/get-key');
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        apiSecretKey = data.api_key;
+        return apiSecretKey;
+    } catch (error) {
+        console.error('Failed to get API key:', error);
+        showAlert('error', 'Không thể lấy khóa API để xác thực. Vui lòng tải lại trang.');
+        throw error; // Re-throw to stop the authenticated fetch
+    }
 }
 
 /**
- * Creates and returns an HTML table element from given data.
- * @param {Array<Object>} data - Array of data objects.
- * @param {Object} headers - An object where keys are data properties and values are display names.
- * @param {string} collectionName - The name of the Firestore collection.
- * @param {number} page - The current page number.
- * @param {number} pageSize - The number of items per page.
- * @returns {HTMLTableElement} The generated table element.
+ * Shows a customizable alert message.
+ * @param {'success' | 'error' | 'info'} type - The type of alert.
+ * @param {string} message - The message to display.
+ * @param {number} duration - The duration in milliseconds before the alert disappears.
  */
-export function createTable(data, headers, collectionName, page, pageSize) {
-    const table = document.createElement('table');
-    table.className = 'min-w-full bg-white';
+export function showAlert(type, message, duration = 4000) {
+    const alertContainer = document.getElementById('alert-container');
+    if (!alertContainer) {
+        console.error('Alert container not found!');
+        return;
+    }
 
-    const headerKeys = Object.keys(headers);
-    const headerValues = Object.values(headers);
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+    };
 
-    const thead = document.createElement('thead');
-    thead.className = 'bg-green-600 text-white';
-    const headerRow = document.createElement('tr');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `fixed top-5 right-5 ${colors[type]} text-white py-2 px-4 rounded-lg shadow-lg animate-fade-in-down z-50`;
+    alertDiv.textContent = message;
+
+    alertContainer.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.classList.add('animate-fade-out-up');
+        alertDiv.addEventListener('animationend', () => {
+            alertDiv.remove();
+        });
+    }, duration);
+}
+
+/**
+ * A wrapper around the native fetch API that automatically adds the API key to the headers.
+ * It also provides centralized error handling.
+ * @param {string} url - The URL to fetch.
+ * @param {object} options - The options for the fetch request.
+ * @returns {Promise<Response>} The fetch response.
+ */
+export async function authenticatedFetch(url, options = {}) {
+    try {
+        const key = await getApiSecretKey();
+
+        const headers = {
+            ...options.headers,
+            'X-API-Key': key,
+            'Content-Type': 'application/json'
+        };
+
+        const response = await fetch(url, { ...options, headers });
+
+        if (!response.ok) {
+            let errorMessage = `Lỗi HTTP: ${response.status}`;
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || errorBody.error || errorMessage;
+            } catch (e) {
+                // Body is not JSON or empty, use the default message
+            }
+            showAlert('error', errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        return response;
+    } catch (error) {
+        console.error('Authenticated fetch failed:', error);
+        // Avoid showing a generic alert if a specific one was already shown
+        if (!error.message.startsWith('Lỗi HTTP')) {
+             showAlert('error', `Yêu cầu thất bại: ${error.message}`);
+        }
+        throw error; // Re-throw the error so the calling function can handle it
+    }
+}
+
+/**
+ * Creates and displays a dynamic modal for adding or editing data.
+ * @param {object} options - The configuration for the modal.
+ * @param {'add' | 'edit'} options.mode - The mode of the modal.
+ * @param {object} options.headers - An object defining the form fields (key: field name, value: label).
+ * @param {object} [options.data] - The existing data for the fields (in 'edit' mode).
+ * @param {string} options.apiUrl - The base API URL for the request.
+ * @param {string} [options.docId] - The document ID (required for 'edit' mode).
+ * @param {string} options.addAction - The action identifier for adding an item.
+ * @param {string} options.editAction - The action identifier for updating an item.
+ * @param {function} options.onComplete - The callback function to execute after a successful operation.
+ */
+export function createDynamicModal({ mode, headers, data = {}, apiUrl, docId, addAction, editAction, onComplete }) {
+    // Remove any existing modal first
+    document.getElementById('dynamic-modal-container')?.remove();
+
+    const isEditMode = mode === 'edit';
+
+    // Create modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'dynamic-modal-container';
+    modalContainer.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-40';
+
+    // Create modal dialog
+    const modalDialog = document.createElement('div');
+    modalDialog.className = 'relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white';
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'mt-3 text-center';
+
+    // Create title
+    const title = document.createElement('h3');
+    title.className = 'text-lg leading-6 font-medium text-gray-900';
+    title.textContent = isEditMode ? 'Chỉnh sửa Mục' : 'Thêm Mục mới';
+
+    // Create form
+    const form = document.createElement('form');
+    form.className = 'mt-4';
     
-    // Add STT column header
-    const thStt = document.createElement('th');
-    thStt.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
-    thStt.textContent = "STT";
-    headerRow.appendChild(thStt);
+    const formFields = document.createElement('div');
+    formFields.className = 'space-y-4';
 
-    headerValues.forEach(value => {
-        const th = document.createElement('th');
-        th.className = 'py-3 px-4 text-left uppercase font-semibold text-sm';
-        th.textContent = value;
-        headerRow.appendChild(th);
+    // Generate form fields from headers
+    Object.keys(headers).forEach(key => {
+        if (key.toLowerCase() === 'id') return; // Don't create an input for the ID
+
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'text-left';
+
+        const label = document.createElement('label');
+        label.htmlFor = `modal-field-${key}`;
+        label.className = 'block text-sm font-medium text-gray-700';
+        label.textContent = headers[key];
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = key;
+        input.id = `modal-field-${key}`;
+        input.className = 'mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm';
+        if (isEditMode) {
+            input.value = data[key] || '';
+        }
+
+        fieldDiv.appendChild(label);
+        fieldDiv.appendChild(input);
+        formFields.appendChild(fieldDiv);
     });
 
-    const thAction = document.createElement('th');
-    thAction.className = 'py-3 px-4 text-center uppercase font-semibold text-sm';
-    thAction.textContent = 'Hành động';
-    headerRow.appendChild(thAction);
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'mt-6 flex justify-end space-x-3';
 
-    thead.appendChild(headerRow);
+    // Create submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.className = 'btn btn-primary';
+    submitBtn.textContent = isEditMode ? 'Lưu thay đổi' : 'Thêm mới';
+
+    // Create cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Hủy';
+
+    // Event Listeners
+    cancelBtn.addEventListener('click', () => {
+        modalContainer.remove();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+
+        const method = isEditMode ? 'PUT' : 'POST';
+        const actionIdentifier = isEditMode ? editAction : addAction;
+        const url = isEditMode ? `${apiUrl}/${docId}` : apiUrl;
+
+        try {
+            await authenticatedFetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Action-Identifier': actionIdentifier
+                },
+                body: JSON.stringify(payload)
+            });
+
+            showAlert('success', `Đã ${isEditMode ? 'cập nhật' : 'thêm mới'} thành công!`);
+            modalContainer.remove();
+            if (onComplete) {
+                onComplete();
+            }
+        } catch (error) {
+            // Error alert is already shown by authenticatedFetch
+            console.error('Form submission error:', error);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Assemble modal
+    buttonContainer.appendChild(cancelBtn);
+    buttonContainer.appendChild(submitBtn);
+    
+    form.appendChild(formFields);
+    form.appendChild(buttonContainer);
+
+    modalContent.appendChild(title);
+    modalContent.appendChild(form);
+
+    modalDialog.appendChild(modalContent);
+    modalContainer.appendChild(modalDialog);
+
+    // Append to body and show
+    document.body.appendChild(modalContainer);
+}
+
+/**
+ * Creates an HTML table from an array of data, styled to match the project's design.
+ * @param {Array<object>} data - The array of data objects.
+ * @param {object} headers - An object where keys are data properties and values are table headers.
+ * @param {number} currentPage - The current page number.
+ * @param {number} pageSize - The number of items per page.
+ * @param {function} onAction - Callback function for actions like edit/delete. Signature: (action, docId, data)
+ * @returns {HTMLTableElement} The generated table element.
+ */
+export function createTable(data, headers, currentPage, pageSize, onAction) {
+    const table = document.createElement('table');
+    table.className = 'min-w-full divide-y divide-gray-300';
+
+    // Create table head with project-specific styling
+    const thead = document.createElement('thead');
+    thead.className = 'bg-green-600';
+    const trHead = document.createElement('tr');
+    
+    // Add a number column header
+    const thNum = document.createElement('th');
+    thNum.className = 'px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider';
+    thNum.textContent = 'STT';
+    trHead.appendChild(thNum);
+
+    Object.values(headers).forEach(headerText => {
+        const th = document.createElement('th');
+        th.className = 'px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider';
+        th.textContent = headerText;
+        trHead.appendChild(th);
+    });
+    
+    const thActions = document.createElement('th');
+    thActions.className = 'px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider';
+    thActions.textContent = 'Hành động';
+    trHead.appendChild(thActions);
+
+    thead.appendChild(trHead);
     table.appendChild(thead);
 
+    // Create table body
     const tbody = document.createElement('tbody');
-    tbody.className = 'text-gray-700';
-    
+    tbody.className = 'bg-white divide-y divide-gray-200';
+
     if (data.length === 0) {
         const tr = document.createElement('tr');
         const td = document.createElement('td');
-        td.colSpan = headerKeys.length + 2; // +2 for STT and Actions
-        td.className = 'py-4 px-4 text-center text-gray-500';
-        td.textContent = 'Không có dữ liệu';
+        td.colSpan = Object.keys(headers).length + 2; // +2 for # and Actions columns
+        td.className = 'px-6 py-4 text-center text-gray-500';
+        td.textContent = 'Không có dữ liệu.';
         tr.appendChild(td);
         tbody.appendChild(tr);
     } else {
-        data.forEach((item, index) => {
-            const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-green-50';
+        data.forEach((row, index) => {
             const tr = document.createElement('tr');
-            tr.className = rowClass;
+            tr.className = index % 2 === 0 ? 'bg-white' : 'bg-green-50'; // Alternating row colors
+            tr.classList.add('hover:bg-green-100');
+            
+            // Number cell
+            const tdNum = document.createElement('td');
+            tdNum.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-700';
+            tdNum.textContent = (currentPage - 1) * pageSize + index + 1;
+            tr.appendChild(tdNum);
 
-            // STT cell
-            const tdStt = document.createElement('td');
-            tdStt.className = 'py-3 px-4 text-center';
-            tdStt.textContent = (page - 1) * pageSize + index + 1;
-            tr.appendChild(tdStt);
-
-            // Data cells
-            headerKeys.forEach(key => {
+            Object.keys(headers).forEach(key => {
                 const td = document.createElement('td');
-                const value = item[key];
- 
-                     // 1. Check for numbers
-                     if (typeof value === 'number') {
-                         td.textContent = value.toLocaleString('vi-VN');
-                         td.className = 'py-3 px-4 text-right';
-                     }
-                     // 2. Check for date-like strings (e.g., YYYY-MM-DD) or Firebase Timestamps
-                     else if ((typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) && !isNaN(new Date(value).getTime())) || (value && typeof value.toDate === 'function')) {
-                         td.textContent = formatDate(value); // Use existing formatDate function
-                         td.className = 'py-3 px-4 text-center';
-                     }
-                     // 3. Default for other values
-                     else {
-                         td.textContent = value || '';
-                         td.className = 'py-3 px-4 text-left';
-                     }
+                td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
+                td.textContent = row[key] || '';
                 tr.appendChild(td);
             });
 
-            // Action cell
-            const tdAction = document.createElement('td');
-            tdAction.className = 'py-3 px-4';
-            tdAction.innerHTML = `
-            <div class="flex items-center justify-center space-x-2">
-                <button class="edit-btn p-1 hover:bg-gray-200 rounded-full" data-id="${item.id}" title="Sửa">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
-                </button>
-                <button class="delete-btn p-1 hover:bg-gray-200 rounded-full" data-id="${item.id}" title="Xóa">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                </button>
-            </div>
-            `;
-            tr.appendChild(tdAction);
+            // Action buttons cell
+            const tdActions = document.createElement('td');
+            tdActions.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2';
+
+            const editButton = document.createElement('button');
+            editButton.title = 'Chỉnh sửa';
+            editButton.innerHTML = ICONS.EDIT; // Use icon from JS module
+            editButton.onclick = () => onAction('edit', row.id, row);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.title = 'Xóa';
+            deleteButton.innerHTML = ICONS.DELETE; // Use icon from JS module
+            deleteButton.onclick = () => onAction('delete', row.id, row);
+
+            tdActions.appendChild(editButton);
+            tdActions.appendChild(deleteButton);
+            tr.appendChild(tdActions);
+
             tbody.appendChild(tr);
         });
     }
+
     table.appendChild(tbody);
+
     return table;
-}
-
-/**
- * Opens a modal for adding, editing, or deleting an item.
- * @param {'add'|'edit'|'delete'} mode - The mode of the modal.
- * @param {string} collectionName - The Firestore collection name.
- * @param {Object} headers - Object mapping data keys to display labels for form fields.
- * @param {Object|null} data - The data for the item (for 'edit' and 'delete').
- * @param {Function} onComplete - Callback function to run after a successful operation.
- */
-export async function openModal(mode, collectionName, headers, data, onComplete) {
-    const modal = document.getElementById('form-modal');
-    const titleEl = document.getElementById('form-title');
-    const form = document.getElementById('item-form');
-    const formFields = document.getElementById('form-fields');
-    const submitBtn = document.getElementById('submit-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-
-    if (!modal || !titleEl || !form || !formFields || !submitBtn || !cancelBtn) {
-        return console.error('Modal elements not found!');
-    }
-
-    form.reset();
-    formFields.innerHTML = '';
-    const closeModal = () => modal.classList.add('hidden');
-
-    cancelBtn.onclick = closeModal;
-
-    if (mode === 'delete') {
-        titleEl.textContent = 'Xác nhận xóa';
-        formFields.innerHTML = '<p>Bạn có chắc chắn muốn xóa mục này không?</p>';
-        submitBtn.textContent = 'Xóa';
-        submitBtn.className = 'btn btn-danger'; // Use full classes
-
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            // API call to DELETE
-            closeModal();
-            if (onComplete) onComplete();
-        };
-    } else {
-        // Reset submit button classes for add/edit
-        submitBtn.className = 'btn btn-primary btn-save';
-
-        // Generate form fields for 'add' and 'edit' modes
-        for (const [key, label] of Object.entries(headers)) {
-            const fieldContainer = document.createElement('div');
-            fieldContainer.className = 'mb-4 text-left';
-            fieldContainer.innerHTML = `
-                <label for="field-${key}" class="block text-gray-700 text-sm font-bold mb-2">${label}</label>
-                <input type="text" id="field-${key}" name="${key}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            `;
-            formFields.appendChild(fieldContainer);
-        }
-
-        if (mode === 'add') {
-            titleEl.textContent = 'Thêm mục mới';
-            submitBtn.textContent = 'Lưu';
-            
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const formData = new FormData(form);
-                const postData = Object.fromEntries(formData.entries());
-                // API call to POST
-                showAlert('success', 'Đã thêm thành công!');
-                closeModal();
-                if (onComplete) onComplete();
-            };
-        } else if (mode === 'edit') {
-            titleEl.textContent = 'Chỉnh sửa mục';
-            submitBtn.textContent = 'Cập nhật';
-
-            // Populate form with existing data
-            for (const key of Object.keys(headers)) {
-                const input = form.querySelector(`#field-${key}`);
-                if (input && data[key]) {
-                    input.value = data[key];
-                }
-            }
-
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const formData = new FormData(form);
-                const updateData = Object.fromEntries(formData.entries());
-                // API call to PUT
-                showAlert('success', 'Đã cập nhật thành công!');
-                closeModal();
-                if (onComplete) onComplete();
-            };
-        }
-    }
-
-    modal.classList.remove('hidden');
 }

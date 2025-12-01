@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './utils.js';
 /**
  * Global state to hold the library data.
  */
@@ -166,17 +167,12 @@ async function handleAddBook(event) {
     bookData.compIndex = parseInt(bookData.compIndex, 10);
 
     try {
-        const response = await fetch('/api/books', {
+        const uri = `/api/books`;        
+        const newBook = await authenticatedFetch(uri, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-API-KEY': window.API_KEY
-             },
+            headers: { 'X-Action-Identifier': 'CREATE_BOOK' },
             body: JSON.stringify(bookData)
-        });
-
-        if (!response.ok) throw new Error('Failed to add book.');
-        const newBook = await response.json();
+        });        
         allBooks.push(newBook);
         filterAndRender();
         hideModal('add-book-modal');
@@ -199,17 +195,12 @@ async function handleUpdateBook(event) {
     updatedData.compIndex = currentSelectedBook.compIndex;
 
     try {
-        const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
+        const uri = `/api/books/${currentSelectedBook.id}`;        
+        const updatedBook = await authenticatedFetch(uri, {
             method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-API-KEY': window.API_KEY
-            },
-            body: JSON.stringify(updatedData)
-        });
-
-        if (!response.ok) throw new Error('Failed to update book.');
-        const updatedBook = await response.json();
+            headers: { 'X-Action-Identifier': 'UPDATE_BOOK' },
+            body: JSON.stringify(bookData)
+        });        ;
 
         const index = allBooks.findIndex(b => b.id === updatedBook.id);
         if (index !== -1) allBooks[index] = updatedBook;
@@ -226,16 +217,12 @@ async function handleDeleteBook() {
     if (!currentSelectedBook) return;
 
     if (confirm(`Bạn có chắc chắn muốn xóa sách "${(currentSelectedBook.title || 'Untitled Book')}"?`)) {
-        try {
-            const response = await fetch(`/api/books/${currentSelectedBook.id}`, {
+        try {           
+            const uri = `/api/books/${currentSelectedBook.id}`;        
+            await authenticatedFetch(uri, {
                 method: 'DELETE',
-                headers: {
-                    'X-API-KEY': window.API_KEY
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete book.');
-
+                headers: { 'X-Action-Identifier': 'DELETE_BOOK' }
+            });        ;
             allBooks = allBooks.filter(b => b.id !== currentSelectedBook.id);
             
             filterAndRender();

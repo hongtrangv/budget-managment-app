@@ -3,6 +3,7 @@ import datetime
 from flask import Blueprint, request, jsonify
 from openai import OpenAI
 from firebase_admin import firestore
+from src.api.auth import require_api_key # Import decorator
 
 # Import the database object from your firebase_config
 from src.database.firebase_config import db
@@ -10,8 +11,6 @@ from src.database.firebase_config import db
 chatbot_bp = Blueprint('chatbot_bp', __name__)
 
 # Initialize the OpenAI client
-# IMPORTANT: Your OpenAI API key must be set as an environment variable 
-# named OPENAI_API_KEY for this to work.
 try:
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     client.models.list() # Test the client connection
@@ -20,6 +19,7 @@ except Exception as e:
     client = None
 
 @chatbot_bp.route('/api/chatbot', methods=['POST'])
+@require_api_key # Protect this endpoint
 def handle_chat():
     """Handles incoming chat messages, gets a reply from OpenAI, and saves the interaction."""
     if not client:
@@ -42,11 +42,11 @@ def handle_chat():
         )
         bot_reply = completion.choices[0].message.content
 
-        # 2. Save the conversation to Firestore with consistent field names
+        # 2. Save the conversation to Firestore
         chat_ref = db.collection('chat_history').document()
         chat_ref.set({
-            'message': user_message, # Use 'message' for user
-            'reply': bot_reply,      # Use 'reply' for bot
+            'message': user_message,
+            'reply': bot_reply,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
 
@@ -55,7 +55,6 @@ def handle_chat():
 
     except Exception as e:
         print(f"ERROR: An error occurred during chatbot processing: {e}")
-        # Also return a user-friendly message in the chat itself
         error_reply = f"Rất tiếc, đã có lỗi xảy ra khi xử lý yêu cầu của bạn. Lỗi: {e}"
         return jsonify({"reply": error_reply})
 

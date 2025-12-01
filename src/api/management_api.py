@@ -2,6 +2,7 @@ import uuid
 from flask import Blueprint, jsonify, request
 from src.database.firestore_queries import ManagementTree
 from datetime import datetime
+from src.api.auth import require_api_key, require_action # Import decorators
 
 # Create a Blueprint for the management APIs
 management_bp = Blueprint('management_api', __name__)
@@ -27,6 +28,8 @@ def get_items(year, month):
         return jsonify({"error": "Failed to fetch items"}), 500
 
 @management_bp.route("/api/management/items", methods=['POST'])
+@require_api_key
+@require_action
 def add_new_item():
     """Creates a new expense item."""
     try:
@@ -53,7 +56,7 @@ def add_new_item():
             return jsonify({"error": "Missing data: year, month, type, name, amount, or date"}), 400
 
         record_data = {
-            'id': str(uuid.uuid4()), # Assign a unique ID
+            'id': str(uuid.uuid4()),
             'name': item_name,
             'amount': amount,
             'date': date_str
@@ -74,6 +77,8 @@ def add_new_item():
         return jsonify({"error": "Failed to create new item"}), 500
 
 @management_bp.route("/api/management/record", methods=['DELETE'])
+@require_api_key
+@require_action
 def delete_record():
     """Deletes a specific record from a type item."""
     try:
@@ -94,6 +99,8 @@ def delete_record():
         return jsonify({"error": f"Failed to delete record: {e}"}), 500
 
 @management_bp.route("/api/management/record", methods=['PUT'])
+@require_api_key
+@require_action
 def update_record():
     """Updates a specific record."""
     try:
@@ -107,7 +114,6 @@ def update_record():
         if not all([year, month, type_id, record_id, record_data]):
             return jsonify({"error": "Missing required fields for update"}), 400
 
-        # Ensure amount is an integer
         if 'amount' in record_data:
             record_data['amount'] = int(record_data['amount'])
         

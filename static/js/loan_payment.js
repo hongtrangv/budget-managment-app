@@ -1,4 +1,4 @@
-import { showAlert, formatCurrency,formatDateToYMD } from './utils.js';
+import { showAlert, formatCurrency,formatDateToYMD,authenticatedFetch } from './utils.js';
 
 /**
  * Fetches the list of active loans from the server.
@@ -95,18 +95,14 @@ function setupPaymentForm() {
         }
 
         try {
-            const response = await fetch('/api/loans/payments', {
+            const uri = `/api/loans/payments`;        
+            await authenticatedFetch(uri, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                headers: { 
+                    
+                    'X-Action-Identifier': 'ADD_LOAN_PAYMENT' },
+                body: JSON.stringify(data)
             });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'An unknown error occurred.');
-            }
-
             showAlert('success', 'Đã ghi nhận thanh toán thành công!');
             form.reset(); // Reset form fields
             dateInput.valueAsDate = new Date(); // Re-set date after reset

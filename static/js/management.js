@@ -1,4 +1,4 @@
-import { showAlert, formatDate } from './utils.js';
+import { showAlert, formatDate, authenticatedFetch } from './utils.js';
 
 let mgmtState = { 
     activeMonthLink: null,
@@ -267,8 +267,12 @@ async function handleMgmtFormSubmit(event) {
     data.month = mgmtState.activeMonth;
 
     try {
-        const response = await fetch('/api/management/items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        if (!response.ok) throw new Error((await response.json()).error || 'Không thể tạo mục mới.');
+        const uri = `/api/management/items`;        
+        await authenticatedFetch(uri, {
+            method: 'POST',
+            headers: { 'X-Action-Identifier': 'ADD_MANAGEMENT_ITEM' },
+            body: JSON.stringify(data)
+        });
         showAlert('success', 'Tạo mục mới thành công!');
         await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
     } catch (error) {

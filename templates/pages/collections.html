@@ -1,6 +1,6 @@
 <!-- src/pages/collections.html -->
 <div>
-<button id="add-new-btn" class="btn btn-primary">
+<button id="add-new-item-btn" class="btn btn-primary">
     {{ 
         icons.ADD | safe 
     }}
@@ -8,7 +8,8 @@
 </div>
 <div class="overflow-x-auto shadow-lg rounded-lg"
     id="collections-content" 
-    data-headers='{"name":"Danh mục thu chi"}'>
+    data-headers='{"name":"Danh mục thu chi"}'
+    data-collection='items'>
     <!-- Bảng dữ liệu sẽ được chèn vào đây bởi JavaScript -->
 </div>
 

@@ -29,9 +29,12 @@ def get_redis_client():
         print(f"Connecting to Redis on Render port... {url.port}")
         print(f"Connecting to Redis on Render pass... {url.password}")
         # Create a Redis client instance. Render provides SSL-enabled Redis.
-        redis_client = redis.from_url(redis_url,           
-            socket_connect_timeout=5,
-            decode_responses=True # Decode responses to UTF-8 by default
+        r = redis.Redis(
+            host=url.hostname,
+            port=url.port,
+            password=url.password,
+            ssl=True,
+            ssl_cert_reqs=None  # tránh lỗi cert
         )
 
         # Ping the Redis server to check the connection

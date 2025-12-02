@@ -199,7 +199,7 @@ async function handleUpdateBook(event) {
         const updatedBook = await authenticatedFetch(uri, {
             method: 'PUT',
             headers: { 'X-Action-Identifier': 'UPDATE_BOOK' },
-            body: JSON.stringify(bookData)
+            body: JSON.stringify(updatedData)
         });        ;
 
         const index = allBooks.findIndex(b => b.id === updatedBook.id);

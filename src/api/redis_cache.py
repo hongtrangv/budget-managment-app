@@ -24,7 +24,9 @@ def get_redis_client():
     try:
         # Parse the Redis URL
         url = urlparse(redis_url)
-
+        print(f"Connecting to Redis on Render... {url.hostname}")
+        print(f"Connecting to Redis on Render... {url.port}")
+        print(f"Connecting to Redis on Render... {url.password}")
         # Create a Redis client instance. Render provides SSL-enabled Redis.
         redis_client = redis.Redis(
             host=url.hostname,

@@ -10,4 +10,4 @@ gunicorn
 openai
 bleach
 
-redis
+redis>=5.0

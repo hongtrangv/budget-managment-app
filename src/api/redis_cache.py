@@ -28,9 +28,7 @@ def get_redis_client():
         redis_client = redis.Redis(
             host=url.hostname,
             port=url.port,
-            password=url.password,
-            ssl=True,
-            ssl_cert_reqs=None  # tránh lỗi cert
+            password=url.password
         )
         success = redis_client.set('foo', 'bar')
         # True

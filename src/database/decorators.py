@@ -66,7 +66,7 @@ def cached_query(func):
             return func(*args, **kwargs)
 
         cached_version = redis_client.get(version_key)
-
+        print(f"Firestore version: {firestore_version}, Cached version: {cached_version}")
         if firestore_version and cached_version and str(firestore_version) == cached_version:
             cached_data = redis_client.get(cache_key)
             if cached_data:

@@ -9,3 +9,5 @@ firebase-admin
 gunicorn
 openai
 bleach
+
+redis

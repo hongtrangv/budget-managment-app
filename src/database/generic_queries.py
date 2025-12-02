@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from .firebase_config import db
+from .decorators import update_metadata_on_change, cached_query
 import traceback
 import bleach
 
@@ -10,7 +11,9 @@ class CRUDApi:
     """
     def __init__(self, collection_name):
         self.collection = db.collection(collection_name)
+        self.collection_name = collection_name
 
+    @cached_query
     def get_all(self):
         """Fetches all documents from the collection."""
         try:
@@ -20,6 +23,7 @@ class CRUDApi:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @update_metadata_on_change
     def create(self):
         """
         Creates a new document from request JSON, and returns the document
@@ -57,6 +61,7 @@ class CRUDApi:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @update_metadata_on_change
     def update(self, doc_id):
         """Updates an existing document by its ID."""
         try:
@@ -73,6 +78,7 @@ class CRUDApi:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @update_metadata_on_change
     def delete(self, doc_id):
         """Deletes a document by its ID."""
         try:

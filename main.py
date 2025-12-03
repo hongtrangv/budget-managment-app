@@ -14,6 +14,7 @@ from src.api.dashboard_api import report_bp
 from src.api.chatbot_api import chatbot_bp
 from src.api.loan_api import loan_bp
 from src.api.books_api import books_bp
+from src.api.genre_api import genre_api_blueprint # Import the new genre blueprint
 
 app = Flask(__name__,
             template_folder='templates',
@@ -36,6 +37,9 @@ app.register_blueprint(report_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(loan_bp)
 app.register_blueprint(books_bp)
+
+# Register the new genre blueprint with a URL prefix
+app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 
 
 # === VIEW ROUTES ===

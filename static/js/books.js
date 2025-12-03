@@ -15,18 +15,18 @@ async function fetchGenres() {
         return; // Use cached genres
     }
     try {
-        // Fetch all genres at once, assuming the list isn't excessively long.
-        const response = await fetch('/api/collections/genre/documents?pageSize=1000');
+        // UPDATED: Use the new, cached endpoint for genres
+        const response = await fetch('/api/genres/');
         if (!response.ok) {
             throw new Error('Could not fetch genres.');
         }
-        const result = await response.json();
-        allGenres = result.data || [];
+        // The new endpoint returns a list of genres directly
+        allGenres = await response.json();
     } catch (error) {
         console.error('Error fetching genres:', error);
-        // Optionally show an alert to the user
     }
 }
+
 
 /**
  * Creates a <select> dropdown for genres.
@@ -161,18 +161,15 @@ async function handleAddBook(event) {
     bookData.rowIndex = parseInt(bookData.rowIndex, 10);
     bookData.unitIndex = parseInt(bookData.unitIndex, 10);
     bookData.compIndex = parseInt(bookData.compIndex, 10);
-
-    // Get rating from the star component
     const ratingContainer = document.getElementById('add-book-rating-container').querySelector('.star-rating-input');
     bookData.rating = ratingContainer ? parseInt(ratingContainer.dataset.rating, 10) : 0;
 
     try {
-        const uri = `/api/books`;        
-        const newBook = await authenticatedFetch(uri, {
+        const response = await authenticatedFetch('/api/books', {
             method: 'POST',
-            headers: { 'X-Action-Identifier': 'CREATE_BOOK' },
             body: JSON.stringify(bookData)
-        });        
+        });
+        const newBook = await response.json();
         allBooks.push(newBook);
         filterAndRender();
         hideModal('add-book-modal');
@@ -187,22 +184,18 @@ async function handleUpdateBook(event) {
     const form = document.getElementById('edit-book-form');
     const formData = new FormData(form);
     const updatedData = Object.fromEntries(formData.entries());
-
-    // Get rating from the star component
     const ratingContainer = document.getElementById('edit-book-rating-container').querySelector('.star-rating-input');
     updatedData.rating = ratingContainer ? parseInt(ratingContainer.dataset.rating, 10) : 0;
-    
     updatedData.rowIndex = currentSelectedBook.rowIndex;
     updatedData.unitIndex = currentSelectedBook.unitIndex;
     updatedData.compIndex = currentSelectedBook.compIndex;
 
     try {
-
-        const updatedBook = await authenticatedFetch(uri, {
+        const response = await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, {
             method: 'PUT',
-            headers: { 'X-Action-Identifier': 'UPDATE_BOOK' },
             body: JSON.stringify(updatedData)
-        });        ;
+        });
+        const updatedBook = await response.json();
         const index = allBooks.findIndex(b => b.id === updatedBook.id);
         if (index !== -1) allBooks[index] = updatedBook;
         filterAndRender();
@@ -216,13 +209,8 @@ async function handleDeleteBook() {
     if (!currentSelectedBook) return;
     if (confirm(`Bạn có chắc chắn muốn xóa sách "${(currentSelectedBook.title || 'Untitled Book')}"?`)) {
         try {
-            const uri = `/api/books/${currentSelectedBook.id}`;        
-            await authenticatedFetch(uri, {
-                method: 'DELETE',
-                headers: { 'X-Action-Identifier': 'DELETE_BOOK' }
-            });        ;
+            await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, { method: 'DELETE' });
             allBooks = allBooks.filter(b => b.id !== currentSelectedBook.id);
-            
             filterAndRender();
             hideModal('book-info-modal');
         } catch (error) {

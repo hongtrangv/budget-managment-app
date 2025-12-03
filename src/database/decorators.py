@@ -32,8 +32,7 @@ def update_metadata_on_change(func):
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
         
-        collection_name = _get_collection_name(func, args, kwargs)
-
+        collection_name = _get_collection_name(func, args, kwargs)        
         if collection_name:
             db = firestore.client()
             metadata_ref = db.collection('metadata').document(collection_name)
@@ -56,7 +55,7 @@ def cached_query(func):
         db = firestore.client()
         cache_key = f"cache:{collection_name}"
         version_key = f"version:{collection_name}"
-
+        print(f"Checking cache for '{collection_name}'...")
         try:
             metadata_ref = db.collection('metadata').document(collection_name)
             metadata_doc = metadata_ref.get()

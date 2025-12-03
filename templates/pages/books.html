@@ -1,4 +1,3 @@
-
 <!-- Link to the specific CSS for this page -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/books.css') }}?v=1.3">
 
@@ -9,7 +8,6 @@
     <!-- Statistics Section -->
     <div class="library-stats">
         <div class="stat-item">
-            <!-- The count will be populated by JavaScript -->
             <span class="stat-value" id="total-books-count">...</span> 
             <span class="stat-label">Quyển Sách</span>
         </div>
@@ -28,10 +26,9 @@
     </div>
 </div>
 
-<!-- The main container where the bookshelf units will be rendered by JavaScript -->
 <main id="library-container" class="library-container"></main>
 
-<!-- UPDATED Modal for displaying/editing book details (hidden by default) -->
+<!-- Modal for displaying/editing book details -->
 <div id="book-info-modal" class="book-modal">
     <div class="modal-content-info">
         <button class="modal-close-btn">&times;</button>
@@ -43,7 +40,9 @@
                 <div class="modal-book-info">
                     <h2 id="modal-book-title-view" class="modal-book-title"></h2>
                     <p id="modal-book-author-view" class="modal-book-author"></p>
-                    <p id="modal-book-description-view" class="modal-book-description"></p>
+                    <p id="modal-book-genre-view" class="modal-book-meta"></p>
+                    <div id="modal-book-rating-view" class="modal-book-meta"></div>
+                    <p id="modal-book-description-view" class="modal-book-description mt-4"></p>
                 </div>
             </div>
             <div class="modal-footer-add">
@@ -52,7 +51,7 @@
             </div>
         </div>
 
-        <!-- Edit Mode (hidden by default) -->
+        <!-- Edit Mode -->
         <div id="modal-edit-mode" style="display: none;">
             <form id="edit-book-form" class="modal-form-add">
                 <input type="hidden" id="edit-book-id">
@@ -65,6 +64,17 @@
                 <div class="form-group-add">
                     <label for="edit-book-author" class="form-label-add">Tác giả</label>
                     <input type="text" id="edit-book-author" name="author" required class="form-input-add">
+                </div>
+
+                <!-- UPDATED: Placeholder for genre dropdown -->
+                <div class="form-group-add">
+                    <label for="edit-book-genre-container" class="form-label-add">Thể loại</label>
+                    <div id="edit-book-genre-container"></div>
+                </div>
+
+                <div class="form-group-add">
+                    <label class="form-label-add">Đánh giá</label>
+                    <div id="edit-book-rating-container"></div>
                 </div>
 
                 <div class="form-group-add">
@@ -87,50 +97,53 @@
 </div>
 
 
-<!-- Modal for Adding a New Book (hidden by default) -->
+<!-- Modal for Adding a New Book -->
 <div id="add-book-modal" class="book-modal">
     <div class="modal-content-add">
-        <!-- Modal Header -->
         <div class="modal-header-add">
             <div>
                 <h3 class="modal-title-add">Thêm Sách Mới</h3>
-                <p class="modal-subtitle-add">Thêm vào vị trí: <strong id="form-location-text"></strong></p>
+                <p class="modal-subtitle-add">Vào vị trí: <strong id="form-location-text"></strong></p>
             </div>
             <button type="button" class="modal-close-btn-add">&times;</button>
         </div>
 
-        <!-- Modal Body - Form -->
         <form id="add-book-form" class="modal-form-add">
-            <!-- Hidden fields -->
             <input type="hidden" id="form-row-index" name="rowIndex">
             <input type="hidden" id="form-unit-index" name="unitIndex">
             <input type="hidden" id="form-comp-index" name="compIndex">
 
-            <!-- Form Group -->
             <div class="form-group-add">
-                <label for="book-title" class="form-label-add">Tiêu đề</label>
-                <input type="text" id="book-title" name="title" required class="form-input-add">
+                <label for="add-book-title" class="form-label-add">Tiêu đề</label>
+                <input type="text" id="add-book-title" name="title" required class="form-input-add">
             </div>
 
-            <!-- Form Group -->
             <div class="form-group-add">
-                <label for="book-author" class="form-label-add">Tác giả</label>
-                <input type="text" id="book-author" name="author" required class="form-input-add">
+                <label for="add-book-author" class="form-label-add">Tác giả</label>
+                <input type="text" id="add-book-author" name="author" required class="form-input-add">
             </div>
 
-            <!-- Form Group -->
+            <!-- UPDATED: Placeholder for genre dropdown -->
             <div class="form-group-add">
-                <label for="book-description" class="form-label-add">Mô tả</label>
-                <textarea id="book-description" name="description" rows="3" class="form-input-add"></textarea>
+                <label for="add-book-genre-container" class="form-label-add">Thể loại</label>
+                <div id="add-book-genre-container"></div>
             </div>
 
-            <!-- Form Group -->
             <div class="form-group-add">
-                <label for="book-cover" class="form-label-add">URL Ảnh bìa</label>
-                <input type="url" id="book-cover" name="coverImage" class="form-input-add" placeholder="https://example.com/image.jpg">
+                <label class="form-label-add">Đánh giá</label>
+                <div id="add-book-rating-container"></div>
+            </div>
+
+            <div class="form-group-add">
+                <label for="add-book-description" class="form-label-add">Mô tả</label>
+                <textarea id="add-book-description" name="description" rows="3" class="form-input-add"></textarea>
+            </div>
+
+            <div class="form-group-add">
+                <label for="add-book-cover" class="form-label-add">URL Ảnh bìa</label>
+                <input type="url" id="add-book-cover" name="coverImage" class="form-input-add" placeholder="https://example.com/image.jpg">
             </div>
             
-            <!-- Modal Footer -->
             <div class="modal-footer-add">
                 <button type="submit" class="btn btn-primary btn-save">Lưu Sách</button>
             </div>
@@ -140,3 +153,5 @@
 
 <!-- Link to the specific JavaScript for this page -->
 <script type="module" src="{{ url_for('static', filename='js/books.js') }}"></script>
+<!-- UPDATED: Script path -->
+<script type="module" src="{{ url_for('static', filename='js/components/uiStars.js') }}"></script>

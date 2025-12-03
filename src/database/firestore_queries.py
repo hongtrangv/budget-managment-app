@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 import math
 import bleach
+from .decorators import update_metadata_on_change
 
 # Helper function to sanitize dictionaries
 def sanitize_dict(data):
@@ -85,7 +86,8 @@ class DocumentHandler:
             print(f"Error getting paginated documents from {collection_name}: {e}")
             return {'data': [], 'last_doc_id': None, 'total_records': 0, 'total_pages': 0}
 
-    @staticmethod    
+    @staticmethod
+    @update_metadata_on_change    
     def add_document_to_collection(collection_name, data):
         """Adds a new document with a specified ID."""
         try:

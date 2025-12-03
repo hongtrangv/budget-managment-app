@@ -29,15 +29,7 @@ def get_redis_client():
             host=url.hostname,
             port=url.port,
             password=url.password
-        )
-        success = redis_client.set('foo', 'bar')
-        # True
-
-        result = redis_client.get('foo')
-        print(result)       
-
-        # Ping the Redis server to check the connection
-        redis_client.ping()
+        )               
         print("Successfully connected to Redis on Render!")
         return redis_client
 

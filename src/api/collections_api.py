@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from src.database.firestore_queries import DocumentHandler
+from src.database.generic_queries import CRUDApi
 from src.api.auth import require_api_key, require_action # Import decorators
 
 # Create a Blueprint for the collections API
@@ -28,8 +29,9 @@ def get_documents(collection_name):
 def get_items_for_dropdown():
     """API endpoint to get all items from the 'items' collection for dropdowns."""
     try:
-        items = DocumentHandler.get_all_documents_from_collection('items')
-        return jsonify(items)
+        #items = DocumentHandler.get_all_documents_from_collection('items')
+        return CRUDApi('items').get_all()
+        #return jsonify(items)
     except Exception as e:
         print(f"Error fetching items: {e}")
         return jsonify({"error": str(e)}), 500
@@ -42,12 +44,7 @@ def get_items_for_dropdown():
 def add_document(collection_name):
     """Adds a new document to a collection."""
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid JSON data"}), 400
-        
-        doc_id = DocumentHandler.add_document_to_collection(collection_name, data)
-        return jsonify({"success": True, "id": doc_id}), 201
+        return CRUDApi(collection_name).create();        
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 409 # 409 Conflict for existing doc
     except Exception as e:
@@ -60,12 +57,7 @@ def add_document(collection_name):
 def update_document(collection_name, document_id):
     """Updates a document."""
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid data"}), 400
-        
-        result_id = DocumentHandler.update_document_in_collection(collection_name, document_id, data)
-        return jsonify({"success": True, "id": result_id})
+        return CRUDApi(collection_name).update(document_id)
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 409 # Conflict
     except Exception as e:
@@ -78,10 +70,7 @@ def update_document(collection_name, document_id):
 def delete_document(collection_name, document_id):
     """Deletes a document."""
     try:
-        if DocumentHandler.delete_document_from_collection(collection_name, document_id):
-            return jsonify({"success": True})
-        else:
-            return jsonify({"error": "Failed to delete document"}), 500
+        return CRUDApi(collection_name).delete(document_id)
     except Exception as e:
         print(f"Error deleting document: {e}")
         return jsonify({"error": "Failed to delete document"}), 500

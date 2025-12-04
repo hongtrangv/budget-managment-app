@@ -9,7 +9,6 @@ from src.api.auth import require_api_key # Import decorator
 from src.database.firebase_config import db
 
 chatbot_bp = Blueprint('chatbot_bp', __name__)
-
 # Initialize the OpenAI client
 try:
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))

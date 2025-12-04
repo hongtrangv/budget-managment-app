@@ -167,6 +167,7 @@ async function handleAddBook(event) {
     try {
         const response = await authenticatedFetch('/api/books', {
             method: 'POST',
+            headers: { 'X-Action-Identifier': 'CREATE_BOOK' }, 
             body: JSON.stringify(bookData)
         });
         const newBook = await response.json();
@@ -180,6 +181,8 @@ async function handleAddBook(event) {
 
 async function handleUpdateBook(event) {
     event.preventDefault();
+    await generalDescription();   
+
     if (!currentSelectedBook) return;
     const form = document.getElementById('edit-book-form');
     const formData = new FormData(form);
@@ -191,8 +194,10 @@ async function handleUpdateBook(event) {
     updatedData.compIndex = currentSelectedBook.compIndex;
 
     try {
-        const response = await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, {
+        const response = await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, 
+            {
             method: 'PUT',
+            headers: { 'X-Action-Identifier': 'UPDATE_BOOK' }, 
             body: JSON.stringify(updatedData)
         });
         const updatedBook = await response.json();
@@ -209,13 +214,36 @@ async function handleDeleteBook() {
     if (!currentSelectedBook) return;
     if (confirm(`Bạn có chắc chắn muốn xóa sách "${(currentSelectedBook.title || 'Untitled Book')}"?`)) {
         try {
-            await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, { method: 'DELETE' });
+            await authenticatedFetch(`/api/books/${currentSelectedBook.id}`,{
+                headers: { 'X-Action-Identifier': 'DELETE_BOOK' }, 
+                method: 'DELETE'} );
             allBooks = allBooks.filter(b => b.id !== currentSelectedBook.id);
             filterAndRender();
             hideModal('book-info-modal');
         } catch (error) {
             console.error("Error deleting book:", error);
         }
+    }
+}
+
+async function generalDescription(){
+    const title =document.getElementById('edit-book-title');
+    const author = document.getElementById('edit-book-author');
+    const description = document.getElementById('edit-book-description')
+    if (description.value != '') return;
+    let message = `Bạn là chuyên gia phân tích văn học. Bạn tóm tắt giúp tôi tác phần ${title.value} của tác giả ${author.value} trong 100 từ`;
+    try {
+        const response = await authenticatedFetch('/api/chatbot', {
+            method: 'POST',            
+            body: JSON.stringify({ message: message }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Network response was not ok');
+        description.value = data.reply;
+    } catch (error) {
+        console.error('Error sending message:', error);
+        
+    } finally {        
     }
 }
 

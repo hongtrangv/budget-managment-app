@@ -1,4 +1,4 @@
-import { showAlert } from './utils.js';
+import { showAlert, authenticatedFetch } from './utils.js';
 
 // This single function will initialize the entire chatbot widget logic.
 export function initializeChatbotWidget() {
@@ -59,10 +59,10 @@ export function initializeChatbotWidget() {
         chatInput.disabled = true;
 
         try {
-            const response = await fetch('/api/chatbot', {
+           
+            const response = await authenticatedFetch('/api/chatbot', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message }),
+                body: JSON.stringify({ message: message })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Network response was not ok');

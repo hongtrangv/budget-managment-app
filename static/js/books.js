@@ -155,7 +155,7 @@ export async function loadAndRenderLibrary() {
 
 async function handleAddBook(event) {
     event.preventDefault();
-    await generalDescription()
+    await generalDescription();
     const form = document.getElementById('add-book-form');
     const formData = new FormData(form);
     const bookData = Object.fromEntries(formData.entries());

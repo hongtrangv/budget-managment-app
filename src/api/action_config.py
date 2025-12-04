@@ -17,9 +17,9 @@ ACTION_CONFIG = {
     'loan_api.add_loan_payment': ['ADD_LOAN_PAYMENT'],
 
     # === Management API Endpoints ===
-    'management_api.add_management_item': ['ADD_MANAGEMENT_ITEM'],
-    'management_api.update_management_record': ['UPDATE_MANAGEMENT_RECORD'],
-    'management_api.delete_management_record': ['DELETE_MANAGEMENT_RECORD'],
+    'management_api.add_new_item': ['ADD_MANAGEMENT_ITEM'],
+    'management_api.update_record': ['UPDATE_MANAGEMENT_RECORD'],
+    'management_api.delete_record': ['DELETE_MANAGEMENT_RECORD'],
 
     # === Collections API Endpoints ===
     'collections_api.add_document': ['ADD_COLLECTION_DOCUMENT'],

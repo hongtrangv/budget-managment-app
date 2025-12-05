@@ -29,11 +29,14 @@ def handle_chat():
         return jsonify({"error": "Message is required in the request body."}), 400
 
     user_message = data['message']
+    
+    # Get model from environment or use default
+    model = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
 
     try:
         # 1. Get bot's reply from OpenAI
         completion = client.chat.completions.create(
-            model=os.environ.get("OPENAI_MODEL"),
+            model=model,
             messages=[
                 {"role": "system", "content": "Bạn là chuyên gia AI. Chuyên tư vấn và giải đáp các thắc mắc về tài chính học tập, chuyên gia tiếng anh"},
                 {"role": "user", "content": user_message}
@@ -41,21 +44,25 @@ def handle_chat():
         )
         bot_reply = completion.choices[0].message.content
 
-        # 2. Save the conversation to Firestore
-        chat_ref = db.collection('chat_history').document()
-        chat_ref.set({
-            'message': user_message,
-            'reply': bot_reply,
-            'timestamp': firestore.SERVER_TIMESTAMP
-        })
+        # 2. Save the conversation to Firestore (async, don't block response)
+        try:
+            chat_ref = db.collection('chat_history').document()
+            chat_ref.set({
+                'message': user_message,
+                'reply': bot_reply,
+                'timestamp': firestore.SERVER_TIMESTAMP
+            })
+        except Exception as db_error:
+            # Log but don't fail the request if saving fails
+            print(f"WARNING: Failed to save chat history: {db_error}")
 
         # 3. Return the bot's reply to the frontend
         return jsonify({"reply": bot_reply})
 
     except Exception as e:
         print(f"ERROR: An error occurred during chatbot processing: {e}")
-        error_reply = f"Rất tiếc, đã có lỗi xảy ra khi xử lý yêu cầu của bạn. Lỗi: {e}"
-        return jsonify({"reply": error_reply})
+        error_reply = "Rất tiếc, đã có lỗi xảy ra khi xử lý yêu cầu của bạn."
+        return jsonify({"reply": error_reply}), 500
 
 @chatbot_bp.route('/api/chatbot/history', methods=['GET'])
 def get_chat_history():

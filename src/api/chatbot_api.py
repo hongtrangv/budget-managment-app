@@ -20,7 +20,7 @@ except Exception as e:
 @chatbot_bp.route('/api/chatbot', methods=['POST'])
 @require_api_key # Protect this endpoint
 def handle_chat():
-    """Handles incoming chat messages, gets a reply from OpenAI, and saves the interaction."""
+    """Handles incoming chat messages, gets a reply from OpenAI, and optionally saves the interaction."""
     if not client:
         return jsonify({"reply": "Lỗi: Chatbot chưa được cấu hình đúng trên máy chủ. Vui lòng liên hệ quản trị viên."}), 200
 
@@ -29,6 +29,8 @@ def handle_chat():
         return jsonify({"error": "Message is required in the request body."}), 400
 
     user_message = data['message']
+    # Check if we should save to history (default: True for backward compatibility)
+    save_history = data.get('saveHistory', True)
     
     # Get model from environment or use default
     model = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
@@ -44,17 +46,18 @@ def handle_chat():
         )
         bot_reply = completion.choices[0].message.content
 
-        # 2. Save the conversation to Firestore (async, don't block response)
-        try:
-            chat_ref = db.collection('chat_history').document()
-            chat_ref.set({
-                'message': user_message,
-                'reply': bot_reply,
-                'timestamp': firestore.SERVER_TIMESTAMP
-            })
-        except Exception as db_error:
-            # Log but don't fail the request if saving fails
-            print(f"WARNING: Failed to save chat history: {db_error}")
+        # 2. Save the conversation to Firestore only if saveHistory is True
+        if save_history:
+            try:
+                chat_ref = db.collection('chat_history').document()
+                chat_ref.set({
+                    'message': user_message,
+                    'reply': bot_reply,
+                    'timestamp': firestore.SERVER_TIMESTAMP
+                })
+            except Exception as db_error:
+                # Log but don't fail the request if saving fails
+                print(f"WARNING: Failed to save chat history: {db_error}")
 
         # 3. Return the bot's reply to the frontend
         return jsonify({"reply": bot_reply})

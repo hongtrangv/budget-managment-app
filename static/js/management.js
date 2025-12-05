@@ -151,8 +151,8 @@ function renderRecordsTable(item) {
                 <td class="py-2 px-4 text-center">${formatDate(record['date']) || 'N/A'}</td>`;
         }
         tableHtml += `<td class="py-3 px-4 flex items-center justify-end space-x-2">
-            <button class="p-1 hover:bg-gray-200 rounded-full edit-btn" data-id="${item.id}" title="Sửa"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-            <button class="p-1 hover:bg-gray-200 rounded-full delete-btn" data-id="${item.id}" title="Xóa"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
+            <button class="p-1 hover:bg-gray-200 rounded-full edit-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Sửa"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+            <button class="p-1 hover:bg-gray-200 rounded-full delete-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Xóa"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
             </td></tr>`;
     });
     tableHtml += '</tbody></table></div>';
@@ -240,6 +240,7 @@ async function loadMonthData(year, month, monthElement) {
         
         attachTabEventListeners();
         attachFormEventListeners(newTabId);
+        attachRecordActionListeners();
 
         if (items && items.length > 0) {
             switchTab(`tab-${items[0].id}`);
@@ -277,6 +278,215 @@ async function handleMgmtFormSubmit(event) {
         await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
     } catch (error) {
         console.error('New item form submission error:', error);
+        showAlert('error', `Lỗi: ${error.message}`);
+    }
+}
+
+/**
+ * Attaches event listeners to edit and delete buttons in record tables
+ */
+function attachRecordActionListeners() {
+    // Edit buttons
+    document.querySelectorAll('.edit-record-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const typeId = e.currentTarget.dataset.typeId;
+            const recordId = e.currentTarget.dataset.recordId;
+            await showEditRecordModal(typeId, recordId);
+        });
+    });
+
+    // Delete buttons
+    document.querySelectorAll('.delete-record-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const typeId = e.currentTarget.dataset.typeId;
+            const recordId = e.currentTarget.dataset.recordId;
+            await handleDeleteRecord(typeId, recordId);
+        });
+    });
+}
+
+/**
+ * Shows modal to edit a record
+ */
+async function showEditRecordModal(typeId, recordId) {
+    if (!mgmtState.activeYear || !mgmtState.activeMonth) {
+        showAlert('error', 'Không thể xác định năm/tháng hiện tại');
+        return;
+    }
+
+    // Find the record in current state
+    const typeItem = mgmtState.typeItems.find(item => item.id === typeId);
+    if (!typeItem || !typeItem.records) {
+        showAlert('error', 'Không tìm thấy dữ liệu');
+        return;
+    }
+
+    const record = typeItem.records.find(r => r.id === recordId);
+    if (!record) {
+        showAlert('error', 'Không tìm thấy bản ghi');
+        return;
+    }
+
+    // Build edit form - Allow editing amount (and rate/term/note for savings)
+    const modal = document.getElementById('edit-modal');
+    const formContainer = document.getElementById('edit-form-container');
+
+    let formHtml = `
+        <form id="edit-record-form" class="text-left space-y-4">
+            <input type="hidden" name="typeId" value="${typeId}">
+            <input type="hidden" name="recordId" value="${recordId}">
+            <input type="hidden" name="name" value="${record.name || ''}">
+            <input type="hidden" name="date" value="${record.date || ''}">
+            
+            <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600 font-medium">Tên khoản:</span>
+                    <span class="text-gray-900 font-semibold">${record.name || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 font-medium">Ngày:</span>
+                    <span class="text-gray-900 font-semibold">${formatDate(record.date) || 'N/A'}</span>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Số tiền (VND) <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="amount" value="${record.amount || ''}" required 
+                       class="input-field w-full text-lg font-semibold text-green-600 focus:ring-2 focus:ring-green-500"
+                       placeholder="Nhập số tiền mới">
+                <p class="text-sm text-gray-500 mt-1">Số tiền hiện tại: ${(record.amount || 0).toLocaleString('vi-VN')} VND</p>
+            </div>`;
+
+    if (typeId === 'Tiết kiệm') {
+        formHtml += `
+            <div class="border-t pt-4 mt-4">
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Thông tin tiết kiệm</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            Lãi suất (%/năm) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" step="0.01" name="rate" value="${record.rate || ''}" required
+                               class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                               placeholder="Ví dụ: 6.5">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            Kỳ hạn (tháng) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="term" value="${record.term || ''}" required
+                               class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                               placeholder="Ví dụ: 12">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Ghi chú</label>
+                        <textarea name="note" rows="2" class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Ghi chú thêm (tùy chọn)">${record.note || ''}</textarea>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    formHtml += `
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" id="cancel-edit-btn-form" class="btn btn-secondary">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </form>`;
+
+    formContainer.innerHTML = formHtml;
+    modal.style.display = 'flex';
+
+    // Attach event listeners
+    const closeModal = () => {
+        modal.style.display = 'none';
+    };
+
+    document.getElementById('cancel-edit-btn-form').addEventListener('click', closeModal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.getElementById('edit-record-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleUpdateRecord(e);
+    });
+}
+
+/**
+ * Handles updating a record
+ */
+async function handleUpdateRecord(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const typeId = formData.get('typeId');
+    const recordId = formData.get('recordId');
+    
+    const recordData = {
+        name: formData.get('name'),
+        amount: parseInt(formData.get('amount')),
+        date: formData.get('date')
+    };
+
+    if (typeId === 'Tiết kiệm') {
+        recordData.rate = parseFloat(formData.get('rate')) || 0;
+        recordData.term = parseInt(formData.get('term')) || 0;
+        recordData.note = formData.get('note') || '';
+    }
+
+    try {
+        await authenticatedFetch('/api/management/record', {
+            method: 'PUT',
+            headers: { 'X-Action-Identifier': 'UPDATE_MANAGEMENT_RECORD' },
+            body: JSON.stringify({
+                year: mgmtState.activeYear,
+                month: mgmtState.activeMonth,
+                typeId,
+                recordId,
+                recordData
+            })
+        });
+
+        showAlert('success', 'Cập nhật thành công!');
+        document.getElementById('edit-modal').style.display = 'none';
+        await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
+    } catch (error) {
+        console.error('Error updating record:', error);
+        showAlert('error', `Lỗi: ${error.message}`);
+    }
+}
+
+/**
+ * Handles deleting a record
+ */
+async function handleDeleteRecord(typeId, recordId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) {
+        return;
+    }
+
+    try {
+        await authenticatedFetch('/api/management/record', {
+            method: 'DELETE',
+            headers: { 'X-Action-Identifier': 'DELETE_MANAGEMENT_RECORD' },
+            body: JSON.stringify({
+                year: mgmtState.activeYear,
+                month: mgmtState.activeMonth,
+                typeId,
+                recordId
+            })
+        });
+
+        showAlert('success', 'Xóa thành công!');
+        await loadMonthData(mgmtState.activeYear, mgmtState.activeMonth, mgmtState.activeMonthLink);
+    } catch (error) {
+        console.error('Error deleting record:', error);
         showAlert('error', `Lỗi: ${error.message}`);
     }
 }

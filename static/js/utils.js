@@ -34,22 +34,16 @@ async function getApiSecretKey() {
     if (apiSecretKey) {
         return apiSecretKey;
     }
-    try {
-        const response = await fetch('/api/get-key');
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        apiSecretKey = data.api_key;
-        return apiSecretKey;
-    } catch (error) {
-        console.error('Failed to get API key:', error);
+    
+    // If window.API_KEY is not available, show error immediately
+    if (!window.API_KEY) {
+        const error = new Error('API key not configured');
+        console.error('API key not found in window.API_KEY');
         showAlert('error', 'Không thể lấy khóa API để xác thực. Vui lòng tải lại trang.');
-        throw error; // Re-throw to stop the authenticated fetch
+        throw error;
     }
+    
+    return window.API_KEY;
 }
 
 /**

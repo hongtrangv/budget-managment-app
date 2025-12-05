@@ -47,7 +47,7 @@ function createGenreDropdown(currentGenre = '') {
 
     allGenres.forEach(genre => {
         const option = document.createElement('option');
-        option.value = genre.name; // Use genre name as the value
+        option.value = genre.name;
         option.textContent = genre.name;
         if (genre.name === currentGenre) {
             option.selected = true;
@@ -56,6 +56,25 @@ function createGenreDropdown(currentGenre = '') {
     });
 
     return select;
+}
+
+/**
+ * Helper function to populate genre dropdown and rating input
+ * @param {string} genreContainerId - ID of genre container element
+ * @param {string} ratingContainerId - ID of rating container element
+ * @param {string} currentGenre - Current genre value (optional)
+ * @param {number} currentRating - Current rating value (optional)
+ */
+async function populateGenreAndRating(genreContainerId, ratingContainerId, currentGenre = '', currentRating = 0) {
+    await fetchGenres();
+    
+    const genreContainer = document.getElementById(genreContainerId);
+    genreContainer.innerHTML = '';
+    genreContainer.appendChild(createGenreDropdown(currentGenre));
+
+    const ratingContainer = document.getElementById(ratingContainerId);
+    ratingContainer.innerHTML = '';
+    ratingContainer.appendChild(createStarRatingInput('rating', currentRating));
 }
 
 
@@ -155,7 +174,6 @@ export async function loadAndRenderLibrary() {
 
 async function handleAddBook(event) {
     event.preventDefault();
-    await generalDescription();
     const form = document.getElementById('add-book-form');
     const formData = new FormData(form);
     const bookData = Object.fromEntries(formData.entries());
@@ -182,7 +200,12 @@ async function handleAddBook(event) {
 
 async function handleUpdateBook(event) {
     event.preventDefault();
-    await generalDescription();   
+    
+    // Auto-generate description if empty
+    const descriptionField = document.getElementById('edit-book-description');
+    if (!descriptionField.value.trim()) {
+        await generateDescription('edit-book-title', 'edit-book-author', 'edit-book-description');
+    }
 
     if (!currentSelectedBook) return;
     const form = document.getElementById('edit-book-form');
@@ -195,8 +218,7 @@ async function handleUpdateBook(event) {
     updatedData.compIndex = currentSelectedBook.compIndex;
 
     try {
-        const response = await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, 
-            {
+        const response = await authenticatedFetch(`/api/books/${currentSelectedBook.id}`, {
             method: 'PUT',
             headers: { 'X-Action-Identifier': 'UPDATE_BOOK' }, 
             body: JSON.stringify(updatedData)
@@ -227,24 +249,32 @@ async function handleDeleteBook() {
     }
 }
 
-async function generalDescription(){
-    const title =document.getElementById('edit-book-title');
-    const author = document.getElementById('edit-book-author');
-    const description = document.getElementById('edit-book-description')
-    if (description.value != '') return;
-    let message = `Bạn là chuyên gia phân tích văn học. Bạn tóm tắt giúp tôi tác phần ${title.value} của tác giả ${author.value} trong 100 từ`;
+/**
+ * Generates book description using AI chatbot
+ * @param {string} titleFieldId - ID of title input field
+ * @param {string} authorFieldId - ID of author input field  
+ * @param {string} descriptionFieldId - ID of description field to populate
+ */
+async function generateDescription(titleFieldId, authorFieldId, descriptionFieldId) {
+    const titleField = document.getElementById(titleFieldId);
+    const authorField = document.getElementById(authorFieldId);
+    const descriptionField = document.getElementById(descriptionFieldId);
+    
+    if (!titleField?.value || !authorField?.value) return;
+    
+    const message = `Bạn là chuyên gia phân tích văn học. Bạn tóm tắt giúp tôi tác phẩm ${titleField.value} của tác giả ${authorField.value} trong 100 từ`;
+    
     try {
         const response = await authenticatedFetch('/api/chatbot', {
             method: 'POST',            
-            body: JSON.stringify({ message: message }),
+            body: JSON.stringify({ message }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Network response was not ok');
-        description.value = data.reply;
+        if (data.reply) {
+            descriptionField.value = data.reply;
+        }
     } catch (error) {
-        console.error('Error sending message:', error);
-        
-    } finally {        
+        console.error('Error generating description:', error);
     }
 }
 
@@ -271,17 +301,8 @@ async function switchToEditMode() {
     document.getElementById('edit-book-description').value = currentSelectedBook.description || '';
     document.getElementById('edit-book-cover').value = currentSelectedBook.coverImage || '';
 
-    // Populate genre dropdown
-    const genreContainer = document.getElementById('edit-book-genre-container');
-    genreContainer.innerHTML = ''; // Clear previous content
-    await fetchGenres(); // Ensure genres are loaded
-    const genreDropdown = createGenreDropdown(currentSelectedBook.genre);
-    genreContainer.appendChild(genreDropdown);
-
-    // Populate rating input
-    const ratingContainer = document.getElementById('edit-book-rating-container');
-    ratingContainer.innerHTML = '';
-    ratingContainer.appendChild(createStarRatingInput('rating', currentSelectedBook.rating || 0));
+    // Populate genre and rating using helper
+    await populateGenreAndRating('edit-book-genre-container', 'edit-book-rating-container', currentSelectedBook.genre, currentSelectedBook.rating);
 
     document.getElementById('modal-view-mode').style.display = 'none';
     document.getElementById('modal-edit-mode').style.display = 'block';
@@ -299,17 +320,8 @@ async function showAddBookModal(rowIndex, unitIndex, compIndex) {
     document.getElementById('form-comp-index').value = compIndex;
     document.getElementById('form-location-text').textContent = `Hàng ${rowIndex + 1}, Kệ ${unitIndex + 1}, Ngăn ${compIndex + 1}`;
 
-    // Populate genre dropdown
-    const genreContainer = document.getElementById('add-book-genre-container');
-    genreContainer.innerHTML = '';
-    await fetchGenres();
-    const genreDropdown = createGenreDropdown();
-    genreContainer.appendChild(genreDropdown);
-
-    // Populate rating input
-    const ratingContainer = document.getElementById('add-book-rating-container');
-    ratingContainer.innerHTML = '';
-    ratingContainer.appendChild(createStarRatingInput('rating', 0));
+    // Populate genre and rating using helper
+    await populateGenreAndRating('add-book-genre-container', 'add-book-rating-container');
 
     showModal('add-book-modal');
 }
@@ -339,22 +351,41 @@ function filterAndRender() {
 let areListenersInitialized = false;
 function setupGlobalEventListeners() {
     if (areListenersInitialized) return;
+    
+    // Modal close buttons
     document.querySelectorAll('.modal-close-btn, .modal-close-btn-add').forEach(btn => {
         btn.onclick = (e) => {
             const modal = e.target.closest('.book-modal');
             if (modal) hideModal(modal.id);
         };
     });
+    
+    // Click outside modal to close
     window.addEventListener('click', (event) => {
         if (event.target.classList.contains('book-modal')) {
             hideModal(event.target.id);
         }
     });
+    
+    // Form submissions
     document.getElementById('add-book-form').addEventListener('submit', handleAddBook);
     document.getElementById('edit-book-form').addEventListener('submit', handleUpdateBook);
+    
+    // Modal actions
     document.getElementById('modal-edit-btn').addEventListener('click', switchToEditMode);
     document.getElementById('modal-cancel-btn').addEventListener('click', cancelEditMode);
     document.getElementById('modal-delete-btn').addEventListener('click', handleDeleteBook);
+    
+    // Auto-generate description buttons
+    document.getElementById('add-generate-description-btn').addEventListener('click', () => {
+        generateDescription('add-book-title', 'add-book-author', 'add-book-description');
+    });
+    document.getElementById('edit-generate-description-btn').addEventListener('click', () => {
+        generateDescription('edit-book-title', 'edit-book-author', 'edit-book-description');
+    });
+    
+    // Search
     document.getElementById('book-search-input').addEventListener('input', filterAndRender);
+    
     areListenersInitialized = true;
 }

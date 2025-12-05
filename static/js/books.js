@@ -267,7 +267,10 @@ async function generateDescription(titleFieldId, authorFieldId, descriptionField
     try {
         const response = await authenticatedFetch('/api/chatbot', {
             method: 'POST',            
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ 
+                message,
+                saveHistory: false  // Don't save book description generation to chat history
+            }),
         });
         const data = await response.json();
         if (data.reply) {

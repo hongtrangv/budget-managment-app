@@ -14,6 +14,7 @@ This document tracks optimizations made to improve code quality, performance, an
    - Removed automatic generation on form submit (was only checking edit form in add handler)
    - Added manual trigger buttons in both forms for better UX
    - Only generates if description field is empty
+   - Sends `saveHistory: false` to prevent book descriptions from being saved to chat history
 
 3. **Better code organization**: Added comments to group related event listeners in `setupGlobalEventListeners()`
 
@@ -30,6 +31,10 @@ This document tracks optimizations made to improve code quality, performance, an
 2. **Non-blocking database saves**: Wrapped Firestore save in try-catch so chat history save failures don't break the response
 3. **Better error responses**: Return proper 500 status code on errors instead of 200
 4. **Removed error details from user-facing messages**: Don't expose internal error details to frontend
+5. **Conditional history saving**: Added `saveHistory` parameter to control whether chat interactions are saved to database
+   - Default: `true` (saves to history for backward compatibility)
+   - When `false`: Only gets AI response without saving to chat_history collection
+   - Prevents utility AI calls (like book description generation) from cluttering chat history
 
 ### UI Improvements
 

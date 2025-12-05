@@ -101,6 +101,14 @@ This document tracks optimizations made to improve code quality, performance, an
 - **User Confirmation**: Delete operations require confirmation to prevent accidental data loss
 - **Real-time Updates**: Page automatically refreshes after edit/delete operations
 - **Better Error Handling**: Clear error messages for failed operations
+- **Smart Edit Mode**: Edit modal adapts based on record type
+  - **Regular records (Thu/Chi)**: Only amount field is editable
+  - **Savings records (Tiết kiệm)**: Amount, interest rate, term, and note are editable
+  - Name and date are always read-only to maintain data integrity
+  - Hidden inputs preserve original values for read-only fields
+  - Clear visual distinction between editable and read-only fields
+  - Shows current amount for reference before editing
+  - Separate section for savings-specific fields with clear visual hierarchy
 
 ### Performance & UX Benefits
 

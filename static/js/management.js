@@ -327,47 +327,65 @@ async function showEditRecordModal(typeId, recordId) {
         return;
     }
 
-    // Build edit form
+    // Build edit form - Allow editing amount (and rate/term/note for savings)
     const modal = document.getElementById('edit-modal');
     const formContainer = document.getElementById('edit-form-container');
-    
-    const itemsHtml = mgmtState.expenseItems.map(item => 
-        `<option value="${item['name']}" ${item['name'] === record.name ? 'selected' : ''}>${item['name']}</option>`
-    ).join('');
 
     let formHtml = `
         <form id="edit-record-form" class="text-left space-y-4">
             <input type="hidden" name="typeId" value="${typeId}">
             <input type="hidden" name="recordId" value="${recordId}">
+            <input type="hidden" name="name" value="${record.name || ''}">
+            <input type="hidden" name="date" value="${record.date || ''}">
             
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Tên khoản</label>
-                <select name="name" required class="modern-select input-field w-full">${itemsHtml}</select>
+            <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600 font-medium">Tên khoản:</span>
+                    <span class="text-gray-900 font-semibold">${record.name || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 font-medium">Ngày:</span>
+                    <span class="text-gray-900 font-semibold">${formatDate(record.date) || 'N/A'}</span>
+                </div>
             </div>
             
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Số tiền (VND)</label>
-                <input type="number" name="amount" value="${record.amount || ''}" required class="input-field w-full">
-            </div>
-            
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Ngày</label>
-                <input type="date" name="date" value="${record.date || ''}" required class="input-field w-full">
+            <div class="mt-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Số tiền (VND) <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="amount" value="${record.amount || ''}" required 
+                       class="input-field w-full text-lg font-semibold text-green-600 focus:ring-2 focus:ring-green-500"
+                       placeholder="Nhập số tiền mới">
+                <p class="text-sm text-gray-500 mt-1">Số tiền hiện tại: ${(record.amount || 0).toLocaleString('vi-VN')} VND</p>
             </div>`;
 
     if (typeId === 'Tiết kiệm') {
         formHtml += `
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Lãi suất (%/năm)</label>
-                <input type="number" step="0.01" name="rate" value="${record.rate || ''}" class="input-field w-full">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Kỳ hạn (tháng)</label>
-                <input type="number" name="term" value="${record.term || ''}" class="input-field w-full">
-            </div>
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">Ghi chú</label>
-                <input name="note" value="${record.note || ''}" class="input-field w-full">
+            <div class="border-t pt-4 mt-4">
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Thông tin tiết kiệm</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            Lãi suất (%/năm) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" step="0.01" name="rate" value="${record.rate || ''}" required
+                               class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                               placeholder="Ví dụ: 6.5">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
+                            Kỳ hạn (tháng) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="term" value="${record.term || ''}" required
+                               class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                               placeholder="Ví dụ: 12">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Ghi chú</label>
+                        <textarea name="note" rows="2" class="input-field w-full focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Ghi chú thêm (tùy chọn)">${record.note || ''}</textarea>
+                    </div>
+                </div>
             </div>`;
     }
 

@@ -98,6 +98,7 @@ function createBookElement(bookData, unitType) {
     bookEl.style.backgroundColor = `hsl(${hashCode(title) % 360}, 50%, 60%)`;
     bookEl.dataset.bookId = bookData.id;
     bookEl.textContent = title;
+    bookEl.title = title; // Show full title on hover
     bookEl.addEventListener('click', (e) => {
         e.stopPropagation();
         showBookInfoModal(bookData);

@@ -2,12 +2,176 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities"; */
 
+/* ========================================================================
+   APP LAYOUT WITH SIDEBAR
+======================================================================== */
+:root {
+    --sidebar-width: 260px;
+    --primary: #16a34a;
+    --primary-hover: #15803d;
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e6eefc;
+}
 
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: Inter, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--card);
+    padding: 28px 20px;
+    border-right: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(20, 30, 60, 0.03);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 32px;
+}
+
+.logo svg {
+    flex-shrink: 0;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover {
+    background: #f1f5ff;
+    color: var(--primary);
+}
+
+.nav-item.active {
+    background: var(--primary);
+    color: white;
+}
+
+.nav-item svg {
+    flex-shrink: 0;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.time-ticker {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.ticker-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* MAIN CONTENT */
+.main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.content-area {
+    flex: 1;
+    padding: 24px;
+}
+
+.footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .main {
+        margin-left: 0;
+    }
+}
 
 /* Tổng thể dashboard */
 body {
     background: #f4f6f9;
     font-family: "arial", sans-serif;
+}
+#app-container {
+    display: flex;
+    height: 100vh;
+}
+
+#left-sidebar {
+    width: 250px; /* Or any width you prefer */
+    background-color: #f8f9fa; /* Example background color */
+    border-right: 1px solid #dee2e6; /* Example border */
+}
+
+#main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
 }
 /* ========================================================================
    HIỆU ỨNG DÒNG CHỮ CHẠY (MARQUEE)

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finance Dashboard — Prototype</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --muted:#64748b;
+      --text:#0f172a;
+      --primary:#4a6cf7;
+      --success:#22c55e;
+      --danger:#ef4444;
+      --radius:12px;
+      --shadow: 0 6px 18px rgba(12,20,40,0.08);
+      --glass: rgba(255,255,255,0.6);
+      font-family: Inter, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    .app {
+      display:flex;
+      min-height:100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:260px;
+      background:var(--card);
+      padding:28px 20px;
+      border-right:1px solid #e6eefc;
+      box-shadow: 0 2px 8px rgba(20,30,60,0.03);
+    }
+    .logo {
+      font-weight:700;
+      font-size:20px;
+      color:var(--primary);
+      margin-bottom:24px;
+    }
+    .nav {display:flex;flex-direction:column;gap:8px}
+    .nav a {
+      display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;color:var(--muted);text-decoration:none;
+    }
+    .nav a.active{background:var(--primary);color:white}
+    .nav a:hover{background:#f1f5ff;color:var(--primary)}
+
+    /* MAIN */
+    .main {
+      flex:1;padding:24px;
+    }
+    .topbar {
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;
+    }
+    .search {
+      display:flex;align-items:center;gap:12px;background:var(--card);padding:10px 14px;border-radius:12px;box-shadow:var(--shadow);
+      min-width:360px;
+    }
+    .search input{border:0;outline:0;font-size:15px;background:transparent;width:100%}
+
+    /* GRID */
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(12,1fr);
+      gap:18px;
+    }
+    .card {
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .col-4 {grid-column:span 4}
+    .col-8 {grid-column:span 8}
+    .col-12 {grid-column:span 12}
+
+    .kpi-title{font-size:13px;color:var(--muted)}
+    .kpi-value{font-size:28px;font-weight:700;margin-top:8px}
+
+    /* transactions */
+    .transactions table{width:100%;border-collapse:collapse}
+    .transactions th{font-size:13px;color:var(--muted);text-align:left;padding:12px 10px;border-bottom:1px solid #eef2ff}
+    .transactions td{padding:14px 10px;border-bottom:1px solid #f3f6ff}
+    .amount.negative{color:var(--danger)}
+    .amount.positive{color:var(--success)}
+
+    /* footer / small */
+    .small{font-size:13px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:1000px){
+      .sidebar{display:none}
+      .grid{grid-template-columns:repeat(6,1fr)}
+      .col-4{grid-column:span 6}
+      .col-8{grid-column:span 6}
+    }
+    @media (max-width:520px){
+      .search{min-width:unset;width:100%}
+      .topbar{flex-direction:column;gap:12px;align-items:stretch}
+      .grid{grid-template-columns:repeat(1,1fr)}
+    }
+
+    /* floating add button */
+    .fab {
+      position:fixed;right:28px;bottom:28px;background:var(--primary);color:white;padding:14px 18px;border-radius:16px;box-shadow:0 8px 30px rgba(74,108,247,0.24);cursor:pointer;border:0;
+      font-weight:600;font-size:15px;
+    }
+
+    /* simple chart placeholder */
+    .chart-placeholder{height:220px;border-radius:12px;background:linear-gradient(180deg,#ffffff,#f8fbff);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">Budget Manager</div>
+      <nav class="nav">
+        <a href="#" class="active">🏠 Dashboard</a>
+        <a href="#">💳 Transactions</a>
+        <a href="#">📊 Reports</a>
+        <a href="#">🏷️ Categories</a>
+        <a href="#">⚙ Settings</a>
+      </nav>
+
+      <div style="margin-top:28px">
+        <div class="small" style="margin-bottom:8px">Budget progress</div>
+        <div style="background:#eef6ff;border-radius:12px;padding:10px">
+          <div style="display:flex;justify-content:space-between"><div class="small">Monthly goal</div><div class="small">72%</div></div>
+          <div style="height:8px;background:#e6eefc;border-radius:999px;margin-top:8px;overflow:hidden">
+            <div style="width:72%;height:100%;background:var(--primary)"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div style="display:flex;gap:16px;align-items:center">
+          <div class="search card" style="min-width:420px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:.6"><path d="M21 21l-4.35-4.35" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <input placeholder="Search transactions, titles, authors..." />
+          </div>
+          <div class="small">Last sync: <strong style="color:var(--muted)">2h ago</strong></div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="text-align:right">
+            <div class="small">Welcome back</div>
+            <div style="font-weight:700">Nguyễn Văn A</div>
+          </div>
+        </div>
+      </div>
+
+      <section class="grid" style="margin-top:8px">
+        <div class="card col-4">
+          <div class="kpi-title">Total balance</div>
+          <div class="kpi-value">$18,450</div>
+          <div class="small">Available across accounts</div>
+        </div>
+
+        <div class="card col-4">
+          <div class="kpi-title">Monthly spending</div>
+          <div class="kpi-value">$1,240</div>
+          <div class="small">-8% vs last month</div>
+        </div>
+
+        <div class="card col-4">
+          <div class="kpi-title">Monthly income</div>
+          <div class="kpi-value">$3,680</div>
+          <div class="small">+12% vs last month</div>
+        </div>
+
+        <div class="card col-8" style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Spending overview</div>
+            <div class="small">This month</div>
+          </div>
+          <div class="chart-placeholder">[Chart placeholder]</div>
+          <div style="display:flex;gap:12px">
+            <div style="flex:1" class="small card" >
+              <div style="font-weight:600">Top category</div>
+              <div style="margin-top:8px">$520</div>
+            </div>
+            <div style="flex:1" class="small card">
+              <div style="font-weight:600">Avg daily</div>
+              <div style="margin-top:8px">$42</div>
+            </div>
+            <div style="flex:1" class="small card">
+              <div style="font-weight:600">Planned</div>
+              <div style="margin-top:8px">$900</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card col-4 transactions" style="padding:0;overflow:hidden">
+          <div style="padding:18px;border-bottom:1px solid #eef2ff;display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Recent transactions</div>
+            <div class="small">See all</div>
+          </div>
+          <div style="padding:14px 18px;max-height:420px;overflow:auto">
+            <table>
+              <thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead>
+              <tbody>
+                <tr><td>2025-12-08</td><td>Coffee shop</td><td class="amount negative">-$4.50</td></tr>
+                <tr><td>2025-12-07</td><td>Groceries</td><td class="amount negative">-$32.10</td></tr>
+                <tr><td>2025-12-05</td><td>Salary</td><td class="amount positive">+$1,500</td></tr>
+                <tr><td>2025-12-03</td><td>Book purchase</td><td class="amount negative">-$12.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card col-12" style="display:flex;gap:18px;align-items:center;justify-content:space-between">
+          <div>
+            <div class="small">Savings goal</div>
+            <div style="font-weight:700">Emergency Fund</div>
+            <div style="margin-top:8px" class="small">Progress: 54%</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small">Net worth</div>
+            <div style="font-weight:700;font-size:22px">$52,800</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <button class="fab" id="addBtn">＋ Add</button>
+
+  <script>
+    // Simple interactive behavior for prototype
+    document.getElementById('addBtn').addEventListener('click',()=>{
+      const d = document.createElement('div');
+      d.style.position='fixed';d.style.left=0;d.style.top=0;d.style.right=0;d.style.bottom=0;
+      d.style.background='rgba(2,6,23,0.45)';d.style.display='flex';d.style.alignItems='center';d.style.justifyContent='center';
+      d.innerHTML = `
+        <div style="width:520px;background:white;border-radius:12px;padding:20px;box-shadow:0 8px 36px rgba(2,6,23,0.2);">
+          <div style="font-weight:700;font-size:18px;margin-bottom:12px">Add transaction</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input placeholder="Description" style="flex:1;padding:10px;border-radius:8px;border:1px solid #e6eefc" />
+            <input placeholder="Amount" style="width:140px;padding:10px;border-radius:8px;border:1px solid #e6eefc" />
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <button id="cancel" style="background:#fff;padding:10px 14px;border-radius:8px;border:1px solid #e6eefc">Cancel</button>
+            <button id="save" style="background:var(--primary);color:white;padding:10px 14px;border-radius:8px;border:0">Save</button>
+          </div>
+        </div>`;
+      d.querySelector('#cancel').addEventListener('click',()=>d.remove());
+      d.querySelector('#save').addEventListener('click',()=>{
+        alert('Saved (prototype)'); d.remove();
+      });
+      document.body.appendChild(d);
+    });
+  </script>
+</body>
+</html>

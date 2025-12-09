@@ -1,4 +1,5 @@
-import { loadHomePage } from './home.js';
+import { loadSavingPage } from './saving.js';
+import {loadHomePage} from './home.js';
 import { loadCategoryPage } from './collections.js';
 import { loadManagementPage } from './management.js';
 import { loadLoanPaymentPage } from './loan_payment.js';
@@ -11,6 +12,7 @@ const menuContainer = document.getElementById('menu-container');
 
 const routes = {
     '/': { page: '/pages/home.html', loader: loadHomePage },
+    '/saving': { page: '/pages/saving.html', loader: loadSavingPage },    
     '/collections': { page: './pages/collections.html', loader: loadCategoryPage },
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
@@ -87,7 +89,7 @@ async function initialLoad() {
         menuContainer.innerHTML = await menuResponse.text();   
         
         // NEW: Setup mobile menu listeners after menu is loaded
-        setupMobileMenu();
+        //setupMobileMenu();
 
         initializeChatbotWidget();
         attachGlobalEventListeners(); 

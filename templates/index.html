@@ -15,6 +15,7 @@
     <script>window.API_KEY = "{{ api_key|safe }}";</script>
 </head>
 <body class="bg-gray-100 h-full">
+    {% include 'components/icons.html' %}
     <div id="alert-container" data-position="top-right"></div>
 
     <div class="flex h-screen">
@@ -38,9 +39,7 @@
                             <span>QUẢN LÝ</span>
                         </a>
                         <button id="mobile-menu-button" aria-label="Open menu" class="text-gray-600 hover:text-gray-800 focus:outline-none">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                            </svg>
+                            <svg class="h-6 w-6"><use href="#icon-menu"></use></svg>
                         </button>
                     </div>
                 </div>
@@ -66,7 +65,7 @@
         <div class="flex items-center justify-between p-4 bg-green-600 text-white border-b border-green-700">
             <h3 class="text-lg font-semibold">Trợ lý Tài chính</h3>
             <button id="close-chatbot-widget" class="text-white hover:text-green-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-6 h-6"><use href="#icon-close"></use></svg>
             </button>
         </div>
 

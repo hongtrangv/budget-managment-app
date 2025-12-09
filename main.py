@@ -46,6 +46,7 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 
 # These routes all serve the single-page application's entry point.
 @app.route("/")
+@app.route("/saving")
 @app.route('/collections')
 @app.route('/management')
 @app.route('/loan-payment') # Add this route for the new page

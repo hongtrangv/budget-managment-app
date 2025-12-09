@@ -1,0 +1,150 @@
+
+<!-- REFACTORED: Added data-tab attributes and a common 'tab-pane' class for easier and more reliable tab switching in JS -->
+<div class="container mx-auto p-4 dashboard-container">
+    <h2 class="text-xl font-semibold text-center mb-4">Tổng tài sản hiện tại</h2>
+    <!-- FILTER CONTROLS -->
+    <div class="flex justify-center items-center gap-4 mb-4">
+       <select id="home-year-select" class="modern-select input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+       <select id="home-month-select" class="modern-select input-field bg-white border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+   </div>
+   <!-- MAIN CONTENT -->
+   <div class="flex flex-col md:flex-row gap-6">    
+       <!-- TABS MENU -->
+       <div class="md:w-1/6">
+           <div class="bg-white p-4 shadow-lg rounded-lg h-full">
+               <h2 class="text-xl font-bold mb-4">Tổng quan</h2>
+               <nav id="dashboard-menu" class="space-y-2">
+                   <button data-tab="overview" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
+                       Thu & Chi
+                   </button>
+                   <button data-tab="expense-proportion" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
+                       Tỷ trọng Chi
+                   </button>
+                   <button data-tab="save-detail" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
+                       Tiết kiệm
+                   </button> 
+                   <button data-tab="loan-detail" class="dashboard-menu-item w-full text-left p-2 rounded-md hover:bg-gray-200">
+                    Khoản vay
+                    </button>                       
+               </nav>
+           </div>
+       </div>
+
+       <!-- TABS CONTENT -->
+       <div class="chart-card flex-1">
+           <!-- Tab Pane: Overview -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-overview" class="tab-pane hidden flex flex-col flex-1" data-tab="overview">
+                <h2 class="text-2xl font-bold text-center mb-2">Tổng quan Thu & Chi <span id="chart-period-overview"></span></h2>
+                <h3 class="text-lg text-center text-gray-600 mb-4">Tổng dư nợ trong tháng: <span id="outstanding" class="font-semibold"></span></h3>
+                <div class="relative flex-1 h-[60vh]">
+                   <canvas id="summary-chart"></canvas>
+                </div>
+           </div>
+
+           <!-- Tab Pane: Expense Proportion -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-expense-proportion" class="tab-pane hidden flex flex-col" data-tab="expense-proportion">
+                <h2 class="text-2xl font-bold text-center mb-4">Phân bổ tỷ trọng Chi <span id="chart-period-expense"></span></h2>
+               <div class="relative h-[70vh]">
+                   <canvas id="expense-category-chart"></canvas>
+               </div>
+           </div>
+           
+           <!-- Tab Pane: Save Detail -->
+           <!-- CORRECTED: Added 'hidden' and layout classes -->
+           <div id="content-data-save" class="tab-pane hidden flex flex-col" data-tab="save-detail">
+                <h2 class="text-2xl font-bold text-center mb-4">Chi tiết các khoản tiết kiệm <span id="chart-period-save"></span></h2>
+               <div id="data-save">
+                   <!-- Data will be injected here -->
+               </div>
+           </div>
+           <!-- Tab Pane: Loan Detail -->
+           <div id="content-data-loan" class="tab-pane hidden flex flex-col" data-tab="loan-detail">
+                <h2 class="text-2xl font-bold text-center mb-4">Chi tiết các khoản vay</h2>
+                <div id="data-loan" class="overflow-x-auto shadow-lg rounded-lg">
+                    <table id="loan-table" class="min-w-full bg-white">
+                        <thead class="bg-green-600 text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-center">Tên khoản vay</th>
+                                <th class="py-3 px-4 text-center">Số tiền vay</th>
+                                <th class="py-3 px-4 text-center">Kỳ hạn (Tháng)</th>
+                                <th class="py-3 px-4 text-center">Ngày vay</th>
+                                <th class="py-3 px-4 text-center">Số tiền còn lại</th>
+                                <th class="py-3 px-4 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loan data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Controls -->                
+                <div class="pagination-controls mt-4">
+                    <button id="loan-prev-page" class="pagination-button" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span></span>
+                    </button>
+                    <span id="category-page-info" class="pagination-info"></span>
+                    <button id="loan-next-page" class="pagination-button">
+                        <span></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- <div id="loan-pagination-controls" class="flex justify-end items-center mt-4">
+                    <button id="" class="pagination-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l disabled:opacity-50 disabled:cursor-not-allowed">
+                        Trang trước
+                    </button>
+                    <button id="loan-next-page" class="pagination-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r disabled:opacity-50 disabled:cursor-not-allowed">
+                        Trang sau
+                    </button>
+                </div> -->
+            </div> 
+       </div>
+   </div>
+</div>
+
+<!-- === START: REDESIGNED LOAN PAYMENTS MODAL === -->
+<div id="payments-modal" class="modal fixed w-full h-full top-0 left-0 flex items-center justify-center hidden z-50">
+    <!-- Backdrop -->
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-60"></div>
+    
+    <!-- Modal Container -->
+    <div class="modal-container bg-white w-11/12 md:max-w-2xl mx-auto rounded-lg shadow-xl z-50 overflow-y-auto">
+        <div class="modal-content text-left">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-4 border-b">
+                <p class="text-2xl font-bold text-gray-800">Lịch sử Trả Lãi</p>
+                <div class="modal-close cursor-pointer z-50 p-2">
+                    <svg class="fill-current text-gray-500 hover:text-gray-800" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 18 18">
+                        <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4">
+                <div id="modal-payment-history" class="overflow-x-auto shadow-lg rounded-lg">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-green-600 text-white">
+                            <tr class="py-3 px-4 text-center uppercase font-semibold text-sm">
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Ngày Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Gốc Đã Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Lãi Đã Trả</th>
+                                <th class="py-3 px-4 text-center uppercase font-semibold text-sm text-center">Tổng Cộng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-history-table-body">
+                            <!-- JS will populate this content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>           
+        </div>
+    </div>
+</div>
+<!-- === END: REDESIGNED LOAN PAYMENTS MODAL === -->

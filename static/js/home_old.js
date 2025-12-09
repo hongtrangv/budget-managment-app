@@ -1,11 +1,8 @@
-import { createCategoryChart, createSummaryChart } from './charts.js';
 import { formatCurrency, showAlert,formatDate,formatDateToYMD } from './utils.js';
 
 // Chart instance
 let currentChart = null;
-const now = new Date();
-const currentMonth = now.getMonth() + 1; // getMonth() trả về giá trị từ 0-11, nên cần +1
-const currentYear = now.getFullYear();
+
 // --- LOAN PAGINATION STATE ---
 let loanCurrentPage = 1;
 const LOAN_PAGE_SIZE = 5; // Display 5 loans per page
@@ -13,13 +10,101 @@ const LOAN_PAGE_SIZE = 5; // Display 5 loans per page
 // pageStartDocs[0] is always null (for the first page)
 // pageStartDocs[1] is the ID of the first doc on page 2, etc.
 let loanPageStartDocs = [null]; 
+
+
+/**
+ * Switches the visible tab and updates its content.
+ * @param {string} tabId The data-tab attribute of the target tab.
+ */
+async function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.add('hidden');
+    });
+    document.querySelectorAll('.dashboard-menu-item').forEach(button => {
+        button.classList.remove('active');
+    });
+
+    const activePane = document.querySelector(`.tab-pane[data-tab='${tabId}']`);
+    if (activePane) activePane.classList.remove('hidden');
+
+    const activeButton = document.querySelector(`.dashboard-menu-item[data-tab='${tabId}']`);
+    if (activeButton) activeButton.classList.add('active');
+
+    if (currentChart) {
+        currentChart.destroy();
+        currentChart = null;
+    }
+
+    switch (tabId) {
+        case 'overview':
+            await renderSummaryChart();
+            break;
+        case 'expense-proportion':
+            await renderExpensePieChart();
+            break;
+        case 'save-detail':
+            await renderSavingsTable();
+            break;
+        case 'loan-detail':
+            // When switching to the loan tab, always reset and load the first page.
+            loanCurrentPage = 1;
+            loanPageStartDocs = [null];
+            await loadAndRenderLoans('first');
+            break;
+    }
+}
+
+/**
+ * Fetches data and renders the main income/expense bar chart.
+ */
+async function renderSummaryChart() {
+    try {
+        const year = document.getElementById('home-year-select').value;
+        const month = document.getElementById('home-month-select').value;
+        const response = await fetch(`/api/dashboard/summary/${year}/${month}`);
+        if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('summary-chart').getContext('2d');
+        
+        currentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Tổng Thu', 'Tổng Chi'],
+                datasets: [{
+                    label: 'Số tiền (VND)',
+                    data: [data.income, data.expense],
+                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { callback: value => formatCurrency(value) } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        const outstanding = data.income - data.expense;
+        document.getElementById('outstanding').textContent = formatCurrency(outstanding);
+        document.getElementById('chart-period-overview').textContent = `(Tháng ${month}/${year})`;
+
+    } catch (error) {
+        console.error("Error rendering summary chart:", error);
+        showAlert('error', `Không thể tải biểu đồ Thu/Chi: ${error.message}`);
+    }
+}
+
 /**
  * Fetches data and renders the expense category pie chart.
  */
 async function renderExpensePieChart() {
-     try {       
-        document.getElementById('current_date').innerHTML= ' tháng '+currentMonth +' năm '+currentYear;
-        const response = await fetch(`/api/dashboard/pie/${currentYear}/${currentMonth}`);
+     try {
+        const year = document.getElementById('home-year-select').value;
+        const month = document.getElementById('home-month-select').value;
+        const response = await fetch(`/api/dashboard/pie/${year}/${month}`);
         if (!response.ok) throw new Error(`API error: ${response.statusText}`);
         const data = await response.json();
 
@@ -57,7 +142,7 @@ async function renderExpensePieChart() {
                 }
             }
         });
-         //.getElementById('chart-period-expense').textContent = `(Tháng ${month}/${year})`;
+         document.getElementById('chart-period-expense').textContent = `(Tháng ${month}/${year})`;
 
     } catch (error) {
         console.error("Error rendering expense pie chart:", error);
@@ -206,10 +291,6 @@ async function loadAndRenderLoans(direction) {
                 openPaymentsModal(button.dataset.loanId);
             });
         });
-        const modal = document.getElementById('payments-modal');
-        modal.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
-            el.addEventListener('click', () => modal.classList.add('hidden'));
-        });
 
     } catch (error) {
         console.error("Error rendering loan table:", error);
@@ -259,85 +340,62 @@ async function openPaymentsModal(loanId) {
  * Main function to initialize the home page.
  */
 export async function loadHomePage() {
-    try {       
-        LoadInfomation();
+    try {
+        // --- Setup Filters ---
+        const yearSelect = document.getElementById('home-year-select');
+        const monthSelect = document.getElementById('home-month-select');
+
+        const response = await fetch(`/api/dashboard/years`);
+        if (!response.ok) throw new Error('Could not fetch years');
+        const years = await response.json();
+        const currentYear = new Date().getFullYear().toString();
+        yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y === currentYear ? 'selected' : ''}>Năm ${y}</option>`).join('');
+        
+        let monthOptions = '';
+        for (let i = 1; i <= 12; i++) {
+            monthOptions += `<option value="${i}" ${i === new Date().getMonth() + 1 ? 'selected' : ''}>Tháng ${i}</option>`;
+        }
+        monthSelect.innerHTML = monthOptions;
+
+        // --- Attach Event Listeners ---
+        const dashboardMenu = document.getElementById('dashboard-menu');
+        if (!dashboardMenu.dataset.eventsAttached) {
+            dashboardMenu.addEventListener('click', (e) => {
+                const button = e.target.closest('.dashboard-menu-item');
+                if (button && button.dataset.tab) {
+                    switchTab(button.dataset.tab);
+                }
+            });
+            
+            const handleFilterChange = () => {
+                const activeButton = document.querySelector('.dashboard-menu-item.active');
+                if (activeButton) {
+                    switchTab(activeButton.dataset.tab);
+                }
+            };
+
+            yearSelect.addEventListener('change', handleFilterChange);
+            monthSelect.addEventListener('change', handleFilterChange);
+            
+            // Loan pagination listeners
+            document.getElementById('loan-prev-page').addEventListener('click', () => loadAndRenderLoans('prev'));
+            document.getElementById('loan-next-page').addEventListener('click', () => loadAndRenderLoans('next'));
+
+
+            dashboardMenu.dataset.eventsAttached = 'true';
+        }
+
+        // --- Modal Close --- 
+        const modal = document.getElementById('payments-modal');
+        modal.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+            el.addEventListener('click', () => modal.classList.add('hidden'));
+        });
+
+        // --- Load Initial Tab ---
+        await switchTab('overview');
+
     } catch (error) {
         console.error('Failed to initialize home page:', error);
         showAlert('error', `Lỗi khởi tạo trang chủ: ${error.message}`);
     }
 }
-
-async function totalBook(){
-    const [booksResponse] = await Promise.all([        
-        fetch('/api/books')
-    ]);
-    const allBooks = await booksResponse.json();
-    const books = document.getElementById('total-books');
-    books.textContent = allBooks.length + ' cuốn';
-}
-async function totalSaving(){
-    const response = await fetch(`/api/dashboard/save`);
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
-    const data = await response.json();
-    let total = 0;
-    let totalYield = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-    data.forEach((item, index) => {
-        const startDate = new Date(item.date); // Assumes date format is parseable by new Date() e.g., 'YYYY-MM-DD'                
-        const rate = item.rate;           
-        const days = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24));;
-        
-        const interestYield = Math.round(item.amount * rate * days / 36500,0);
-        totalYield += interestYield;
-        total += item.amount;
-        
-    });
-    const totalSaving = document.getElementById('total-savings');
-    totalSaving.textContent = formatCurrency(total);
-    const totalYieldElement = document.getElementById('total-interest');
-    totalYieldElement.textContent = formatCurrency(totalYield);
-}
-async function LoadInfomation(){
-    // Lấy thông tin tổng số sách
-    totalBook();
-    // Lấy tổng chi trong tháng
-    const response = await fetch(`/api/dashboard/summary/${currentYear}/${currentMonth}`);
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
-    const data = await response.json();
-    
-    const income = document.getElementById('monthly-income');
-    const expense = document.getElementById('monthly-expense');
-    income.textContent = formatCurrency(data.income);
-    expense.textContent = formatCurrency(data.expense);
-
-    // Lấy tổng thu trong tháng trước
-    let previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-    let yearForPreviousMonth = currentMonth === 1 ? currentYear - 1 : currentYear;    
-    const preResponse = await fetch(`/api/dashboard/summary/${yearForPreviousMonth}/${previousMonth}`);
-    if (!preResponse.ok) throw new Error(`API error: ${preResponse.statusText}`);
-    const prevData = await preResponse.json();
-    
-    // So sánh và cập nhật thu nhập
-    const incomeChangeElement = document.getElementById('income-change');
-    const incomeChange = ((data.income - prevData.income) / (prevData.income || 1)) * 100;
-    incomeChangeElement.classList.remove('text-green-600', 'text-red-600');
-    if (incomeChange > 0) {
-        incomeChangeElement.textContent = `▲ ${incomeChange.toFixed(1)}% so với tháng trước`;
-        incomeChangeElement.classList.add('text-green-600');
-    } else if (incomeChange < 0) {
-        incomeChangeElement.textContent = `▼ ${Math.abs(incomeChange).toFixed(1)}% so với tháng trước`;
-        incomeChangeElement.classList.add('text-red-600');
-    } else {
-        incomeChangeElement.textContent = `Không đổi so với tháng trước`;
-    }
-    // Lấy danh sách khoản tiết kiệm
-    loadAndRenderLoans('first');
-    // Biểu đồ thu chi
-    renderExpensePieChart(currentMonth,currentYear);
-
-    // Lấy thông tin tiết kiệm
-    totalSaving();
-}
-
-    

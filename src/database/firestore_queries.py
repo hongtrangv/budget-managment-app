@@ -121,6 +121,28 @@ class DocumentHandler:
         except Exception as e:
             print(f"Error updating document: {e}")
             raise e
+    
+    @staticmethod
+    def get_recent_documents_from_collection(collection_name, limit=10):
+        """Fetches the most recent documents from a specified collection."""
+        try:
+            print(f"Getting recent documents from {collection_name}")
+            query = db.document(collection_name)
+            docs = query.get()           
+            if not docs.exists:
+                print(f"Document not found at path: {collection_name}")
+                return []
+            
+            results = docs.to_dict().get('records', [])
+            # sắp xếp theo một trường bất kỳ, ví dụ createdAt
+            sorted_records = sorted(results, key=lambda x: x.get("date"), reverse= True)
+
+            # lấy 5 bản ghi đầu tiên sau khi sort
+            top_record = sorted_records[:limit]
+            return top_record
+        except Exception as e:
+            print(f"Error getting recent documents: {e}")
+            return []
 
 class ManagementTree:
     """Handles logic for fetching and manipulating data for the management tree."""

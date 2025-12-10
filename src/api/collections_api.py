@@ -25,6 +25,20 @@ def get_documents(collection_name):
         print(f"Error getting paginated documents: {e}")
         return jsonify({"error": "Failed to retrieve documents"}), 500
 
+@collections_bp.route("/api/collections/<path:collection_name>/recent", methods=['GET'])
+def get_recent_documents(collection_name):
+    """Fetches the most recent documents from a collection."""
+    try:
+        limit = request.args.get('limit', default=10, type=int)
+        result = DocumentHandler.get_recent_documents_from_collection(
+            collection_name=collection_name,
+            limit=limit
+        )
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error getting recent documents: {e}")
+        return jsonify({"error": "Failed to retrieve recent documents"}), 500
+
 @collections_bp.route("/api/items", methods=['GET'])
 def get_items_for_dropdown():
     """API endpoint to get all items from the 'items' collection for dropdowns."""

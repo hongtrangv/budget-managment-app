@@ -1,8 +1,13 @@
 # Dev environment
 pip
 autopep8
+python-dotenv
 
 # App
 flask
 firebase-admin
 gunicorn
+openai
+bleach
+
+redis>=5.0.1

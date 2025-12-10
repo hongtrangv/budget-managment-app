@@ -1,0 +1,89 @@
+/* --- Tree Menu Styling (re-used) --- */
+ .tree-menu ul { list-style-type: none; padding-left: 25px; border-left: 1px dashed #ccc; }
+ .tree-menu li { position: relative; padding: 4px 0; }
+ .tree-menu li::before { content: ''; position: absolute; top: 15px; left: -25px; width: 20px; height: 1px; background-color: #ccc; }
+ .tree-menu .toggle { cursor: pointer; display: inline-block; font-weight: bold; user-select: none; }
+ .tree-menu .nested { display: none; }
+ .tree-gittree-menu .active { display: block; }
+ .tree-menu .toggle.expanded::before { content: '- '; }
+ .tree-menu .toggle:not(.expanded)::before { content: '+ '; }
+ .tree-menu .month-link { cursor: pointer; display: block; padding: 4px 0; }
+ .tree-menu .month-link:hover { background-color: #f0f0f0; }
+ .tree-menu .month-link.active-month { background-color: #e0e7ff; font-weight: bold; }
+
+/* --- New Styling for the Special '+' Tab --- */
+.special-tab {
+     cursor: pointer;
+     background-color: #28a745; /* Green background */
+     color: white;
+     border-radius: 50%; /* Make it a circle */
+     width: 36px;
+     height: 36px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 22px;
+     font-weight: bold;
+     margin-top: 5px;
+     margin-left: 5px;
+     margin-right: 5px;
+     border: 1px solid #218838;
+     transition: background-color 0.2s;
+ }
+
+ .special-tab:hover {
+     background-color: #218838; /* Darker green on hover */
+ }
+
+ .special-tab.active-tab {
+     background-color: #fff;
+     color: #28a745;
+     border: 2px solid #28a745;
+ }
+
+ /* --- End New Styling --- */
+
+ /* --- Tab Styling for Items --- */
+ #item-tab-bar { display: flex; border-bottom: 2px solid #ccc; flex-wrap: wrap; /* Allow tabs to wrap */ }
+ 
+ .item-tab {
+     padding: 10px 15px; 
+     cursor: pointer; 
+     background-color: #f1f5f9;
+     border: 1px solid #ccc; 
+     border-bottom: none; 
+     border-radius: 5px 5px 0 0;
+     margin-right: 5px; 
+     margin-top: 5px; 
+     position: relative;
+ }
+
+ .item-tab.active-tab {
+     background-color: #fff; 
+     border-bottom: 2px solid #fff; 
+     transform: translateY(2px);
+ }
+
+ .tab-close-btn {
+     margin-left: 10px; 
+     color: #999; 
+     font-weight: bold; 
+     cursor: pointer;
+     border: none; 
+     background: none; 
+     padding: 0; 
+     font-size: 16px;
+ }
+
+ .tab-close-btn:hover { 
+     color: #333; 
+ }
+
+ .item-tab-content { 
+     display: none; 
+     padding: 20px; 
+ }
+
+ .item-tab-content.active-content { 
+     display: block; 
+ }

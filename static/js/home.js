@@ -254,7 +254,6 @@ async function openPaymentsModal(loanId) {
     }
 }
 
-
 /**
  * Main function to initialize the home page.
  */
@@ -266,7 +265,6 @@ export async function loadHomePage() {
         showAlert('error', `Lỗi khởi tạo trang chủ: ${error.message}`);
     }
 }
-
 async function totalBook(){
     const [booksResponse] = await Promise.all([        
         fetch('/api/books')
@@ -298,19 +296,43 @@ async function totalSaving(){
     const totalYieldElement = document.getElementById('total-interest');
     totalYieldElement.textContent = formatCurrency(totalYield);
 }
-async function LoadInfomation(){
-    // Lấy thông tin tổng số sách
-    totalBook();
-    // Lấy tổng chi trong tháng
+async function loadRecentTransactions(){
+
+    const response = await fetch(`/api/collections/Year/${currentYear}/Months/${currentMonth}/Types/Chi/recent?limit=5`);
+    const data = await response.json();
+    const table = document.getElementById("recent-transactions");
+    table.innerHTML = ""; // Clear existing rows    
+    let tableHeader =`<table class="min-w-full bg-white">
+                        <thead class="bg-green-600 text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-center">Ngày</th>
+                                <th class="py-3 px-4 text-center">Nội dung</th>                                
+                                <th class="py-3 px-4 text-center">Số tiền</th>
+                            </tr>
+                        </thead><tbody>`;    
+    data.forEach((item, index) => {
+        let row = `<tr class="${index % 2 === 0 ? 'bg-white' : 'bg-green-50'}">`;        
+        row += `<td class="py-3 px-4 text-center">${formatDate(item.date)}</td>
+            <td class="py-3 px-4 text-center">${item.name}</td>
+            <td class="py-3 px-4 text-center">${formatCurrency(item.amount)}</td> </tr>               
+        `;
+        tableHeader += row;        
+    }); 
+    tableHeader += `</tbody></table>`
+    table.innerHTML = tableHeader;      
+}
+async function loadChart(){
     const response = await fetch(`/api/dashboard/summary/${currentYear}/${currentMonth}`);
     if (!response.ok) throw new Error(`API error: ${response.statusText}`);
     const data = await response.json();
     
     const income = document.getElementById('monthly-income');
     const expense = document.getElementById('monthly-expense');
+    const outstanding = document.getElementById('balance')
     income.textContent = formatCurrency(data.income);
     expense.textContent = formatCurrency(data.expense);
-
+    outstanding.textContent = formatCurrency(data.income- data.expense);
+    
     // Lấy tổng thu trong tháng trước
     let previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
     let yearForPreviousMonth = currentMonth === 1 ? currentYear - 1 : currentYear;    
@@ -331,13 +353,20 @@ async function LoadInfomation(){
     } else {
         incomeChangeElement.textContent = `Không đổi so với tháng trước`;
     }
+}
+async function LoadInfomation(){
+    // Lấy thông tin tổng số sách
+    totalBook();
+    // Lấy tổng chi trong tháng
+    loadChart();    
     // Lấy danh sách khoản tiết kiệm
     loadAndRenderLoans('first');
     // Biểu đồ thu chi
     renderExpensePieChart(currentMonth,currentYear);
-
     // Lấy thông tin tiết kiệm
     totalSaving();
+    // Lấy thông tin các giao dịch gần đây top 5
+    loadRecentTransactions();
 }
 
     

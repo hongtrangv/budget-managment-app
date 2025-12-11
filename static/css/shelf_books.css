@@ -1,0 +1,68 @@
+.shelf-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+}
+
+.shelf-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #343a40;
+}
+
+.shelf-location {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.book-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.book-card-shelf {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    text-align: center;
+}
+
+.book-card-shelf:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.book-card-shelf a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.book-card-shelf img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+}
+
+.book-card-shelf-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 1rem 0.5rem;
+    margin: 0;
+    color: #333;
+}
+
+.no-books-message {
+    font-size: 1.2rem;
+    color: #6c757d;
+    text-align: center;
+    padding: 3rem;
+    grid-column: 1 / -1;
+}

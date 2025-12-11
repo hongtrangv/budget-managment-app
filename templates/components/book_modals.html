@@ -1,33 +1,3 @@
-<!-- Link to the specific CSS for this page -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/books.css') }}?v=1.3">
-
-<div class="library-header">
-    <h1 class="library-title">Thư Viện Sách</h1>
-    <p class="library-subtitle">Nơi lưu giữ tri thức và những câu chuyện</p>
-    
-    <!-- Statistics Section -->
-    <div class="library-stats">
-        <div class="stat-item">
-            <span class="stat-value" id="total-books-count">...</span> 
-            <span class="stat-label">Quyển Sách</span>
-        </div>
-    </div>
-</div>
-
-<!-- Search Section -->
-<div class="mb-6 px-4 md:px-0">
-    <div class="relative">
-        <input type="text" id="book-search-input" placeholder="Tìm kiếm theo tiêu đề hoặc tác giả..." class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </div>
-    </div>
-</div>
-
-<main id="library-container" class="library-container"></main>
-
 <!-- Modal for displaying/editing book details -->
 <div id="book-info-modal" class="book-modal">
     <div class="modal-content-info">
@@ -82,9 +52,7 @@
                     <div class="flex gap-2">
                         <textarea id="edit-book-description" name="description" rows="3" class="form-input-add flex-grow"></textarea>
                         <button type="button" id="edit-generate-description-btn" class="btn btn-secondary self-start" title="Tạo mô tả tự động">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                            {{ icons.bolt_icon() }}
                         </button>
                     </div>
                 </div>
@@ -112,11 +80,11 @@
         </div>
         <div class="flex justify-around">
             <button id="action-choice-add-btn" class="flex flex-col items-center justify-center p-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors w-28 h-28">
-                <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                {{ icons.plus_icon() }}
                 <span>Thêm Sách</span>
             </button>
             <button id="action-choice-view-btn" class="flex flex-col items-center justify-center p-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors w-28 h-28">
-                <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                {{ icons.eye_icon() }}
                 <span>Xem Chi Tiết</span>
             </button>
         </div>
@@ -179,9 +147,7 @@
                 <div class="flex gap-2">
                     <textarea id="add-book-description" name="description" rows="3" class="form-input-add flex-grow"></textarea>
                     <button type="button" id="add-generate-description-btn" class="btn btn-secondary self-start" title="Tạo mô tả tự động">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
+                        {{ icons.bolt_icon() }}
                     </button>
                 </div>
             </div>
@@ -197,8 +163,3 @@
         </form>
     </div>
 </div>
-
-<!-- Link to the specific JavaScript for this page -->
-<script type="module" src="{{ url_for('static', filename='js/books.js') }}"></script>
-<!-- UPDATED: Script path -->
-<script type="module" src="{{ url_for('static', filename='js/components/uiStars.js') }}"></script>

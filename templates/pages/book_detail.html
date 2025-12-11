@@ -1,0 +1,39 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/book_detail.css') }}">
+<div class="book-detail-container" data-book-id="{{ book.id }}">
+    <div class="book-detail-card">
+        <!-- Left Column: Book Cover -->
+        <div class="book-cover-section">
+            <img src="{{ book.coverImage if book.coverImage else 'https://via.placeholder.com/300x450.png?text=No+Image' }}" alt="Bìa sách {{ book.title }}" class="book-cover-image-large">
+        </div>
+
+        <!-- Right Column: Book Information -->
+        <div class="book-info-section">
+            <h1 class="book-title">{{ book.title }}</h1>
+            
+            <div class="info-item">
+                <strong class="info-label">Tác giả:</strong>
+                <span class="info-value">{{ book.author or 'Chưa có thông tin' }}</span>
+            </div>
+
+            <div class="info-item">
+                <strong class="info-label">Thể loại:</strong>
+                <span class="info-value">{{ book.genre or 'Chưa có thông tin' }}</span>
+            </div>
+
+            <div class.info-item">
+                <strong class="info-label">Đánh giá:</strong>
+                <!-- This div will be populated by JavaScript to show stars -->
+                <div id="book-detail-rating" class="info-value" data-rating="{{ book.rating or 0 }}"></div>
+            </div>
+
+            <div class="info-item-description">
+                <strong class="info-label">Mô tả:</strong>
+                <p class="book-description">{{ book.description or 'Chưa có mô tả cho sách này.' }}</p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/bookstore" data-navigo class="btn btn-secondary">Quay lại</a>              
+            </div>
+        </div>
+    </div>
+</div>

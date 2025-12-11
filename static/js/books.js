@@ -1,11 +1,19 @@
 import { authenticatedFetch } from './utils.js';
-// UPDATED: Import path
 import { renderStars, createStarRatingInput } from './components/uiStars.js';
 
 let currentLibraryData = { layout: [], books: [] };
 let allBooks = [];
 let currentSelectedBook = null;
 let allGenres = []; // Cache for genres
+let currentCompartmentIndices = { rowIndex: -1, unitIndex: -1, compIndex: -1 };
+
+export function renderStarRating(container) {
+    if (!container) return;
+    const rating = parseInt(container.dataset.rating, 10) || 0;
+    container.innerHTML = ''; // Clear existing content
+    container.appendChild(renderStars(rating));
+}
+
 
 /**
  * Fetches genres from the API and caches them.
@@ -101,7 +109,9 @@ function createBookElement(bookData, unitType) {
     bookEl.title = title; // Show full title on hover
     bookEl.addEventListener('click', (e) => {
         e.stopPropagation();
+        // NEW: Redirect to the book detail page
         showBookInfoModal(bookData);
+        //window.location.href = `/book/${bookData.id}`;
     });
     return bookEl;
 }
@@ -143,7 +153,11 @@ function renderBookshelf() {
                     compEl.classList.add('compartment--empty');
                 }
                 compEl.addEventListener('click', () => {
-                    showAddBookModal(rowIndex, unitIndex, compIndex);
+                    if (booksInCompartment.length === 0) {
+                        showAddBookModal(rowIndex, unitIndex, compIndex);
+                    } else {
+                        showActionChoiceModal(rowIndex, unitIndex, compIndex);
+                    }
                 });
                 unitEl.appendChild(compEl);
             }
@@ -165,7 +179,9 @@ export async function loadAndRenderLibrary() {
         currentLibraryData.layout = await layoutResponse.json();
         allBooks = await booksResponse.json();
         filterAndRender();
-        setupGlobalEventListeners();
+        initializeBookModals();
+        // Listener for the search bar, specific to the library page
+        document.getElementById('book-search-input').addEventListener('input', filterAndRender);
     } catch (error) {
         console.error("Failed to load library data:", error);
         const libraryContainer = document.getElementById('library-container');
@@ -202,7 +218,6 @@ async function handleAddBook(event) {
 async function handleUpdateBook(event) {
     event.preventDefault();
     
-    // Auto-generate description if empty
     const descriptionField = document.getElementById('edit-book-description');
     if (!descriptionField.value.trim()) {
         await generateDescription('edit-book-title', 'edit-book-author', 'edit-book-description');
@@ -227,8 +242,8 @@ async function handleUpdateBook(event) {
         const updatedBook = await response.json();
         const index = allBooks.findIndex(b => b.id === updatedBook.id);
         if (index !== -1) allBooks[index] = updatedBook;
-        filterAndRender();
         hideModal('book-info-modal');
+        window.location.reload(); // Reload to see changes
     } catch (error) {
         console.error("Error updating book:", error);
     }
@@ -242,20 +257,19 @@ async function handleDeleteBook() {
                 headers: { 'X-Action-Identifier': 'DELETE_BOOK' }, 
                 method: 'DELETE'} );
             allBooks = allBooks.filter(b => b.id !== currentSelectedBook.id);
-            filterAndRender();
             hideModal('book-info-modal');
+            // After deletion, if on book detail page, navigate away
+            if (window.location.pathname.startsWith('/book/')) {
+                window.location.href = '/bookstore';
+            } else {
+                filterAndRender();
+            }
         } catch (error) {
             console.error("Error deleting book:", error);
         }
     }
 }
 
-/**
- * Generates book description using AI chatbot
- * @param {string} titleFieldId - ID of title input field
- * @param {string} authorFieldId - ID of author input field  
- * @param {string} descriptionFieldId - ID of description field to populate
- */
 async function generateDescription(titleFieldId, authorFieldId, descriptionFieldId) {
     const titleField = document.getElementById(titleFieldId);
     const authorField = document.getElementById(authorFieldId);
@@ -270,7 +284,7 @@ async function generateDescription(titleFieldId, authorFieldId, descriptionField
             method: 'POST',            
             body: JSON.stringify({ 
                 message,
-                saveHistory: false  // Don't save book description generation to chat history
+                saveHistory: false
             }),
         });
         const data = await response.json();
@@ -294,20 +308,19 @@ function showBookInfoModal(bookData) {
     document.getElementById('modal-book-cover-view').src = bookData.coverImage || '';
     showModal('book-info-modal');
 }
-
 async function switchToEditMode() {
     if (!currentSelectedBook) return;
     
-    // Populate standard fields
     document.getElementById('edit-book-id').value = currentSelectedBook.id;
     document.getElementById('edit-book-title').value = currentSelectedBook.title || '';
     document.getElementById('edit-book-author').value = currentSelectedBook.author || '';
     document.getElementById('edit-book-description').value = currentSelectedBook.description || '';
     document.getElementById('edit-book-cover').value = currentSelectedBook.coverImage || '';
 
-    // Populate genre and rating using helper
     await populateGenreAndRating('edit-book-genre-container', 'edit-book-rating-container', currentSelectedBook.genre, currentSelectedBook.rating);
-
+    
+    hideModal('book-info-modal'); // Hide view modal if open
+    showModal('book-info-modal'); // Show the main modal container
     document.getElementById('modal-view-mode').style.display = 'none';
     document.getElementById('modal-edit-mode').style.display = 'block';
 }
@@ -324,10 +337,14 @@ async function showAddBookModal(rowIndex, unitIndex, compIndex) {
     document.getElementById('form-comp-index').value = compIndex;
     document.getElementById('form-location-text').textContent = `Hàng ${rowIndex + 1}, Kệ ${unitIndex + 1}, Ngăn ${compIndex + 1}`;
 
-    // Populate genre and rating using helper
     await populateGenreAndRating('add-book-genre-container', 'add-book-rating-container');
 
     showModal('add-book-modal');
+}
+
+function showActionChoiceModal(rowIndex, unitIndex, compIndex) {
+    currentCompartmentIndices = { rowIndex, unitIndex, compIndex };
+    showModal('action-choice-modal');
 }
 
 function showModal(modalId) {
@@ -338,7 +355,14 @@ function showModal(modalId) {
 function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('show');
-    currentSelectedBook = null;
+    if (modalId === 'book-info-modal') {
+        currentSelectedBook = null;
+        // Also reset view/edit modes
+        const viewMode = document.getElementById('modal-view-mode');
+        const editMode = document.getElementById('modal-edit-mode');
+        if (viewMode) viewMode.style.display = 'block';
+        if (editMode) editMode.style.display = 'none';
+    }
 }
 
 function filterAndRender() {
@@ -353,10 +377,9 @@ function filterAndRender() {
 }
 
 let areListenersInitialized = false;
-function setupGlobalEventListeners() {
+export function initializeBookModals() {
     if (areListenersInitialized) return;
     
-    // Modal close buttons
     document.querySelectorAll('.modal-close-btn, .modal-close-btn-add').forEach(btn => {
         btn.onclick = (e) => {
             const modal = e.target.closest('.book-modal');
@@ -364,23 +387,19 @@ function setupGlobalEventListeners() {
         };
     });
     
-    // Click outside modal to close
     window.addEventListener('click', (event) => {
         if (event.target.classList.contains('book-modal')) {
             hideModal(event.target.id);
         }
     });
     
-    // Form submissions
     document.getElementById('add-book-form').addEventListener('submit', handleAddBook);
     document.getElementById('edit-book-form').addEventListener('submit', handleUpdateBook);
     
-    // Modal actions
     document.getElementById('modal-edit-btn').addEventListener('click', switchToEditMode);
     document.getElementById('modal-cancel-btn').addEventListener('click', cancelEditMode);
     document.getElementById('modal-delete-btn').addEventListener('click', handleDeleteBook);
-    
-    // Auto-generate description buttons
+
     document.getElementById('add-generate-description-btn').addEventListener('click', () => {
         generateDescription('add-book-title', 'add-book-author', 'add-book-description');
     });
@@ -388,8 +407,45 @@ function setupGlobalEventListeners() {
         generateDescription('edit-book-title', 'edit-book-author', 'edit-book-description');
     });
     
-    // Search
-    document.getElementById('book-search-input').addEventListener('input', filterAndRender);
+    document.getElementById('action-choice-add-btn').addEventListener('click', () => {
+        hideModal('action-choice-modal');
+        const { rowIndex, unitIndex, compIndex } = currentCompartmentIndices;
+        showAddBookModal(rowIndex, unitIndex, compIndex);
+    });
+
+    // UPDATED: Navigate to the new shelf page
+    document.getElementById('action-choice-view-btn').addEventListener('click', () => {
+        const { rowIndex, unitIndex, compIndex } = currentCompartmentIndices;
+        window.location.href = `/shelf/${rowIndex}/${unitIndex}/${compIndex}`;
+    });
+    
+    // Delegate event listeners for detail page buttons
+    document.addEventListener('click', async (event) => {
+        const bookDetailContainer = event.target.closest('.book-detail-container');
+        if (!bookDetailContainer) return;
+
+        const bookId = bookDetailContainer.dataset.bookId;
+        if (!bookId) return;
+        
+        let book = allBooks.find(b => b.id === bookId);
+
+        try {
+             if (!book) {
+                const response = await fetch(`/api/books/${bookId}`);
+                if (!response.ok) throw new Error('Book not found');
+                book = await response.json();
+            }
+            currentSelectedBook = book
+        } catch(e) {
+            console.log(e)
+        }
+       
+        if (event.target.id === 'detail-edit-btn') {
+            await switchToEditMode();
+        } else if (event.target.id === 'detail-delete-btn') {
+            handleDeleteBook();
+        }
+    });
     
     areListenersInitialized = true;
 }

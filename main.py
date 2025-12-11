@@ -3,7 +3,6 @@ load_dotenv() # Tải các biến môi trường từ file .env
 
 import os
 from flask import Flask, render_template
-
 # Import a class that holds icon SVGs
 from icons import Icon
 
@@ -51,7 +50,9 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/management')
 @app.route('/loan-payment') # Add this route for the new page
 @app.route('/bookstore')
-def index():
+@app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
+@app.route('/book/<string:book_id>')
+def index(row_index=None, unit_index=None, comp_index=None, book_id=None):
     """Serves the main index.html file, which is the entry point for the SPA."""
     # Lấy API key từ biến môi trường và truyền vào template
     api_key = os.environ.get('API_SECRET_KEY')

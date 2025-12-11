@@ -1,0 +1,22 @@
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/shelf_books.css') }}">
+
+<div class="shelf-header">
+    <h1 class="shelf-title">Sách trong Kệ</h1>
+    <p class="shelf-location" id="shelf-location-text">Vị trí: Hàng {{ row_index + 1 }}, Kệ {{ unit_index + 1 }}, Ngăn {{ comp_index + 1 }}</p>
+</div>
+
+<div class="book-grid-container">
+    {% if books %}
+        {% for book in books %}
+            <div class="book-card-shelf">
+                <a href="/book/{{ book.id }}" data-navigo>
+                    <img src="{{ book.coverImage if book.coverImage else 'https://via.placeholder.com/150x220.png?text=No+Image' }}" alt="Bìa sách {{ book.title }}">
+                    <h3 class="book-card-shelf-title">{{ book.title }}</h3>
+                </a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-books-message">Không có sách nào trong ngăn kệ này.</p>
+    {% endif %}
+</div>

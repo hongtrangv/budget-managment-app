@@ -4,7 +4,8 @@ import { loadCategoryPage } from './collections.js';
 import { loadManagementPage } from './management.js';
 import { loadLoanPaymentPage } from './loan_payment.js';
 import { initializeChatbotWidget } from './chatbot.js';
-import { loadAndRenderLibrary } from './books.js';
+import { loadAndRenderLibrary,renderStarRating } from './books.js';
+import { initializeBookActions } from './book_actions.js';
 import { showAlert } from './utils.js';
 
 const content = document.getElementById('content');
@@ -16,8 +17,65 @@ const routes = {
     '/collections': { page: './pages/collections.html', loader: loadCategoryPage },
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
-    '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary }
+    '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary },
+    '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
+    '/book/:bookId': { 
+        dynamic: true, 
+        page: '/book/:bookId', 
+        loader: () => {
+            const ratingElement = document.getElementById('book-detail-rating');
+            if (ratingElement) {
+                renderStarRating(ratingElement);
+            }
+        }
+    }
 };
+
+function findMatchingRoute(path) {
+    for (const route in routes) {
+        const routeParts = route.split('/').filter(p => p);
+        const pathParts = path.split('/').filter(p => p);
+        if (routeParts.length !== pathParts.length) continue;
+
+        const params = {};
+        let match = true;
+        for (let i = 0; i < routeParts.length; i++) {
+            if (routeParts[i].startsWith(':')) {
+                params[routeParts[i].substring(1)] = pathParts[i];
+            } else if (routeParts[i] !== pathParts[i]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) return { ...routes[route], params };
+    }
+    return routes['/']; // Fallback to the root route
+}
+
+async function handleNav(path) {
+    const routeInfo = findMatchingRoute(path);
+    let pageUrl = routeInfo.page;
+    if (routeInfo.dynamic) {
+        for (const key in routeInfo.params) {
+            pageUrl = pageUrl.replace(`:${key}`, routeInfo.params[key]);
+        }
+    }
+
+    try {
+        // Use the books_bp prefix for dynamic content
+        const finalUrl = routeInfo.dynamic ? `/books_bp${pageUrl}` : pageUrl;
+        const response = await fetch(finalUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} for path ${finalUrl}`);
+        content.innerHTML = await response.text();
+        
+        if (routeInfo.loader) {
+            await routeInfo.loader();
+        }
+    } catch (e) {
+        console.error("Error handling navigation:", e);
+        showAlert('error', `Không thể tải trang: ${path}. Vui lòng thử lại.`);
+    }
+}
 
 /**
  * Sets up the event listener for the mobile menu button.
@@ -51,35 +109,15 @@ function setupMobileMenu() {
 }
 
 function attachGlobalEventListeners() {
-    const menu = document.querySelector('nav');
-    if (menu) {
-        menu.addEventListener('click', e => {
-            const navLink = e.target.closest('a[data-navigo]');
-            if (navLink) {
-                e.preventDefault();
-                const path = navLink.getAttribute('href');
-                history.pushState({ path }, '', path);
-                handleNav(path);
-            }
-        });
-    }
-}
-
-async function handleNav(path) {
-    const routePath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
-    const route = routes[routePath] || routes['/'];
-    try {
-        const response = await fetch(route.page);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} for path ${route.page}`);
-        content.innerHTML = await response.text();
-        
-        if (route.loader) {
-            await route.loader();
+    document.body.addEventListener('click', e => {
+        const navLink = e.target.closest('a[data-navigo]');
+        if (navLink) {
+            e.preventDefault();
+            const path = navLink.getAttribute('href');
+            history.pushState({ path }, '', path);
+            handleNav(path);
         }
-    } catch (e) {
-        console.error("Error handling navigation:", e);
-        showAlert('error', `Không thể tải trang: ${path}. Vui lòng thử lại.`);
-    }
+    });
 }
 
 async function initialLoad() {
@@ -88,10 +126,8 @@ async function initialLoad() {
         if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
         
-        // NEW: Setup mobile menu listeners after menu is loaded
-        //setupMobileMenu();
-
         initializeChatbotWidget();
+        //initializeBookActions();
         attachGlobalEventListeners(); 
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);

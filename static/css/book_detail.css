@@ -1,0 +1,98 @@
+.book-detail-container {
+    padding: 2rem;
+    background-color: #f9fafb; /* Light gray background */
+}
+
+.book-detail-card {
+    display: flex;
+    flex-direction: column; /* Stack columns on small screens */
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* Ensures content respects the border radius */
+    max-width: 900px;
+    margin: auto;
+}
+
+.book-cover-section {
+    flex: 1; /* Take up available space */
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f3f4f6; /* Slightly different background for the image area */
+}
+
+.book-cover-image-large {
+    max-width: 100%;
+    max-height: 450px;
+    object-fit: contain; /* This is key: it scales the image down to fit, preserving aspect ratio */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.book-info-section {
+    flex: 2; /* Take up more space */
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-title {
+    font-size: 2.25rem; /* Larger title */
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #111827;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.info-item-description {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #4b5563; /* Gray-600 */
+    margin-right: 0.5rem;
+    min-width: 80px; /* Align values */
+}
+
+.info-value {
+    color: #1f2937; /* Gray-800 */
+}
+
+.book-description {
+    color: #374151; /* Gray-700 */
+    line-height: 1.6;
+    margin-top: 0.5rem; /* Space between label and text */
+}
+
+.action-buttons {
+    margin-top: auto; /* Pushes buttons to the bottom */
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb; /* Separator line */
+    display: flex;
+    justify-content: flex-end; /* Aligns buttons to the right */
+    align-items: center;
+    gap: 0.75rem; /* Adds space between buttons */
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) { /* md breakpoint */
+    .book-detail-card {
+        flex-direction: row; /* Side-by-side layout on larger screens */
+    }
+
+    .book-cover-section {
+        /* Ensure this section doesn't get too large */
+        flex-basis: 300px; /* Set a base width */
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+}

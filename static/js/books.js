@@ -356,7 +356,7 @@ function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('show');
     if (modalId === 'book-info-modal') {
-        currentSelectedBook = null;
+       // currentSelectedBook = null;
         // Also reset view/edit modes
         const viewMode = document.getElementById('modal-view-mode');
         const editMode = document.getElementById('modal-edit-mode');

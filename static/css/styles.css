@@ -108,12 +108,13 @@ body {
     padding: 12px;
     font-size: 12px;
     color: var(--muted);
+    overflow: hidden;
 }
 
 .ticker-text {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: inline-block;
+    animation: marquee 10s linear infinite;
 }
 
 /* MAIN CONTENT */

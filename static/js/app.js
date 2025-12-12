@@ -138,13 +138,11 @@ async function initialLoad() {
         }
 
         const tickerContent = document.getElementById('time-ticker-content');
-        const tickerClone = document.getElementById('time-ticker-content-clone');
-        if (tickerContent && tickerClone) {
+        if (tickerContent) {
             const updateTime = () => {
                 const now = new Date();
                 const formattedTime = `Hôm nay: ${now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • Bây giờ là: ${now.toLocaleTimeString('vi-VN')}`;
                 tickerContent.textContent = formattedTime;
-                tickerClone.textContent = formattedTime;
             };
             setInterval(updateTime, 1000);
             updateTime();

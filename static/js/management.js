@@ -1,4 +1,5 @@
 import { showAlert, formatDate, authenticatedFetch } from './utils.js';
+import { ICONS } from './icons.js';
 
 let mgmtState = { 
     activeMonthLink: null,
@@ -151,8 +152,8 @@ function renderRecordsTable(item) {
                 <td class="py-2 px-4 text-center">${formatDate(record['date']) || 'N/A'}</td>`;
         }
         tableHtml += `<td class="py-3 px-4 flex items-center justify-end space-x-2">
-            <button class="p-1 hover:bg-gray-200 rounded-full edit-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Sửa"><svg class="h-5 w-5 text-blue-600"><use href="#icon-pencil"></use></svg></button>
-            <button class="p-1 hover:bg-gray-200 rounded-full delete-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Xóa"><svg class="h-5 w-5 text-red-600"><use href="#icon-trash"></use></svg></button>
+            <button class="p-1 hover:bg-gray-200 rounded-full edit-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Sửa">${ICONS.EDIT}</button>
+            <button class="p-1 hover:bg-gray-200 rounded-full delete-record-btn" data-type-id="${item.id}" data-record-id="${record.id}" title="Xóa">${ICONS.DELETE}</button>
             </td></tr>`;
     });
     tableHtml += '</tbody></table></div>';
@@ -228,7 +229,7 @@ async function loadMonthData(year, month, monthElement) {
         tabBarHtml += `
                     <div class="flex-shrink-0 p-2 border-r border-gray-200">
                         <button class="btn btn-primary" data-tab-id="${newTabId}">
-                            <svg class="w-5 h-5 mr-2 -ml-1"><use href="#icon-plus"></use></svg>
+                            ${ICONS.ADD}
                             Thêm khoản mục
                         </button>
                     </div>

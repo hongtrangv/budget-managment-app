@@ -499,7 +499,7 @@ export async function loadManagementPage() {
         if (!response.ok) throw new Error(`API call failed: ${response.status}`);
         const structure = await response.json();
         treeContainer.innerHTML = `<ul>${Object.keys(structure).sort((a,b) => b-a).map(year => `
-            <li><span class="toggle caret-down">${year}</span><ul class="nested active">${structure[year].map(month => `
+            <li><span class="toggle">${year}</span><ul class="nested">${structure[year].map(month => `
                 <li><span class="month-link" data-year="${year}" data-month="${month}">Tháng ${month}</span></li>`).join('')}</ul></li>`).join('')}</ul>`;
         
         attachTreeEventListeners();

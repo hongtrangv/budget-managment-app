@@ -31,7 +31,9 @@ body {
 /* SIDEBAR */
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--card);
+    --background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-position: center;
     padding: 28px 20px;
     border-right: 1px solid var(--border);
     box-shadow: 0 2px 8px rgba(20, 30, 60, 0.03);

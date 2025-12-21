@@ -196,6 +196,7 @@ export async function showAddBookModal(rowIndex, unitIndex, compIndex) {
     await populateGenreAndRating('add-book-genre-container', 'add-book-rating-container');
 
     showModal('add-book-modal');
+    document.getElementById('add-book-title').focus();
 }
 
 /**

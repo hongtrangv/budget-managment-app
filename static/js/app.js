@@ -14,10 +14,12 @@ const menuContainer = document.getElementById('menu-container');
 const routes = {
     '/': { page: '/pages/home.html', loader: loadHomePage },
     '/saving': { page: '/pages/saving.html', loader: loadSavingPage },    
-    '/collections': { page: './pages/collections.html', loader: loadCategoryPage },
+    '/collections': { page: '/pages/collections.html', loader: loadCategoryPage },
     '/management': { page: '/pages/management.html', loader: loadManagementPage },
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
     '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary },
+    '/login': { page: '/login' },
+    '/register': { page: '/register' },
     '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
     '/book/:bookId': { 
         dynamic: true, 
@@ -53,6 +55,14 @@ function findMatchingRoute(path) {
 }
 
 async function handleNav(path) {
+    // Nếu người dùng đã đăng nhập và cố gắng truy cập /login hoặc /register, chuyển hướng họ về trang chủ
+    const loggedIn = document.body.dataset.loggedIn === 'true';
+    if (loggedIn && (path === '/login' || path === '/register')) {
+        history.replaceState({ path: '/' }, '', '/');
+        handleNav('/');
+        return;
+    }
+    
     const routeInfo = findMatchingRoute(path);
     let pageUrl = routeInfo.page;
     if (routeInfo.dynamic) {
@@ -62,9 +72,16 @@ async function handleNav(path) {
     }
 
     try {
-        // Use the books_bp prefix for dynamic content
         const finalUrl = routeInfo.dynamic ? `/books_bp${pageUrl}` : pageUrl;
         const response = await fetch(finalUrl);
+
+        if (response.redirected) {
+            const redirectPath = new URL(response.url).pathname;
+            history.replaceState({ path: redirectPath }, '', redirectPath);
+            handleNav(redirectPath);
+            return;
+        }
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status} for path ${finalUrl}`);
         content.innerHTML = await response.text();
         
@@ -77,34 +94,22 @@ async function handleNav(path) {
     }
 }
 
-/**
- * Sets up the event listener for the mobile menu button.
- */
-function setupMobileMenu() {
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const openChatbotMobile = document.getElementById('open-chatbot-widget-mobile');
+async function logout() {
+    try {
+        const response = await fetch('/logout');
+        const result = await response.json();
 
-    if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-    }
-    
-    // Ensure menu closes when a link is clicked
-    mobileMenu.addEventListener('click', (e) => {
-        if (e.target.matches('a[data-navigo]') || e.target.closest('a[data-navigo]')) {
-            mobileMenu.classList.add('hidden');
+        if (response.ok && result.status === 'success' && result.redirect) {
+            showAlert('success', 'Đăng xuất thành công. Đang chuyển hướng...');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        } else {
+            throw new Error(result.message || 'Đăng xuất không thành công.');
         }
-    });
-    
-    // Handle chatbot button inside mobile menu
-    if(openChatbotMobile) {
-        openChatbotMobile.addEventListener('click', () => {
-            const mainChatbotButton = document.getElementById('open-chatbot-widget');
-            if(mainChatbotButton) mainChatbotButton.click();
-            mobileMenu.classList.add('hidden');
-        });
+    } catch (error) {
+        console.error('Lỗi Đăng xuất:', error);
+        showAlert('error', `Lỗi khi đăng xuất: ${error.message}`);
     }
 }
 
@@ -117,6 +122,58 @@ function attachGlobalEventListeners() {
             history.pushState({ path }, '', path);
             handleNav(path);
         }
+
+        // Thay đổi bộ chọn từ ID sang CLASS
+        const logoutButton = e.target.closest('.logout-button');
+        if (logoutButton) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
+    document.body.addEventListener('submit', async (event) => {
+        const form = event.target;
+
+        if (form.id === 'login-form' || form.id === 'register-form') {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            const messageDiv = document.getElementById('form-message');
+
+            try {
+                const actionUrl = event.target.id === 'login-form' ? '/login' : '/register';
+                const response = await fetch(actionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-KEY': window.API_KEY || ''
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    if (messageDiv) {
+                         messageDiv.className = 'p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg';
+                         messageDiv.textContent = result.message;
+                    }
+                    setTimeout(() => {
+                        if (result.redirect) {
+                             window.location.href = result.redirect;
+                        }
+                    }, 1000);
+                } else {
+                    throw new Error(result.message || 'An unknown error occurred.');
+                }
+            } catch (error) {
+                if (messageDiv) {
+                    messageDiv.className = 'p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg';
+                    messageDiv.textContent = error.message;
+                }
+            }
+        }
     });
 }
 
@@ -126,8 +183,12 @@ async function initialLoad() {
         if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
         menuContainer.innerHTML = await menuResponse.text();   
         
+        // Lấy trạng thái đăng nhập từ server và đặt nó vào body tag
+        const authStatusResponse = await fetch('/api/auth/status');
+        const authStatus = await authStatusResponse.json();
+        document.body.dataset.loggedIn = authStatus.logged_in;
+
         initializeChatbotWidget();
-        //initializeBookActions();
         attachGlobalEventListeners(); 
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);

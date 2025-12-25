@@ -50,6 +50,9 @@ def login():
 
             session['logged_in'] = True
             session['username'] = username
+            session['rolename'] = response_data.get('rolename')
+            
+            
             # You could also store a token from response_data in the session if needed
             # session['jwt_token'] = response_data.get('token')
             

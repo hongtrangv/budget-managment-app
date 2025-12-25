@@ -14,7 +14,8 @@ from src.api.dashboard_api import report_bp
 from src.api.chatbot_api import chatbot_bp
 from src.api.loan_api import loan_bp
 from src.api.books_api import books_bp
-from src.api.genre_api import genre_api_blueprint # Import the new genre blueprint
+from src.api.genre_api import genre_api_blueprint
+from src.api.menu_api import menu_bp # Import the new menu blueprint
 
 app = Flask(__name__,
             template_folder='templates',
@@ -39,6 +40,7 @@ app.register_blueprint(report_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(loan_bp)
 app.register_blueprint(books_bp)
+app.register_blueprint(menu_bp) # Register the menu blueprint
 
 # Register the new genre blueprint with a URL prefix
 app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
@@ -55,6 +57,7 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/bookstore')
 @app.route('/login')
 @app.route('/register')
+@app.route('/calendar')
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
 def index(row_index=None, unit_index=None, comp_index=None, book_id=None):

@@ -1,3 +1,4 @@
+
 async function initializeCalendar() {
     // --- DOM Elements ---
     const monthYearElement = document.getElementById('current-month-year');
@@ -15,16 +16,13 @@ async function initializeCalendar() {
     const modalForm = document.getElementById('task-form');
     const cancelTaskBtn = document.getElementById('cancel-task-btn');
 
-    // --- API Configuration ---
-    const API_GATEWAY_URL = 'YOUR_API_GATEWAY_URL/tasks'; // IMPORTANT: Replace this
-
     // --- State ---
     let currentDate = new Date();
     let selectedDate = new Date();
     let holidays = {};
     let currentYearForHolidays = null;
 
-    // --- Solar to Lunar Conversion Library (Embedded) ---
+    // --- Solar to Lunar Conversion Library (Corrected Version) ---
     function solarToLunar(dd, mm, yy, timeZone = 7) {
         function INT(d) { return Math.floor(d); }
       
@@ -144,7 +142,7 @@ async function initializeCalendar() {
         if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
       
         return { lunarDay, lunarMonth, lunarYear, lunarLeap };
-    }   
+    }
 
     // --- Helper ---
     function toYYYYMMDD(date) {
@@ -169,19 +167,51 @@ async function initializeCalendar() {
 
     async function fetchTasks(date) {
         taskList.innerHTML = '<li>Đang tải công việc...</li>';
-        // Mock data for demonstration - replace with actual API call
-        console.log(`Fetching tasks for ${toYYYYMMDD(date)}... (mock)`);
-        const mockTasks = Math.random() > 0.5 ? [
-            { description: 'Hoàn thành báo cáo dự án', assignee: 'Nguyễn Văn A' },
-            { description: 'Họp với đội ngũ marketing', assignee: 'Trần Thị B' }
-        ] : [];
-        setTimeout(() => renderTasks(mockTasks), 300);
-    }
+        const dateString = toYYYYMMDD(date);
+        try {
+            const response = await fetch(`/api/tasks?date=${dateString}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': window.API_KEY || ''
+                },                
+            });
+                        // --- GIẢI PHÁP --- 
+            // Kiểm tra xem responseData có phải là mảng không.
+             // Bước 1: Phân tích cú pháp JSON từ đối tượng Response
+             const responseData = await response.json();
 
+            // Nếu không, giả định nó là một object { data: [...] } và lấy mảng từ đó.
+            const tasks = Array.isArray(responseData) ? responseData : responseData.data;
+
+            // Kiểm tra an toàn lần cuối để đảm bảo `tasks` là một mảng trước khi render
+            if (!Array.isArray(tasks)) {
+                throw new Error('Định dạng dữ liệu công việc không hợp lệ.');
+            }
+          
+            renderTasks(tasks);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            taskList.innerHTML = '<li>Có lỗi xảy ra khi tải công việc.</li>';
+        }
+    }
+    
     async function saveTask(taskData) {
-        console.log('Saving task (mock):', JSON.stringify(taskData));
-        closeModal();
-        fetchTasks(selectedDate);
+        try {
+            await fetch(`/api/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': window.API_KEY || ''
+                },
+                body: JSON.stringify(taskData)                
+            });
+            closeModal();
+            fetchTasks(selectedDate); // Refresh the task list
+        } catch (error) {
+            console.error('Error saving task:', error);
+            alert('Không thể lưu công việc. Vui lòng thử lại.');
+        }
     }
 
     // --- Rendering Functions ---
@@ -221,7 +251,6 @@ async function initializeCalendar() {
         const date = new Date(year, month, day);
         const dateString = toYYYYMMDD(date);
 
-        //const lunar = getLunarDate(day, month + 1, year);
         const lunar = solarToLunar(day, month + 1, year);
         const lunarText = lunar.lunarDay === 1 ? `${lunar.lunarDay}/${lunar.lunarMonth}` : lunar.lunarDay;
 
@@ -240,7 +269,7 @@ async function initializeCalendar() {
         daysGrid.appendChild(dayElement);
     }
 
-    function renderTasks(tasks) {
+    function renderTasks(tasks) {        
         taskList.innerHTML = '';
         if (!tasks || tasks.length === 0) {
             taskList.innerHTML = '<li>Không có công việc nào cho ngày này.</li>';

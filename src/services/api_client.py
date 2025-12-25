@@ -19,37 +19,66 @@ class APIGatewayClient:
         self.base_url = os.environ.get('APIGW_BASE_URL')
         if not self.base_url:
             raise APIGatewayError("Lỗi cấu hình: APIGW_BASE_URL chưa được thiết lập trong tệp .env.", 500)
+         # Thiết lập header mặc định cho tất cả các yêu cầu
+        self.headers = {
+            'Authorization': os.environ.get('AUTHORIZATION'),
+            'Content-Type': 'application/json'
+        }
 
-    def _request(self, method, endpoint, **kwargs):
-        """Phương thức private để xử lý tất cả các yêu cầu đến API Gateway."""
-        full_url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+    def _request(self, method, endpoint, params=None, data=None):
+        """
+        Gửi yêu cầu đến API Gateway và xử lý phản hồi.
 
+        Args:
+            method (str): Phương thức HTTP (GET, POST, PUT, DELETE).
+            endpoint (str): Đường dẫn API (ví dụ: '/tasks').
+            params (dict, optional): Các tham số query string.
+            data (dict, optional): Dữ liệu body cho các yêu cầu POST/PUT.
+
+        Returns:
+            dict: Dữ liệu JSON từ phản hồi.
+
+        Raises:
+            APIGatewayError: Nếu yêu cầu thất bại hoặc trả về mã lỗi.
+        """
+        url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
         try:
-            response = requests.request(method, full_url, **kwargs)
+            response = requests.request(
+                method,
+                url,
+                headers=self.headers,
+                params=params,
+                json=data # Sử dụng json=data để tự động serialize và đặt Content-Type
+            )
+            # Ném ngoại lệ nếu phản hồi là một mã lỗi HTTP (4xx hoặc 5xx)
             response.raise_for_status()
+            # Trả về JSON nếu có nội dung, ngược lại trả về một dict rỗng
             return response.json() if response.content else {}
-        except requests.exceptions.HTTPError as err:
+        except requests.exceptions.HTTPError as e:
+            # Cố gắng lấy thông điệp lỗi từ JSON của phản hồi nếu có
             try:
-                error_details = err.response.json()
-                message = error_details.get('message', 'Lỗi không xác định từ gateway.')
+                error_data = e.response.json()
+                message = error_data.get('message', str(e))
             except ValueError:
-                message = f'Gateway đã trả về lỗi không phải JSON: {err.response.status_code}'
-            raise APIGatewayError(message, err.response.status_code) from err
+                message = str(e)
+            raise APIGatewayError(message, e.response.status_code)
         except requests.exceptions.RequestException as e:
-            raise APIGatewayError(f"Không thể kết nối đến dịch vụ: {e}", 503) from e
+            # Xử lý các lỗi kết nối mạng
+            raise APIGatewayError(f"Lỗi kết nối đến API Gateway: {e}", 503)
 
     def get(self, endpoint, params=None):
-        """Gửi một yêu cầu GET đến một điểm cuối cụ thể."""
+        """Gửi yêu cầu GET."""
         return self._request('GET', endpoint, params=params)
 
     def post(self, endpoint, data):
-        """Gửi một yêu cầu POST đến một điểm cuối cụ thể."""
-        return self._request('POST', endpoint, json=data)
+        """Gửi yêu cầu POST."""
+        return self._request('POST', endpoint, data=data)
 
     def put(self, endpoint, data):
-        """Gửi một yêu cầu PUT đến một điểm cuối cụ thể."""
-        return self._request('PUT', endpoint, json=data)
+        """Gửi yêu cầu PUT."""
+        return self._request('PUT', endpoint, data=data)
 
     def delete(self, endpoint):
-        """Gửi một yêu cầu DELETE đến một điểm cuối cụ thể."""
+        """Gửi yêu cầu DELETE."""
         return self._request('DELETE', endpoint)
+

@@ -16,6 +16,7 @@ from src.api.loan_api import loan_bp
 from src.api.books_api import books_bp
 from src.api.genre_api import genre_api_blueprint
 from src.api.menu_api import menu_bp # Import the new menu blueprint
+from src.api.task_api import task_bp
 
 app = Flask(__name__,
             template_folder='templates',
@@ -41,6 +42,8 @@ app.register_blueprint(chatbot_bp)
 app.register_blueprint(loan_bp)
 app.register_blueprint(books_bp)
 app.register_blueprint(menu_bp) # Register the menu blueprint
+app.register_blueprint(task_bp)
+
 
 # Register the new genre blueprint with a URL prefix
 app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')

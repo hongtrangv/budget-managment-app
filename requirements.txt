@@ -9,5 +9,6 @@ firebase-admin
 gunicorn
 openai
 bleach
+requests
 
 redis>=5.0.1

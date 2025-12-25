@@ -1,52 +1,106 @@
-import os
+from flask import Blueprint, render_template, request, url_for, session, jsonify
 from functools import wraps
-from flask import request, jsonify
-from .action_config import ACTION_CONFIG # Nhập cấu hình action
+from src.services.api_client import APIGatewayClient, APIGatewayError
 
-# Lấy khóa API bí mật từ biến môi trường
-API_SECRET_KEY = os.environ.get('API_SECRET_KEY')
+auth_bp = Blueprint('auth_bp', __name__, template_folder='../../templates', static_folder='../../static')
+
+# --- Decorators ---
 
 def require_api_key(f):
-    """
-    Decorator để yêu cầu khóa API cho một route.
-    Khóa API phải được gửi trong header 'X-API-KEY'.
-    """
+    """Decorator to require an API key for a route."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not API_SECRET_KEY:
-            return f(*args, **kwargs)
-        provided_key = request.headers.get('X-API-KEY')
-        if not provided_key or provided_key != API_SECRET_KEY:
-            return jsonify({"error": "Unauthorized. Invalid or missing API Key."}), 401
         return f(*args, **kwargs)
     return decorated_function
 
 def require_action(f):
-    """
-    Decorator để xác thực X-Action-Identifier dựa trên cấu hình tập trung.
-    Nó sử dụng `request.endpoint` để tra cứu các action được phép trong ACTION_CONFIG.
-    """
+    """Placeholder decorator for action-based authorization."""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # `request.endpoint` trả về 'blueprint_name.function_name'
-        endpoint = request.endpoint
-        allowed_actions = ACTION_CONFIG.get(endpoint)
-
-        # Nếu endpoint không được cấu hình, từ chối quyền truy cập theo mặc định
-        if allowed_actions is None:
-            print(f"CẢNH BÁO BẢO MẬT: Endpoint '{endpoint}' được bảo vệ bởi @require_action nhưng không có trong ACTION_CONFIG.")
-            return jsonify({"error": "Forbidden. Action configuration missing for this endpoint."}), 403
-
-        # Lấy action được cung cấp từ header
-        provided_action = request.headers.get('X-Action-Identifier')
-
-        # Kiểm tra xem action được cung cấp có trong danh sách được phép không
-        if not provided_action or provided_action not in allowed_actions:
-            return jsonify({
-                "error": "Forbidden. This action is not permitted for this endpoint.",
-                "allowed_actions": allowed_actions,
-                "provided_action": provided_action or "None"
-            }), 403
-        
+    def wrapper(*args, **kwargs):
+        print(f"Action required for endpoint {request.endpoint}. (Placeholder)")
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
+
+# --- API Endpoint for Auth Status ---
+
+@auth_bp.route('/api/auth/status')
+def auth_status():
+    """Returns the current authentication status from the session."""
+    logged_in = session.get('logged_in', False)
+    username = session.get('username', None) if logged_in else None
+    return jsonify({
+        'logged_in': logged_in,
+        'username': username
+    })
+
+# --- Auth Routes --- 
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    """Handles user login by calling the APIGatewayClient."""
+    if request.method == 'POST':
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        try:
+            client = APIGatewayClient()
+            # Assuming the login endpoint on the APIGW is '/auth/login'
+            response_data = client.post('/api/auth/login', {'username': username, 'password': password})
+
+            session['logged_in'] = True
+            session['username'] = username
+            session['rolename'] = response_data.get('rolename')
+            
+            
+            # You could also store a token from response_data in the session if needed
+            # session['jwt_token'] = response_data.get('token')
+            
+            return jsonify({'status': 'success', 'message': 'Đăng nhập thành công!', 'redirect': '/'})
+
+        except APIGatewayError as e:
+            return jsonify({'status': 'error', 'message': e.message}), e.status_code
+
+    # For GET request, render the login page
+    return render_template('pages/login.html')
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    """Handles user registration by calling the APIGatewayClient."""
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        if data.get('password') != data.get('confirm-password'):
+            return jsonify({'status': 'error', 'message': 'Mật khẩu không khớp!'}), 400
+
+        payload = {
+            'username': data.get('username'),
+            'email': data.get('email'),
+            'password': data.get('password')
+        }
+
+        try:
+            client = APIGatewayClient()
+            # Assuming the register endpoint on the APIGW is '/auth/register'
+            client.post('/api/users/register', payload)
+
+            return jsonify({'status': 'success', 'message': 'Đăng ký thành công! Vui lòng đăng nhập.', 'redirect': '/'})
+
+        except APIGatewayError as e:
+            return jsonify({'status': 'error', 'message': e.message}), e.status_code
+
+    return render_template('pages/register.html')
+
+@auth_bp.route('/logout')
+def logout():
+    """Logs the user out."""
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    return jsonify({'status': 'success', 'redirect': '/login'})
+
+@auth_bp.route('/admin')
+def admin():
+    """Serves the admin page (for logged-in users)."""
+    if not session.get('logged_in'):
+        return jsonify({'status': 'error', 'redirect': '/login'}), 401
+    return render_template('pages/admin.html')

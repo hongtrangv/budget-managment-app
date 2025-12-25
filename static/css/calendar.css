@@ -1,0 +1,329 @@
+/* General body styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    box-sizing: border-box;
+}
+
+/* Page container for centering content */
+.page-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Main calendar container */
+.calendar-container {
+    margin-top: 40px;
+    width: 100%;
+    max-width: 900px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Header section */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    font-weight: 500;
+}
+
+.month-navigation {
+    display: flex;
+    border: 1px solid #34d399;
+    border-radius: 4px;
+}
+
+.month-navigation button {
+    background: #34d399;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+.month-navigation button:hover {
+    background: #10b981;
+}
+
+.month-navigation #today-btn {
+    background: #fdfdfd;
+    color: #333;
+    border-left: 1px solid #34d399;
+    border-right: 1px solid #34d399;
+}
+.month-navigation #today-btn:hover {
+    background: #f1f1f1;
+}
+
+/* Calendar body and grid */
+.calendar-body {
+    padding: 0 15px 15px;
+}
+
+.day-names, .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+}
+
+.day-names span {
+    padding: 15px 0;
+    font-weight: 600;
+    color: #555;
+}
+
+.days-grid div {
+    position: relative; /* For tooltip & lunar date positioning */
+    height: 80px;
+    border: 1px solid #e0e0e0;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.days-grid div:hover {
+    background-color: #f9f9f9;
+}
+
+.days-grid div.other-month {
+    color: #aaa;
+    background-color: #fafafa;
+}
+
+/* Solar/Lunar Date Styling */
+.solar-date {
+    font-size: 1.1em; 
+    font-weight: 500;
+}
+
+.lunar-date {
+    position: absolute;
+    bottom: 5px;
+    right: 7px;
+    font-size: 0.8em;
+    color: #777;
+}
+
+.days-grid div.selected .lunar-date {
+    color: #e6fffa;
+}
+
+.days-grid div.other-month .lunar-date {
+    color: #ccc;
+}
+
+/* Holiday and Tooltip Styling */
+.days-grid div.holiday {
+    background-color: #e6fffa; /* Light teal for holidays */
+}
+
+.days-grid div .tooltip {
+    visibility: hidden;
+    width: 140px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 105%; /* Position above the day */
+    left: 50%;
+    margin-left: -70px; /* Center the tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.days-grid div:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.days-grid div.selected {
+    background-color: #10b981; /* Main theme color */
+    color: #fff;
+    border: 1px solid #10b981;
+}
+
+.days-grid div.holiday.selected {
+    background-color: #059669; /* Darker teal when selected */
+}
+
+/* Task List Section */
+.task-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px 0 40px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.task-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+#add-task-btn {
+    background-color: #34d399;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+}
+
+#add-task-btn:hover {
+    background-color: #10b981;
+}
+
+#task-list {
+    list-style: none;
+    padding: 0 20px;
+    margin: 0;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+#task-list li {
+    padding: 15px 5px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#task-list li:last-child {
+    border-bottom: none;
+}
+
+#task-list .task-info {
+    flex-grow: 1;
+}
+
+#task-list .task-assignee {
+    font-style: italic;
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 15px;
+    background-color: #f4f4f4;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.5em;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.modal-actions button[type="submit"] {
+    background-color: #34d399;
+    color: white;
+}
+.modal-actions button[type="submit"]:hover {
+    background-color: #10b981;
+}
+
+.modal-actions #cancel-task-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.modal-actions #cancel-task-btn:hover {
+    background-color: #e0e0e0;
+}

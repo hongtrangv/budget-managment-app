@@ -18,6 +18,7 @@ def get_menu():
                 {"url": "/loan-payment", "icon": "loan", "text": "Thanh toán khoản vay"},
                 {"url": "/bookstore", "icon": "book", "text": "Nhà sách"},
                 {"url": "/calendar", "icon": "register", "text": "Lịch công việc"},
+                {"url": "/excel-upload", "icon": "register", "text": "Excel Upload"}, # Add a new menu item
                 {"url": "#", "icon": "logout", "text": "Đăng xuất", "id": "logout-btn"}
             ]
         }

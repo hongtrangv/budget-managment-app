@@ -40,7 +40,7 @@
                         </a>
                         <div class="flex items-center space-x-2">
                             {% if session.logged_in %}
-                                <span class="text-gray-600 text-sm">Chào, <span class="font-medium">{{ session.username }}</span></span>
+                                <span class="text-gray-600 text-sm">Chào, <span class="font-medium">{{ session.fullname }}</span></span>
                                 <button class="logout-button text-sm text-red-600 hover:underline focus:outline-none" aria-label="Đăng xuất">
                                     <svg class="h-6 w-6"><use href="#icon-logout"></use></svg>
                                 </button>
@@ -66,7 +66,7 @@
                         <!-- User Info and Logout Button -->
                         <div class="flex items-center space-x-4">
                             {% if session.logged_in %}
-                                <span class="text-gray-700 text-sm">Xin chào, <span class="font-medium">{{ session.username }}</span></span>
+                                <span class="text-gray-700 text-sm">Xin chào, <span class="font-medium">{{ session.fullname }}</span></span>
                                 <button class="logout-button text-sm text-red-600 hover:underline focus:outline-none">
                                     Thoát
                                 </button>

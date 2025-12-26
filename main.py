@@ -17,6 +17,7 @@ from src.api.books_api import books_bp
 from src.api.genre_api import genre_api_blueprint
 from src.api.menu_api import menu_bp # Import the new menu blueprint
 from src.api.task_api import task_bp
+from src.api.excel_upload_api import excel_upload_bp # Import a new excel upload blueprint
 
 app = Flask(__name__,
             template_folder='templates',
@@ -43,6 +44,7 @@ app.register_blueprint(loan_bp)
 app.register_blueprint(books_bp)
 app.register_blueprint(menu_bp) # Register the menu blueprint
 app.register_blueprint(task_bp)
+app.register_blueprint(excel_upload_bp) # Register the excel upload blueprint
 
 
 # Register the new genre blueprint with a URL prefix
@@ -63,6 +65,7 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/calendar')
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
+@app.route('/excel-upload') # Add this route for the new page
 def index(row_index=None, unit_index=None, comp_index=None, book_id=None):
     """Serves the main index.html file, which is the entry point for the SPA."""
     # Lấy API key từ biến môi trường và truyền vào template

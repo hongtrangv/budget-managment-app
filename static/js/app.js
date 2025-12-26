@@ -7,6 +7,7 @@ import { initializeChatbotWidget } from './chatbot.js';
 import { loadAndRenderLibrary,renderStarRating } from './books.js';
 import { initializeBookActions } from './book_actions.js';
 import { showAlert } from './utils.js';
+import { loadExcelUploadPage } from './excel_upload.js'; // Import a new page
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
@@ -19,6 +20,8 @@ const routes = {
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
     '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary },
     '/calendar': { page: '/pages/calendar.html', loader: () => import('./calendar.js') },
+    '/report': { page: '/pages/report.html' }, // Thêm route cho trang báo cáo
+    '/excel-upload': { page: '/pages/excel_upload.html', loader: loadExcelUploadPage }, // Add excel upload page route
     '/login': { page: '/login' },
     '/register': { page: '/register' },
     '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
@@ -150,12 +153,22 @@ function attachGlobalEventListeners() {
         if (form.id === 'login-form' || form.id === 'register-form') {
             event.preventDefault();
 
+            const submitButton = document.getElementById('login-submit-button');
+            const spinner = document.getElementById('login-spinner');
+            const buttonText = document.getElementById('login-button-text');
+
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            const messageDiv = document.getElementById('form-message');
+
+            // Bắt đầu trạng thái loading (chỉ cho form đăng nhập)
+            if (form.id === 'login-form' && submitButton) {
+                submitButton.disabled = true;
+                if(spinner) spinner.classList.remove('hidden');
+                if(buttonText) buttonText.textContent = 'Đang xử lý...';
+            }
 
             try {
-                const actionUrl = event.target.id === 'login-form' ? '/login' : '/register';
+                const actionUrl = form.id === 'login-form' ? '/login' : '/register';
                 const response = await fetch(actionUrl, {
                     method: 'POST',
                     headers: {
@@ -168,22 +181,26 @@ function attachGlobalEventListeners() {
                 const result = await response.json();
 
                 if (response.ok && result.status === 'success') {
-                    if (messageDiv) {
-                         messageDiv.className = 'p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg';
-                         messageDiv.textContent = result.message;
-                    }
+                    // Hiển thị popup thành công
+                    showAlert('success', result.message || 'Thao tác thành công!');
                     setTimeout(() => {
                         if (result.redirect) {
                              window.location.href = result.redirect;
                         }
                     }, 1000);
                 } else {
-                    throw new Error(result.message || 'An unknown error occurred.');
+                    // Lỗi từ API
+                    throw new Error(result.message || 'Đã có lỗi không xác định xảy ra.');
                 }
             } catch (error) {
-                if (messageDiv) {
-                    messageDiv.className = 'p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg';
-                    messageDiv.textContent = error.message;
+                // Hiển thị popup lỗi
+                showAlert('error', error.message);
+
+                // Reset lại trạng thái nút (chỉ cho form đăng nhập)
+                if (form.id === 'login-form' && submitButton) {
+                    submitButton.disabled = false;
+                    if(spinner) spinner.classList.add('hidden');
+                    if(buttonText) buttonText.textContent = 'Đăng nhập';
                 }
             }
         }

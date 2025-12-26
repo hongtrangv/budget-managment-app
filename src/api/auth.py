@@ -28,9 +28,12 @@ def auth_status():
     """Returns the current authentication status from the session."""
     logged_in = session.get('logged_in', False)
     username = session.get('username', None) if logged_in else None
+    fullname = session.get('fullname', None) if logged_in else None
+
     return jsonify({
         'logged_in': logged_in,
-        'username': username
+        'username': username,
+        'fullname': fullname
     })
 
 # --- Auth Routes --- 
@@ -47,9 +50,10 @@ def login():
             client = APIGatewayClient()
             # Assuming the login endpoint on the APIGW is '/auth/login'
             response_data = client.post('/api/auth/login', {'username': username, 'password': password})
-
+                    
             session['logged_in'] = True
             session['username'] = username
+            session['fullname'] = response_data.get("data").get('fullname')
             session['rolename'] = response_data.get('rolename')
             
             

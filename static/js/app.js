@@ -7,8 +7,9 @@ import { initializeChatbotWidget } from './chatbot.js';
 import { loadAndRenderLibrary, renderStarRating } from './books.js';
 import { showAlert } from './utils.js';
 import { loadExcelUploadPage } from './excel_upload.js';
-import { loadRegistrationPage } from './register.js'; // Import the new registration page handler
+import { loadRegistrationPage } from './register.js';
 import { ICONS } from './icons.js';
+import { initAdminMenuPage } from './admin_menu.js';
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
@@ -23,6 +24,7 @@ function closeMobileSidebar() {
 }
 
 const routes = {
+    '/welcome': { page: '/pages/welcome.html' }, // Page for logged-out users
     '/': { page: '/pages/home.html', loader: loadHomePage },
     '/saving': { page: '/pages/saving.html', loader: loadSavingPage },    
     '/collections': { page: '/pages/collections.html', loader: loadCategoryPage },
@@ -33,7 +35,8 @@ const routes = {
     '/report': { page: '/pages/report.html' },
     '/excel-upload': { page: '/pages/excel_upload.html', loader: loadExcelUploadPage },
     '/login': { page: '/login' },
-    '/register': { page: '/register', loader: loadRegistrationPage }, // Use the imported function
+    '/register': { page: '/register', loader: loadRegistrationPage },
+    '/admin/menu': { page: '/admin/menu', loader: initAdminMenuPage },
     '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
     '/book/:bookId': { 
         dynamic: true, 
@@ -67,11 +70,22 @@ function findMatchingRoute(path) {
 async function handleNav(path) {
     closeMobileSidebar();
     const loggedIn = document.body.dataset.loggedIn === 'true';
-    if (loggedIn && (path === '/login' || path === '/register')) {
-        history.replaceState({ path: '/' }, '', '/');
-        handleNav('/');
-        return;
+
+    // --- REDIRECTION LOGIC ---
+    // 1. If not logged in and trying to access the root, show the welcome page.
+    if (!loggedIn && path === '/') {
+        history.replaceState({ path: '/welcome' }, '', '/welcome');
+        handleNav('/welcome'); // Re-run navigation for the new path
+        return; // Stop this execution
     }
+    
+    // 2. If logged in, redirect away from public-only pages (login, register, welcome)
+    if (loggedIn && ['/login', '/register', '/welcome'].includes(path)) {
+        history.replaceState({ path: '/' }, '', '/');
+        handleNav('/'); // Re-run navigation for the user's dashboard
+        return; // Stop this execution
+    }
+
     const routeInfo = findMatchingRoute(path);
     let pageUrl = routeInfo.page;
     if (routeInfo.dynamic) {
@@ -88,7 +102,13 @@ async function handleNav(path) {
             handleNav(redirectPath);
             return;
         }
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            if (response.status === 403) {
+                content.innerHTML = await response.text();
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         content.innerHTML = await response.text();
         if (routeInfo.loader) await routeInfo.loader();
     } catch (e) {
@@ -215,14 +235,19 @@ function renderMenu(menu) {
 
 async function initialLoad() {
     try {
-        const menuResponse = await fetch('/api/menu');
-        if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
-        renderMenu(await menuResponse.json());
-        
         const authStatusResponse = await fetch('/api/auth/status');
         const authStatus = await authStatusResponse.json();
         document.body.dataset.loggedIn = authStatus.logged_in;
 
+        // Load menu only if logged in, otherwise the welcome page doesn't need it
+        if (authStatus.logged_in) {
+            const menuResponse = await fetch('/api/menu');
+            if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
+            renderMenu(await menuResponse.json());
+        } else {
+             menuContainer.innerHTML = ''; // Clear menu for welcome page
+        }
+        
         initializeChatbotWidget();
         initializeResponsiveUI();
         attachGlobalEventListeners(); 

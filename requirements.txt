@@ -10,5 +10,7 @@ gunicorn
 openai
 bleach
 requests
+pandas
+openpyxl
 
 redis>=5.0.1

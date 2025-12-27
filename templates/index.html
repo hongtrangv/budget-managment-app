@@ -18,64 +18,72 @@
     {% include 'components/icons.html' %}
     <div id="alert-container" data-position="top-right"></div>
 
-    <div class="flex h-screen">
-        <!-- Backdrop for mobile menu, hidden on md and larger -->
+    <div class="flex h-screen bg-gray-100">
+        <!-- START: Backdrop for mobile menu -->
         <div id="backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
+        <!-- END: Backdrop for mobile menu -->
 
-        <!-- Sidebar -->
+        <!-- START: Sidebar -->
         <aside id="left-sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-30 transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex-shrink-0">
-            <!-- Menu will be loaded here -->
-            <div id="menu-container" class="h-full"></div>
+            <div class="h-full" id="menu-container">
+                <!-- Menu content will be loaded here by app.js -->
+            </div>
         </aside>
+        <!-- END: Sidebar -->
 
-        <!-- Main content area -->
+        <!-- START: Main Content Area -->
         <div class="flex-1 flex flex-col overflow-y-auto">
-            <!-- Top bar for mobile, hidden on md and larger -->
-            <header class="bg-white shadow-sm md:hidden sticky top-0 z-10">
+            
+            <!-- START: Unified Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
                 <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between items-center py-4">
-                         <a href="/" class="font-bold text-xl text-gray-800 flex items-center">
-                            <span class="icon-logo mr-2"></span> 
-                            <span>QUẢN LÝ</span>
-                        </a>
-                        <div class="flex items-center space-x-2">
-                            {% if session.logged_in %}
-                                <span class="text-gray-600 text-sm">Chào, <span class="font-medium">{{ session.fullname }}</span></span>
-                                <button class="logout-button text-sm text-red-600 hover:underline focus:outline-none" aria-label="Đăng xuất">
-                                    <svg class="h-6 w-6"><use href="#icon-logout"></use></svg>
-                                </button>
-                            {% endif %}
-                            <button id="mobile-menu-button" aria-label="Open menu" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                        
+                        <!-- Left side: Hamburger (Mobile) & Logo (Desktop) -->
+                        <div class="flex items-center">
+                            <!-- Hamburger Button -->
+                            <button id="mobile-menu-button" aria-label="Open menu" class="md:hidden mr-4 text-gray-600 hover:text-gray-800 focus:outline-none">
                                 <svg class="h-6 w-6"><use href="#icon-menu"></use></svg>
                             </button>
+                            <!-- Logo - Visible on all screens, but hamburger is hidden on desktop -->
+                             <a href="/" class="font-bold text-xl text-gray-800 flex items-center">
+                                <span class="icon-logo mr-2"></span> 
+                                <span class="hidden sm:inline">QUẢN LÝ</span>
+                            </a>
                         </div>
-                    </div>
-                </div>
-            </header>
 
-            <!-- START: Desktop Header -->
-            <header class="bg-white shadow-sm sticky top-0 z-10 hidden md:flex items-center justify-between">
-                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between items-center py-4">
-                        <!-- Logo for Desktop -->
-                        <a href="/" class="font-bold text-xl text-gray-800 flex items-center">
-                           <span class="icon-logo mr-2"></span> 
-                           <span>QUẢN LÝ</span>
-                       </a>
-
-                        <!-- User Info and Logout Button -->
+                        <!-- Right side: User Info -->
                         <div class="flex items-center space-x-4">
-                            {% if session.logged_in %}
-                                <span class="text-gray-700 text-sm">Xin chào, <span class="font-medium">{{ session.fullname }}</span></span>
-                                <button class="logout-button text-sm text-red-600 hover:underline focus:outline-none">
-                                    Thoát
-                                </button>
+                            {% if 'username' in session %}
+                                <!-- Desktop User Info -->
+                                <div class="hidden md:flex items-center space-x-4">
+                                    <span class="text-gray-700 text-sm">Xin chào, <span class="font-medium">{{ session.get('fullname', session['username']) }}</span></span>
+                                    <button class="logout-button flex items-center text-sm text-red-600 hover:underline focus:outline-none">
+                                        <svg class="h-5 w-5 mr-1"><use href="#icon-logout"></use></svg>
+                                        Thoát
+                                    </button>
+                                </div>
+
+                                <!-- Mobile User Dropdown -->
+                                <div class="md:hidden relative">
+                                    <button id="user-menu-button" class="flex items-center focus:outline-none">
+                                        <img class="h-8 w-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ session.get('fullname', session['username'])|urlencode }}&background=0D8ABC&color=fff" alt="User avatar">
+                                    </button>
+                                    <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                                        <div class="px-4 py-2 text-sm text-gray-700">
+                                            <p class="font-semibold">{{ session.get('fullname', session['username']) }}</p>
+                                            <p class="text-xs text-gray-500">{{ session['username'] }}</p>
+                                        </div>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="#" class="logout-button block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Đăng xuất</a>
+                                    </div>
+                                </div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </header>
-            <!-- END: Desktop Header -->
+            <!-- END: Unified Header -->
 
             <!-- Page Content -->
             <main id="content" class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8"></main>
@@ -88,12 +96,12 @@
                 </div>
             </footer>
         </div>
+        <!-- END: Main Content Area -->
     </div>
-
 
     <!-- === START: CHATBOT WIDGET HTML === -->
     <div id="chatbot-widget" class="bg-white">
-        <!-- Widget Header -->
+        <!-- ... (chatbot content remains the same) ... -->
         <div class="flex items-center justify-between p-4 bg-green-600 text-white border-b border-green-700">
             <h3 class="text-lg font-semibold">Trợ lý Tài chính</h3>
             <button id="close-chatbot-widget" class="text-white hover:text-green-200">
@@ -117,6 +125,6 @@
     <!-- === END: CHATBOT WIDGET HTML === -->
 
     <script src="https://cdn.jsdelivr.net/npm/navigo@8.11.1/lib/navigo.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}?v=1.2"></script>    
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}?v=1.3"></script>    
 </body>
 </html>

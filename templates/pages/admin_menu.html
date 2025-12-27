@@ -1,0 +1,54 @@
+<div class="container mx-auto p-4 md:p-6 lg:p-8">
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Menu</h1>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Thêm, sửa, xóa và sắp xếp các mục trong menu điều hướng.</p>
+            </div>
+            <button id="reload-menu-btn" title="Tải lại menu" class="btn btn-secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 4l16 16"></path></svg>
+            </button>
+        </div>
+
+        <!-- Form for adding/editing a menu item -->
+        <div id="menu-item-form-container" class="mb-8 p-6 border rounded-lg bg-gray-50 dark:bg-gray-700 transition-all duration-300">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white" id="form-title">Thêm mục mới</h2>
+            <form id="menu-item-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="menu-item-id" name="id">
+                
+                <div>
+                    <label for="menu-item-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tên hiển thị (Name)</label>
+                    <input type="text" id="menu-item-name" name="text" class="input-field w-full mt-1" placeholder="Ví dụ: Trang chủ" required>
+                </div>
+                <div>
+                    <label for="menu-item-path" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Đường dẫn (Path/URL)</label>
+                    <input type="text" id="menu-item-path" name="url" class="input-field w-full mt-1" placeholder="Ví dụ: /saving" required>
+                </div>
+                <div>
+                    <label for="menu-item-icon" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tên Icon</label>
+                    <input type="text" id="menu-item-icon" name="icon" class="input-field w-full mt-1" placeholder="Ví dụ: home">
+                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tên không bao gồm "icon-". Tham khảo ID trong icons.html.</p>
+                </div>
+                <div>
+                    <label for="menu-item-roles" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nhóm quyền (Roles)</label>
+                    <input type="text" id="menu-item-roles" name="roles" class="input-field w-full mt-1" placeholder="admin, user (phân cách bằng dấu phẩy)">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Để trống nếu mục này dành cho mọi người.</p>
+                </div>
+
+                <div class="md:col-span-2 flex justify-end space-x-3 mt-2">
+                    <button type="button" id="cancel-edit-btn" class="btn btn-secondary hidden">Hủy</button>
+                    <button type="submit" id="save-menu-item-btn" class="btn btn-primary w-28">Lưu</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- List of current menu items -->
+        <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Danh sách Menu hiện tại</h2>
+        <div class="border rounded-lg overflow-hidden">
+            <div id="menu-items-list" class="space-y-2 bg-white dark:bg-gray-800 p-3">
+                <!-- Menu items will be loaded here by JavaScript -->
+                <div class="text-center p-8 text-gray-500">Đang tải danh sách menu...</div>
+            </div>
+        </div>
+    </div>
+</div>

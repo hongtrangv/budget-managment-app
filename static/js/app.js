@@ -1,17 +1,30 @@
 import { loadSavingPage } from './saving.js';
-import {loadHomePage} from './home.js';
+import { loadHomePage } from './home.js';
 import { loadCategoryPage } from './collections.js';
 import { loadManagementPage } from './management.js';
 import { loadLoanPaymentPage } from './loan_payment.js';
 import { initializeChatbotWidget } from './chatbot.js';
-import { loadAndRenderLibrary,renderStarRating } from './books.js';
-import { initializeBookActions } from './book_actions.js';
+import { loadAndRenderLibrary, renderStarRating } from './books.js';
 import { showAlert } from './utils.js';
+import { loadExcelUploadPage } from './excel_upload.js';
+import { loadRegistrationPage } from './register.js';
+import { ICONS } from './icons.js';
+import { initAdminMenuPage } from './admin_menu.js';
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
 
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('left-sidebar');
+    const backdrop = document.getElementById('backdrop');
+    if (sidebar && backdrop) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+    }
+}
+
 const routes = {
+    '/welcome': { page: '/pages/welcome.html' }, // Page for logged-out users
     '/': { page: '/pages/home.html', loader: loadHomePage },
     '/saving': { page: '/pages/saving.html', loader: loadSavingPage },    
     '/collections': { page: '/pages/collections.html', loader: loadCategoryPage },
@@ -19,31 +32,20 @@ const routes = {
     '/loan-payment': { page: '/pages/loan_payment.html', loader: loadLoanPaymentPage },
     '/bookstore': { page: '/pages/books.html', loader: loadAndRenderLibrary },
     '/calendar': { page: '/pages/calendar.html', loader: () => import('./calendar.js') },
+    '/report': { page: '/pages/report.html' },
+    '/excel-upload': { page: '/pages/excel_upload.html', loader: loadExcelUploadPage },
     '/login': { page: '/login' },
-    '/register': { page: '/register' },
+    '/register': { page: '/register', loader: loadRegistrationPage },
+    '/admin/menu': { page: '/admin/menu', loader: initAdminMenuPage },
     '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
     '/book/:bookId': { 
         dynamic: true, 
         page: '/book/:bookId', 
         loader: () => {
             const ratingElement = document.getElementById('book-detail-rating');
-            if (ratingElement) {
-                renderStarRating(ratingElement);
-            }
+            if (ratingElement) renderStarRating(ratingElement);
         }
     }
-};
-
-const ICONS = {
-    home: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-7 4h14a1 1 0 001-1V10a1 1 0 00-1-1h-4"></path></svg>',
-    saving: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>',
-    collections: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>',
-    management: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>',
-    loan: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1m0-1H8m11 11.5a1.5 1.5 0 01-3 0V16a1.5 1.5 0 013 0v.5z"></path></svg>',
-    book: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m0 0l-5.495-3.663A2.25 2.25 0 005.25 12V6.253a2.25 2.25 0 011.007-1.928l5.495-3.663a2.25 2.25 0 012.496 0l5.495 3.663A2.25 2.25 0 0118.75 6.253V12a2.25 2.25 0 01-1.257 2.086l-5.495 3.663z"></path></svg>',
-    logout: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
-    login: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
-    register: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z"></path></svg>'
 };
 
 function findMatchingRoute(path) {
@@ -51,31 +53,39 @@ function findMatchingRoute(path) {
         const routeParts = route.split('/').filter(p => p);
         const pathParts = path.split('/').filter(p => p);
         if (routeParts.length !== pathParts.length) continue;
-
         const params = {};
         let match = true;
         for (let i = 0; i < routeParts.length; i++) {
             if (routeParts[i].startsWith(':')) {
                 params[routeParts[i].substring(1)] = pathParts[i];
             } else if (routeParts[i] !== pathParts[i]) {
-                match = false;
-                break;
+                match = false; break;
             }
         }
         if (match) return { ...routes[route], params };
     }
-    return routes['/']; // Fallback to the root route
+    return routes['/'];
 }
 
 async function handleNav(path) {
-    // Nếu người dùng đã đăng nhập và cố gắng truy cập /login hoặc /register, chuyển hướng họ về trang chủ
+    closeMobileSidebar();
     const loggedIn = document.body.dataset.loggedIn === 'true';
-    if (loggedIn && (path === '/login' || path === '/register')) {
-        history.replaceState({ path: '/' }, '', '/');
-        handleNav('/');
-        return;
+
+    // --- REDIRECTION LOGIC ---
+    // 1. If not logged in and trying to access the root, show the welcome page.
+    if (!loggedIn && path === '/') {
+        history.replaceState({ path: '/welcome' }, '', '/welcome');
+        handleNav('/welcome'); // Re-run navigation for the new path
+        return; // Stop this execution
     }
     
+    // 2. If logged in, redirect away from public-only pages (login, register, welcome)
+    if (loggedIn && ['/login', '/register', '/welcome'].includes(path)) {
+        history.replaceState({ path: '/' }, '', '/');
+        handleNav('/'); // Re-run navigation for the user's dashboard
+        return; // Stop this execution
+    }
+
     const routeInfo = findMatchingRoute(path);
     let pageUrl = routeInfo.page;
     if (routeInfo.dynamic) {
@@ -83,27 +93,27 @@ async function handleNav(path) {
             pageUrl = pageUrl.replace(`:${key}`, routeInfo.params[key]);
         }
     }
-
     try {
         const finalUrl = routeInfo.dynamic ? `/books_bp${pageUrl}` : pageUrl;
         const response = await fetch(finalUrl);
-
         if (response.redirected) {
             const redirectPath = new URL(response.url).pathname;
             history.replaceState({ path: redirectPath }, '', redirectPath);
             handleNav(redirectPath);
             return;
         }
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status} for path ${finalUrl}`);
-        content.innerHTML = await response.text();
-        
-        if (routeInfo.loader) {
-            await routeInfo.loader();
+        if (!response.ok) {
+            if (response.status === 403) {
+                content.innerHTML = await response.text();
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        content.innerHTML = await response.text();
+        if (routeInfo.loader) await routeInfo.loader();
     } catch (e) {
         console.error("Error handling navigation:", e);
-        showAlert('error', `Không thể tải trang: ${path}. Vui lòng thử lại.`);
+        showAlert('error', `Không thể tải trang: ${path}.`);
     }
 }
 
@@ -111,14 +121,11 @@ async function logout() {
     try {
         const response = await fetch('/logout');
         const result = await response.json();
-
         if (response.ok && result.status === 'success' && result.redirect) {
             showAlert('success', 'Đăng xuất thành công. Đang chuyển hướng...');
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+            setTimeout(() => { window.location.href = '/'; }, 1000);
         } else {
-            throw new Error(result.message || 'Đăng xuất không thành công.');
+            throw new Error(result.message || 'Đăng xuất thất bại.');
         }
     } catch (error) {
         console.error('Lỗi Đăng xuất:', error);
@@ -126,64 +133,83 @@ async function logout() {
     }
 }
 
+function initializeResponsiveUI() {
+    const sidebar = document.getElementById('left-sidebar');
+    const backdrop = document.getElementById('backdrop');
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenuDropdown = document.getElementById('user-menu-dropdown');
+
+    if (mobileMenuButton) mobileMenuButton.addEventListener('click', () => {
+        sidebar.classList.toggle('-translate-x-full');
+        backdrop.classList.toggle('hidden');
+    });
+    if (backdrop) backdrop.addEventListener('click', closeMobileSidebar);
+    if (userMenuButton) userMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenuDropdown.classList.toggle('hidden');
+    });
+    window.addEventListener('click', (e) => {
+        if (userMenuDropdown && !userMenuDropdown.classList.contains('hidden')) {
+             if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                userMenuDropdown.classList.add('hidden');
+            }
+        }
+    });
+}
+
 function attachGlobalEventListeners() {
     document.body.addEventListener('click', e => {
         const navLink = e.target.closest('a[data-navigo]');
         if (navLink) {
             e.preventDefault();
-            const path = navLink.getAttribute('href');
-            history.pushState({ path }, '', path);
-            handleNav(path);
+            history.pushState({ path: navLink.getAttribute('href') }, '', navLink.getAttribute('href'));
+            handleNav(navLink.getAttribute('href'));
         }
-
-        // Thay đổi bộ chọn từ ID sang CLASS
         const logoutButton = e.target.closest('.logout-button');
         if (logoutButton) {
             e.preventDefault();
+            const dropdown = document.getElementById('user-menu-dropdown');
+            if(dropdown) dropdown.classList.add('hidden');
             logout();
         }
     });
 
     document.body.addEventListener('submit', async (event) => {
         const form = event.target;
-
         if (form.id === 'login-form' || form.id === 'register-form') {
             event.preventDefault();
-
+            const isLoginForm = form.id === 'login-form';
+            const submitButton = document.getElementById(isLoginForm ? 'login-submit-button' : 'register-submit-button');
+            const buttonText = document.getElementById(isLoginForm ? 'login-button-text' : 'register-button-text');
+            const originalButtonText = isLoginForm ? 'Đăng nhập' : 'Đăng ký';
+            
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            const messageDiv = document.getElementById('form-message');
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                if(buttonText) buttonText.textContent = 'Đang xử lý...';
+            }
 
             try {
-                const actionUrl = event.target.id === 'login-form' ? '/login' : '/register';
-                const response = await fetch(actionUrl, {
+                const response = await fetch(form.action, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-KEY': window.API_KEY || ''
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                 });
-
                 const result = await response.json();
-
                 if (response.ok && result.status === 'success') {
-                    if (messageDiv) {
-                         messageDiv.className = 'p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg';
-                         messageDiv.textContent = result.message;
-                    }
-                    setTimeout(() => {
-                        if (result.redirect) {
-                             window.location.href = result.redirect;
-                        }
-                    }, 1000);
+                    showAlert('success', result.message);
+                    setTimeout(() => { if (result.redirect) window.location.href = result.redirect; }, 1000);
                 } else {
-                    throw new Error(result.message || 'An unknown error occurred.');
+                    throw new Error(result.message || 'Lỗi không xác định.');
                 }
             } catch (error) {
-                if (messageDiv) {
-                    messageDiv.className = 'p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg';
-                    messageDiv.textContent = error.message;
+                showAlert('error', error.message);
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    if(buttonText) buttonText.textContent = originalButtonText;
                 }
             }
         }
@@ -192,7 +218,7 @@ function attachGlobalEventListeners() {
 
 function renderMenu(menu) {
     const menuItems = menu.items.map(item => {
-        const icon = ICONS[item.icon] || '';
+        const icon = ICONS[item.icon.toUpperCase()] || '';
         return `
             <a href="${item.url}" id="${item.id || ''}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group" data-navigo>
                 ${icon}
@@ -200,52 +226,41 @@ function renderMenu(menu) {
             </a>
         `;
     }).join('');
-
     menuContainer.innerHTML = `
         <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-            <ul class="space-y-2 font-medium">
-                ${menuItems}
-            </ul>
+            <ul class="space-y-2 font-medium">${menuItems}</ul>
         </div>
     `;
 }
 
 async function initialLoad() {
     try {
-        const menuResponse = await fetch('/api/menu');
-        if (!menuResponse.ok) throw new Error(`Failed to load menu: ${menuResponse.status}`);
-        const menu = await menuResponse.json();
-        renderMenu(menu);
-        
-        // Lấy trạng thái đăng nhập từ server và đặt nó vào body tag
         const authStatusResponse = await fetch('/api/auth/status');
         const authStatus = await authStatusResponse.json();
         document.body.dataset.loggedIn = authStatus.logged_in;
 
+        // Load menu only if logged in, otherwise the welcome page doesn't need it
+        if (authStatus.logged_in) {
+            const menuResponse = await fetch('/api/menu');
+            if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
+            renderMenu(await menuResponse.json());
+        } else {
+             menuContainer.innerHTML = ''; // Clear menu for welcome page
+        }
+        
         initializeChatbotWidget();
+        initializeResponsiveUI();
         attachGlobalEventListeners(); 
+
         window.onpopstate = e => { handleNav(e.state?.path || '/'); };
         await handleNav(window.location.pathname);
         
         const footerYear = document.getElementById('footer-year');
-        if (footerYear) {
-            footerYear.textContent = new Date().getFullYear();
-        }
-
-        const tickerContent = document.getElementById('time-ticker-content');
-        if (tickerContent) {
-            const updateTime = () => {
-                const now = new Date();
-                const formattedTime = `Hôm nay: ${now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • Bây giờ là: ${now.toLocaleTimeString('vi-VN')}`;
-                tickerContent.textContent = formattedTime;
-            };
-            setInterval(updateTime, 1000);
-            updateTime();
-        }
+        if (footerYear) footerYear.textContent = new Date().getFullYear();
 
     } catch(e) {
         console.error("Initial load failed:", e);
-        showAlert('error', 'Lỗi nghiêm trọng: Không thể tải các thành phần giao diện chính.', 10000);
+        showAlert('error', 'Lỗi nghiêm trọng: Không thể tải các thành phần chính.', 10000);
     }
 }
 

@@ -28,10 +28,25 @@ def auth_status():
     """Returns the current authentication status from the session."""
     logged_in = session.get('logged_in', False)
     username = session.get('username', None) if logged_in else None
+    fullname = session.get('fullname', None) if logged_in else None
+
     return jsonify({
         'logged_in': logged_in,
-        'username': username
+        'username': username,
+        'fullname': fullname
     })
+
+# --- API Endpoint for User Groups ---
+@auth_bp.route('/api/auth/groups')
+def get_user_groups():
+    """Fetches the list of user groups from the API Gateway."""
+    try:
+        client = APIGatewayClient()
+        response_data = client.get('/api/users/roles')
+        groups = response_data.get('data', [])
+        return jsonify({'status': 'success', 'groups': groups})
+    except APIGatewayError as e:
+        return jsonify({'status': 'error', 'message': f'Không thể tải danh sách nhóm quyền: {e.message}'}), e.status_code
 
 # --- Auth Routes --- 
 
@@ -45,23 +60,18 @@ def login():
 
         try:
             client = APIGatewayClient()
-            # Assuming the login endpoint on the APIGW is '/auth/login'
             response_data = client.post('/api/auth/login', {'username': username, 'password': password})
-
+                    
             session['logged_in'] = True
             session['username'] = username
+            session['fullname'] = response_data.get("data").get('fullname')
             session['rolename'] = response_data.get('rolename')
-            
-            
-            # You could also store a token from response_data in the session if needed
-            # session['jwt_token'] = response_data.get('token')
             
             return jsonify({'status': 'success', 'message': 'Đăng nhập thành công!', 'redirect': '/'})
 
         except APIGatewayError as e:
             return jsonify({'status': 'error', 'message': e.message}), e.status_code
 
-    # For GET request, render the login page
     return render_template('pages/login.html')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -70,23 +80,26 @@ def register():
     if request.method == 'POST':
         data = request.get_json()
         
-        if data.get('password') != data.get('confirm-password'):
-            return jsonify({'status': 'error', 'message': 'Mật khẩu không khớp!'}), 400
+        # Updated validation for the new form fields
+        if not all(k in data for k in ['username', 'fullname', 'group_id', 'password']):
+             return jsonify({'status': 'error', 'message': 'Thiếu thông tin, vui lòng điền đầy đủ các trường.'}), 400
 
         payload = {
             'username': data.get('username'),
-            'email': data.get('email'),
-            'password': data.get('password')
+            'fullname': data.get('fullname'),
+            'password': data.get('password'),
+            'group_id': data.get('group_id')
         }
 
         try:
             client = APIGatewayClient()
-            # Assuming the register endpoint on the APIGW is '/auth/register'
             client.post('/api/users/register', payload)
 
-            return jsonify({'status': 'success', 'message': 'Đăng ký thành công! Vui lòng đăng nhập.', 'redirect': '/'})
+            return jsonify({'status': 'success', 'message': 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.', 'redirect': '/login'})
 
         except APIGatewayError as e:
+            if 'already exists' in e.message:
+                 return jsonify({'status': 'error', 'message': f"Tên đăng nhập '{payload['username']}' đã tồn tại. Vui lòng chọn tên khác."}), e.status_code
             return jsonify({'status': 'error', 'message': e.message}), e.status_code
 
     return render_template('pages/register.html')
@@ -96,6 +109,8 @@ def logout():
     """Logs the user out."""
     session.pop('logged_in', None)
     session.pop('username', None)
+    session.pop('fullname', None)
+    session.pop('rolename', None)
     return jsonify({'status': 'success', 'redirect': '/login'})
 
 @auth_bp.route('/admin')

@@ -2,12 +2,12 @@ from dotenv import load_dotenv
 load_dotenv() # Tải các biến môi trường từ file .env
 
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 # Import a class that holds icon SVGs
 from icons import Icon
 
 # Import blueprints from the api directory
-from src.api.auth import auth_bp # Import the new auth blueprint
+from src.api.auth import auth_bp
 from src.api.collections_api import collections_bp
 from src.api.management_api import management_bp
 from src.api.dashboard_api import report_bp
@@ -15,8 +15,10 @@ from src.api.chatbot_api import chatbot_bp
 from src.api.loan_api import loan_bp
 from src.api.books_api import books_bp
 from src.api.genre_api import genre_api_blueprint
-from src.api.menu_api import menu_bp # Import the new menu blueprint
+from src.api.menu_api import menu_bp
 from src.api.task_api import task_bp
+from src.api.excel_upload_api import excel_upload_bp
+from src.api.admin_api import admin_bp # Import the new admin blueprint
 
 app = Flask(__name__,
             template_folder='templates',
@@ -34,16 +36,17 @@ def inject_icons():
 
 
 # === REGISTER BLUEPRINTS ===
-app.register_blueprint(auth_bp) # Register the auth blueprint
+app.register_blueprint(auth_bp)
 app.register_blueprint(collections_bp)
 app.register_blueprint(management_bp)
 app.register_blueprint(report_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(loan_bp)
 app.register_blueprint(books_bp)
-app.register_blueprint(menu_bp) # Register the menu blueprint
+app.register_blueprint(menu_bp)
 app.register_blueprint(task_bp)
-
+app.register_blueprint(excel_upload_bp)
+app.register_blueprint(admin_bp) # Register the new admin blueprint
 
 # Register the new genre blueprint with a URL prefix
 app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
@@ -53,19 +56,21 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 
 # These routes all serve the single-page application's entry point.
 @app.route("/")
+@app.route("/welcome") # Add route for the welcome page
 @app.route("/saving")
 @app.route('/collections')
 @app.route('/management')
-@app.route('/loan-payment') # Add this route for the new page
+@app.route('/loan-payment')
 @app.route('/bookstore')
 @app.route('/login')
 @app.route('/register')
 @app.route('/calendar')
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
+@app.route('/excel-upload')
+@app.route('/admin/menu')
 def index(row_index=None, unit_index=None, comp_index=None, book_id=None):
     """Serves the main index.html file, which is the entry point for the SPA."""
-    # Lấy API key từ biến môi trường và truyền vào template
     api_key = os.environ.get('API_SECRET_KEY')
     return render_template('index.html', api_key=api_key)
 

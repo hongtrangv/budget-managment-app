@@ -358,3 +358,26 @@ export function createTable(data, headers, currentPage, pageSize, onAction) {
 
     return table;
 }
+
+/**
+ * Fetches and renders a 'login required' partial into a specified container.
+ * @param {HTMLElement} containerElement - The DOM element to render the partial into.
+ */
+export async function renderLoginRequired(containerElement) {
+    if (!containerElement) {
+        console.error('Login required: Target container element not provided.');
+        return;
+    }
+    try {
+        const response = await fetch('/pages/partials/login_required.html');
+        if (!response.ok) {
+            throw new Error(`Could not load login required partial. Status: ${response.status}`);
+        }
+        const htmlContent = await response.text();
+        containerElement.innerHTML = htmlContent;
+    } catch (error) {
+        console.error('Failed to render login required partial:', error);
+        // Fallback content in case the partial fails to load
+        containerElement.innerHTML = '<p class="text-red-500 text-center">Lỗi khi tải nội dung. Vui lòng đăng nhập để tiếp tục.</p>';
+    }
+}

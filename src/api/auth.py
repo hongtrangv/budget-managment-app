@@ -48,6 +48,25 @@ def get_user_groups():
     except APIGatewayError as e:
         return jsonify({'status': 'error', 'message': f'Không thể tải danh sách nhóm quyền: {e.message}'}), e.status_code
 
+# --- API Endpoint for All Users ---
+@auth_bp.route('/api/users')
+def get_all_users():
+    """Fetches the list of all users from the API Gateway for assignee dropdowns."""
+    if not session.get('logged_in'):
+        return jsonify({'status': 'error', 'message': 'Yêu cầu đăng nhập.'}), 401
+    
+    try:
+        client = APIGatewayClient()
+        response_data = client.get('/api/users') 
+        users = response_data.get('data', [])
+        if not isinstance(users, list):
+            raise APIGatewayError("Định dạng dữ liệu người dùng không hợp lệ từ cổng API.", status_code=500)
+
+        return jsonify({'status': 'success', 'users': users})
+
+    except APIGatewayError as e:
+        return jsonify({'status': 'error', 'message': f'Không thể tải danh sách người dùng: {e.message}'}), e.status_code
+
 # --- Auth Routes --- 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -61,11 +80,20 @@ def login():
         try:
             client = APIGatewayClient()
             response_data = client.post('/api/auth/login', {'username': username, 'password': password})
-                    
+            
+            # Standardize role handling
+            roles_from_api = response_data.get("data").get('rolename')
+            if roles_from_api is None:
+                roles_to_store = []
+            elif isinstance(roles_from_api, str):
+                roles_to_store = [roles_from_api]
+            else:
+                roles_to_store = roles_from_api # Assume it's a list
+
             session['logged_in'] = True
             session['username'] = username
             session['fullname'] = response_data.get("data").get('fullname')
-            session['rolename'] = response_data.get('rolename')
+            session['roles'] = roles_to_store
             
             return jsonify({'status': 'success', 'message': 'Đăng nhập thành công!', 'redirect': '/'})
 
@@ -80,7 +108,6 @@ def register():
     if request.method == 'POST':
         data = request.get_json()
         
-        # Updated validation for the new form fields
         if not all(k in data for k in ['username', 'fullname', 'group_id', 'password']):
              return jsonify({'status': 'error', 'message': 'Thiếu thông tin, vui lòng điền đầy đủ các trường.'}), 400
 
@@ -110,7 +137,7 @@ def logout():
     session.pop('logged_in', None)
     session.pop('username', None)
     session.pop('fullname', None)
-    session.pop('rolename', None)
+    session.pop('roles', None) # Use 'roles'
     return jsonify({'status': 'success', 'redirect': '/login'})
 
 @auth_bp.route('/admin')

@@ -29,7 +29,7 @@ async function initializeCalendar() {
     const prevMonthBtn = document.getElementById('prev-month-btn');
     const nextMonthBtn = document.getElementById('next-month-btn');
     const todayBtn = document.getElementById('today-btn');
-
+    const assigneeSelect = document.getElementById('task-assignee-select');
     const selectedDateDisplay = document.getElementById('selected-date-display');
     const taskList = document.getElementById('task-list');
 
@@ -100,14 +100,77 @@ async function initializeCalendar() {
     }
 
     function toYYYYMMDD(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    // --- Data Fetching ---
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/users');
+            const result = await response.json();
 
+            if (result.status === 'success') {
+                assigneeSelect.innerHTML = '<option value="" disabled selected>Chọn người thực hiện</option>';
+                result.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.username;
+                    option.textContent = `${user.fullname}`;
+                    assigneeSelect.appendChild(option);
+                });
+            } else {
+                throw new Error(result.message || 'Không thể tải danh sách người dùng.');
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+            assigneeSelect.innerHTML = '<option value="" disabled>Lỗi tải danh sách</option>';
+            showAlert('error', 'Không thể tải danh sách người dùng để giao việc.');
+        }
+    }
     async function fetchHolidays(year) { if (year === currentYearForHolidays) return; try { const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/VN`); if (!response.ok) throw new Error('Failed to fetch holidays'); const data = await response.json(); holidays = {}; data.forEach(holiday => { holidays[holiday.date] = holiday.localName; }); currentYearForHolidays = year; } catch (error) { console.error('Error fetching holidays:', error); holidays = {}; } }
     async function fetchTasks(date) { taskList.innerHTML = '<li>Đang tải...</li>'; try { const response = await fetch(`/api/tasks?date=${toYYYYMMDD(date)}`, { headers: { 'Content-Type': 'application/json', 'X-API-KEY': window.API_KEY || '' } }); const responseData = await response.json(); const tasks = Array.isArray(responseData) ? responseData : responseData.data; if (!Array.isArray(tasks)) throw new Error('Invalid task data format.'); renderTasks(tasks); } catch (error) { console.error('Error fetching tasks:', error); taskList.innerHTML = '<li>Lỗi khi tải công việc.</li>'; } }
     async function saveTask(taskData) { try { await fetch(`/api/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-KEY': window.API_KEY || '' }, body: JSON.stringify(taskData) }); closeModal(); fetchTasks(selectedDate); } catch (error) { console.error('Error saving task:', error); alert('Không thể lưu công việc.'); } }
 
     async function renderCalendar() { await fetchHolidays(currentDate.getFullYear()); daysGrid.innerHTML = ''; const month = currentDate.getMonth(), year = currentDate.getFullYear(); monthYearElement.textContent = `Tháng ${month + 1}, ${year}`; const firstDayOfMonth = new Date(year, month, 1), lastDayOfPrevMonth = new Date(year, month, 0), lastDateOfPrevMonth = lastDayOfPrevMonth.getDate(); let startDayOfWeek = firstDayOfMonth.getDay() === 0 ? 7 : firstDayOfMonth.getDay(); for (let i = startDayOfWeek - 2; i >= 0; i--) createDayElement(lastDateOfPrevMonth - i, month - 1, year, ['other-month']); const daysInMonth = new Date(year, month + 1, 0).getDate(); for (let i = 1; i <= daysInMonth; i++) createDayElement(i, month, year); const totalDaysRendered = (startDayOfWeek - 1) + daysInMonth; const remainingDays = Math.ceil(totalDaysRendered / 7) * 7 - totalDaysRendered; for (let i = 1; i <= remainingDays; i++) createDayElement(i, month + 1, year, ['other-month']); updateSelectedDayStyle(); }
     function createDayElement(day, month, year, classes = []) { const dayElement = document.createElement('div'), date = new Date(year, month, day), dateString = toYYYYMMDD(date); const lunar = solarToLunar(day, month + 1, year); const lunarText = lunar.lunarDay === 1 ? `${lunar.lunarDay}/${lunar.lunarMonth}` : lunar.lunarDay; dayElement.innerHTML = `<span class="solar-date">${day}</span><span class="lunar-date">${lunarText}</span>`; dayElement.dataset.date = dateString; dayElement.classList.add(...classes); if (holidays[dateString]) { dayElement.classList.add('holiday'); const tooltip = document.createElement('span'); tooltip.className = 'tooltip'; tooltip.textContent = holidays[dateString]; dayElement.appendChild(tooltip); } daysGrid.appendChild(dayElement); }
-    function renderTasks(tasks) { taskList.innerHTML = ''; if (!tasks || tasks.length === 0) { taskList.innerHTML = '<li>Không có công việc nào cho ngày này.</li>'; return; } tasks.forEach(task => { const li = document.createElement('li'); li.innerHTML = `<span class="task-info">${task.description}</span><span class="task-assignee">${task.assignee}</span>`; taskList.appendChild(li); }); }
+    function renderTasks(tasks) {
+        taskList.innerHTML = '';
+        if (!tasks || tasks.length === 0) {
+            taskList.innerHTML = '<li>Không có công việc nào cho ngày này.</li>';
+            return;
+        }
+    
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Chuẩn hóa về đầu ngày để so sánh chính xác
+    
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            li.classList.add('p-3', 'rounded-lg', 'transition-colors', 'duration-200', 'mb-2'); // Bổ sung margin-bottom
+    
+            const dueDate = new Date(task.dueDate + 'T00:00:00'); // Đảm bảo parse dueDate không bị ảnh hưởng bởi múi giờ
+            
+            // Điều kiện: hôm nay đã qua dueDate VÀ công việc chưa hoàn thành
+            const isOverdueAndIncomplete = today > dueDate && !task.complete;
+    
+            if (isOverdueAndIncomplete) {
+                // Thêm lớp CSS để bôi đỏ cho công việc quá hạn
+                li.classList.add('bg-red-100', 'dark:bg-red-900/40', 'border-l-4', 'border-red-500');
+            } else {
+                // Kiểu mặc định cho các công việc khác
+                 li.classList.add('bg-gray-50', 'dark:bg-gray-700');
+            }
+            // Conditionally create assignee HTML only if task.assignee exists
+            const assigneeHTML = task.assignee 
+            ? `<span class="task-assignee text-sm ml-auto p-1 px-2 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">${task.assignee}</span>`
+            : '';
+            li.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="task-info font-medium text-gray-800 dark:text-gray-200 pr-4">${task.description}</span>
+                    ${assigneeHTML}                     
+                </div>
+                <div class="task-meta mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>Hạn cuối: <b>${new Date(task.dueDate + 'T00:00:00').toLocaleDateString('vi-VN')}</b></span>
+                </div>
+            `;
+            taskList.appendChild(li);
+        });
+    }
 
     function selectDate(date) { selectedDate = date; selectedDateDisplay.textContent = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'long' }).format(date); updateSelectedDayStyle(); fetchTasks(date); }
     function updateSelectedDayStyle() { const selectedDateString = toYYYYMMDD(selectedDate); document.querySelectorAll('.days-grid div').forEach(d => { d.classList.remove('selected'); if (d.dataset.date === selectedDateString) d.classList.add('selected'); }); }
@@ -121,10 +184,11 @@ async function initializeCalendar() {
     addTaskBtn.addEventListener('click', openModal);
     cancelTaskBtn.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
-    modalForm.addEventListener('submit', (e) => { e.preventDefault(); saveTask({ date: toYYYYMMDD(selectedDate), description: document.getElementById('task-description').value.trim(), assignee: document.getElementById('task-assignee').value.trim() }); });
+    modalForm.addEventListener('submit', (e) => { e.preventDefault(); saveTask({ date: toYYYYMMDD(selectedDate), description: document.getElementById('task-description').value.trim(), assignee: document.getElementById('task-assignee-select').value.trim(), dueDate: document.getElementById('task-due-date').value.trim()}); });
 
     selectDate(selectedDate);
     renderCalendar();
+    loadUsers();
 }
 
 // --- SPA Initialization ---

@@ -65,6 +65,7 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/login')
 @app.route('/register')
 @app.route('/calendar')
+@app.route('/dnd-list') # <-- ADDED NEW ROUTE FOR DRAG AND DROP PAGE
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
 @app.route('/excel-upload')

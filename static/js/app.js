@@ -10,6 +10,7 @@ import { loadExcelUploadPage } from './excel_upload.js';
 import { loadRegistrationPage } from './register.js';
 import { ICONS } from './icons.js';
 import { initAdminMenuPage } from './admin_menu.js';
+import { initializeDndList } from './dnd_list.js'; // Import the new function
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
@@ -34,7 +35,7 @@ const routes = {
     '/calendar': { page: '/pages/calendar.html', loader: () => import('./calendar.js') },
     '/report': { page: '/pages/report.html' },
     '/excel-upload': { page: '/pages/excel_upload.html', loader: loadExcelUploadPage },
-    '/dnd-list': { page: '/pages/dnd_list.html' }, // <-- ADDED NEW CLIENT-SIDE ROUTE
+    '/dnd-list': { page: '/pages/dnd_list.html', loader: initializeDndList }, // Assign the loader
     '/login': { page: '/login' },
     '/register': { page: '/register', loader: loadRegistrationPage },
     '/admin/menu': { page: '/admin/menu', loader: initAdminMenuPage },

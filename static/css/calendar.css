@@ -182,6 +182,15 @@ body, html {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+.task-container-by-me {
+    width: 100%;
+    max-width: 900px;
+    margin: 40px 0 40px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
 .task-header {
     display: flex;
@@ -326,4 +335,25 @@ body, html {
 
 .modal-actions #cancel-task-btn:hover {
     background-color: #e0e0e0;
+}
+ /* Style đơn giản để tạo layout 2 cột */
+ .two-column-layout {
+    display: flex;
+    flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+    gap: 20px;       /* Khoảng cách giữa 2 cột */
+    width: 100%;
+}
+.left-column {
+    flex: 1; /* Cột trái chiếm không gian còn lại */
+    min-width: 550px; /* Đảm bảo cột trái đủ rộng cho lịch */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.right-column {
+    flex: 1; /* Cột trái chiếm không gian còn lại */
+    min-width: 550px; /* Đảm bảo cột trái đủ rộng cho lịch */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }

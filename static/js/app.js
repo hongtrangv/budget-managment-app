@@ -34,6 +34,7 @@ const routes = {
     '/calendar': { page: '/pages/calendar.html', loader: () => import('./calendar.js') },
     '/report': { page: '/pages/report.html' },
     '/excel-upload': { page: '/pages/excel_upload.html', loader: loadExcelUploadPage },
+    '/dnd-list': { page: '/pages/dnd_list.html' }, // <-- ADDED NEW CLIENT-SIDE ROUTE
     '/login': { page: '/login' },
     '/register': { page: '/register', loader: loadRegistrationPage },
     '/admin/menu': { page: '/admin/menu', loader: initAdminMenuPage },
@@ -72,18 +73,16 @@ async function handleNav(path) {
     const loggedIn = document.body.dataset.loggedIn === 'true';
 
     // --- REDIRECTION LOGIC ---
-    // 1. If not logged in and trying to access the root, show the welcome page.
     if (!loggedIn && path === '/') {
         history.replaceState({ path: '/welcome' }, '', '/welcome');
-        handleNav('/welcome'); // Re-run navigation for the new path
-        return; // Stop this execution
+        handleNav('/welcome');
+        return;
     }
     
-    // 2. If logged in, redirect away from public-only pages (login, register, welcome)
     if (loggedIn && ['/login', '/register', '/welcome'].includes(path)) {
         history.replaceState({ path: '/' }, '', '/');
-        handleNav('/'); // Re-run navigation for the user's dashboard
-        return; // Stop this execution
+        handleNav('/');
+        return;
     }
 
     const routeInfo = findMatchingRoute(path);
@@ -239,13 +238,12 @@ async function initialLoad() {
         const authStatus = await authStatusResponse.json();
         document.body.dataset.loggedIn = authStatus.logged_in;
 
-        // Load menu only if logged in, otherwise the welcome page doesn't need it
         if (authStatus.logged_in) {
             const menuResponse = await fetch('/api/menu');
             if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
             renderMenu(await menuResponse.json());
         } else {
-             menuContainer.innerHTML = ''; // Clear menu for welcome page
+             menuContainer.innerHTML = '';
         }
         
         initializeChatbotWidget();

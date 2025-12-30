@@ -22,7 +22,7 @@ def get_tasks():
     params = {'date': task_date}
     # If the user is not an admin, they can only see tasks assigned to them.
     # This check is now safe because user_roles is guaranteed to be a list.
-    if 'admin' not in user_roles:
+    if not is_admin:
         params['assignee'] = current_user
     # Admins can see all tasks for the given date, so we don't add the assignee filter.
 
@@ -79,3 +79,22 @@ def create_task():
         return jsonify({"message": e.message}), e.status_code
     except Exception as e:
         return jsonify({"message": f"Lỗi hệ thống không xác định: {e}"}), 500
+
+@task_bp.route('/api/tasks/createdBy', methods=['GET'])
+def get_task_by_me():
+    """
+    Lấy dữ liệu task được tạo bới user đăng nhập
+    """
+    if 'username' not in session:
+        return jsonify({"message": "Yêu cầu đăng nhập để tạo công việc."}),
+    createdBy = session['username']    
+    try:
+        client = APIGatewayClient()
+        tasks_response = client.get(f'/api/tasks/created-by/{createdBy}')
+
+        return jsonify(tasks_response)
+    except APIGatewayError as e:
+        return jsonify({"message": e.message}), e.status_code
+    except Exception as e:
+        return jsonify({"message": f"Lỗi hệ thống không xác định: {e}"}), 500
+    

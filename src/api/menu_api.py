@@ -18,8 +18,10 @@ def get_menu():
                 {"url": "/loan-payment", "icon": "loan", "text": "Thanh toán khoản vay"},
                 {"url": "/bookstore", "icon": "book", "text": "Nhà sách"},
                 {"url": "/calendar", "icon": "register", "text": "Lịch công việc"},
-                {"url": "/excel-upload", "icon": "register", "text": "Excel Upload"}, # Add a new menu item
-                {"url": "/admin/menu", "icon": "home", "text": "Đăng ký menu"}
+                {"url": "/excel-upload", "icon": "register", "text": "Excel Upload"},
+                {"url": "/admin/menu", "icon": "home", "text": "Đăng ký menu"},
+                # === CORRECTED MENU ITEM URL ===
+                {"url": "/dnd-list", "icon": "register", "text": "Sắp xếp Kéo-Thả"}
             ]
         }
     else:
@@ -30,7 +32,9 @@ def get_menu():
                 {"url": "/bookstore", "icon": "book", "text": "Nhà sách"},
                 {"url": "/login", "icon": "login", "text": "Đăng nhập"},
                 {"url": "/register", "icon": "register", "text": "Đăng ký"},
-                {"url": "/calendar", "icon": "register", "text": "Lịch công việc"}
+                {"url": "/calendar", "icon": "register", "text": "Lịch công việc"},
+                # === CORRECTED MENU ITEM URL ===
+                {"url": "/dnd-list", "icon": "register", "text": "Sắp xếp Kéo-Thả"}
             ]
         }
     return jsonify(menu)

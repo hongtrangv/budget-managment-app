@@ -78,12 +78,14 @@ def index(row_index=None, unit_index=None, comp_index=None, book_id=None):
 @app.route('/components/<path:filename>')
 def components(filename):
     """Serves components like the menu."""
-    return render_template(os.path.join('components', filename))
+    # FIX: Explicitly pass `icons` to the template context
+    return render_template(os.path.join('components', filename), icons=Icon)
 
 @app.route('/pages/<path:filename>')
 def pages(filename):
     """Serves the different pages for the SPA."""
-    return render_template(os.path.join('pages', filename))
+    # FIX: Explicitly pass `icons` to the template context
+    return render_template(os.path.join('pages', filename), icons=Icon)
 
 # === START APPLICATION ===
 def main():

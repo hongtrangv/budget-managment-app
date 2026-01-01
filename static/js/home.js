@@ -297,8 +297,8 @@ async function totalSaving(){
     totalYieldElement.textContent = formatCurrency(totalYield);
 }
 async function loadRecentTransactions(){
-
-    const response = await fetch(`/api/collections/Year/${currentYear}/Months/${currentMonth}/Types/Chi/recent?limit=5`);
+    const month = String(currentMonth).padStart(2, '0');
+    const response = await fetch(`/api/collections/Year/${currentYear}/Months/${month}/Types/Chi/recent?limit=5`);
     const data = await response.json();
     const table = document.getElementById("recent-transactions");
     table.innerHTML = ""; // Clear existing rows    

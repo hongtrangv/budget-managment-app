@@ -1,33 +1,46 @@
-      <!DOCTYPE html>
-      <html lang="vi">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Danh sách Kéo và Thả</title>
-          <link rel="stylesheet" href="/static/css/dnd_list.css">
-      </head>
-      <body>
-     
-          <div class="container">
-              <h1>Sắp xếp danh sách công việc</h1>
-              <p>Kéo và thả để thay đổi thứ tự ưu tiên.</p>
-     
-              <ul id="sortable-list" class="sortable-list">
-                 <!--
-                   LƯU Ý QUAN TRỌNG:
-                   - Mỗi mục `<li>` phải có thuộc tính `data-name`.
-                   - Thuộc tính này sẽ lưu tên gốc của mục.
-                   - JavaScript sẽ đọc thuộc tính này để cập nhật lại giao diện.
-                 -->
-                 <li class="list-item" data-name="Thiết kế giao diện người dùng">Thiết kế giao diện người dùng</li>
-                 <li class="list-item" data-name="Xây dựng API cho tính năng mới">Xây dựng API cho tính năng mới</li>
-                 <li class="list-item" data-name="Viết tài liệu hướng dẫn">Viết tài liệu hướng dẫn</li>
-                 <li class="list-item" data-name="Sửa lỗi hiển thị trên di động">Sửa lỗi hiển thị trên di động</li>
-                 <li class="list-item" data-name="Tối ưu hóa truy vấn cơ sở dữ liệu">Tối ưu hóa truy vấn cơ sở dữ liệu</li>
-                 <li class="list-item" data-name="Triển khai lên máy chủ staging">Triển khai lên máy chủ staging</li>
-              </ul>
-          </div>
+{# Bước 1: Import macro `button` từ file `buttons.html` #}
+{% from 'macros/buttons.html' import button %}
 
-      </body>
-      </html>
-      
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách Kéo và Thả</title>
+    <link rel="stylesheet" href="/static/css/dnd_list.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sắp xếp danh sách công việc</h1>
+        <p>Kéo và thả để thay đổi thứ tự ưu tiên.</p>
+
+        <!-- Danh sách có thể sắp xếp -->
+        <ul id="sortable-list">
+            <li class="list-item" data-name="Thiết kế giao diện người dùng"></li>
+            <li class="list-item" data-name="Xây dựng API cho tính năng mới"></li>
+            <li class="list-item" data-name="Viết tài liệu hướng dẫn"></li>
+            <li class="list-item" data-name="Sửa lỗi hiển thị trên di động"></li>
+            <li class="list-item" data-name="Tối ưu hóa truy vấn cơ sở dữ liệu"></li>
+            <li class="list-item" data-name="Triển khai lên máy chủ staging"></li>
+        </ul>
+
+        <!-- === KHU VỰC BUTTONS SỬ DỤNG MACRO NÂNG CAO === -->
+        <div class="mt-8 flex justify-end space-x-3">
+            {# Gọi macro với các tham số mới: icon và onclick #}
+            {{ button(type='secondary', text='Hủy bỏ', onclick='handleCancel()') }}
+            {{ button(type='danger', text='Xóa', icon='DELETE', onclick='handleDelete()') }}
+            {{ button(type='primary', text='Lưu thay đổi', icon='EDIT', onclick='handleSaveChanges()', element_id='save-dnd-changes') }}
+        </div>
+        <!-- === KẾT THÚC KHU VỰC BUTTONS === -->
+
+    </div>
+
+    <!-- Thư viện SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    <!-- Script tùy chỉnh -->
+    <script src="/static/js/dnd_list.js"></script>
+
+</body>
+</html>

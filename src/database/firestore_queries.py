@@ -168,7 +168,8 @@ class ManagementTree:
     def get_items_for_month(year, month):
         """Fetches all type items for a specific month and year."""
         try:
-            items_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types')
+            month_str = str(month).zfill(2)
+            items_ref = db.collection('Year').document(year).collection('Months').document(month_str).collection('Types')
             docs = items_ref.stream()
             results = []
             for doc in docs:
@@ -185,8 +186,9 @@ class ManagementTree:
         """Adds a new record to a type document in Firestore, ensuring parent documents exist."""
         try:
             sanitized_data = sanitize_dict(data)
+            month_str = str(month).zfill(2)
             year_ref = db.collection('Year').document(year)
-            month_ref = year_ref.collection('Months').document(month)
+            month_ref = year_ref.collection('Months').document(month_str)
             type_ref = month_ref.collection('Types').document(item_type)
 
             year_ref.set({}, merge=True)
@@ -204,7 +206,8 @@ class ManagementTree:
     def delete_record(year, month, type_id, record_id):
         """Deletes a record from the 'records' array within a type document."""
         try:
-            type_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document(type_id)
+            month_str = str(month).zfill(2)
+            type_ref = db.collection('Year').document(year).collection('Months').document(month_str).collection('Types').document(type_id)
             doc = type_ref.get()
             if not doc.exists:
                 raise Exception("Document not found")
@@ -226,7 +229,8 @@ class ManagementTree:
         """Updates a record within the 'records' array of a type document."""
         try:
             sanitized_new_data = sanitize_dict(new_data)
-            type_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document(type_id)
+            month_str = str(month).zfill(2)
+            type_ref = db.collection('Year').document(year).collection('Months').document(month_str).collection('Types').document(type_id)
             doc = type_ref.get()
             if not doc.exists:
                 raise Exception("Document not found")
@@ -294,8 +298,9 @@ class Dashboard:
             """
             total_income = 0
             total_expense = 0
-            try:                               
-                type_docs = db.collection('Year').document(year).collection('Months').document(month).collection('Types').stream()                
+            try:
+                month_str = str(month).zfill(2)
+                type_docs = db.collection('Year').document(year).collection('Months').document(month_str).collection('Types').stream()                
                 for type_doc in type_docs:
                     type_id = type_doc.id
                     doc_data = type_doc.to_dict()
@@ -359,7 +364,8 @@ class Dashboard:
     def get_piechart_for_month(year,month):
         try:
             aggregated_data = defaultdict(float)
-            chi_ref = db.collection('Year').document(year).collection('Months').document(month).collection('Types').document('Chi')
+            month_str = str(month).zfill(2)
+            chi_ref = db.collection('Year').document(year).collection('Months').document(month_str).collection('Types').document('Chi')
             chi_doc = chi_ref.get()
 
             if chi_doc.exists:

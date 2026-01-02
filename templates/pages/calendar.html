@@ -89,6 +89,42 @@
         </div>
     </div>
 
+    <!-- === MODAL XEM CHI TIẾT CÔNG VIỆC (MỚI) === -->
+    <div id="task-detail-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h2 class="task-detail-title">Chi tiết công việc</h2>
+            
+            <div class="task-detail-item">
+                <strong>Mô tả:</strong>
+                <p id="detail-task-description"></p>
+            </div>
+
+            <div class="task-detail-item">
+                <strong>Người thực hiện:</strong>
+                <p id="detail-task-assignee"></p>
+            </div>
+
+            <div class="task-detail-item">
+                <strong>Ngày hết hạn:</strong>
+                <p id="detail-task-due-date"></p>
+            </div>
+
+            <div class="task-detail-item">
+                <strong>Người tạo:</strong>
+                <p id="detail-task-creator"></p>
+            </div>
+
+            <div class="task-detail-item">
+                <strong>Trạng thái:</strong>
+                <p id="detail-task-status"></p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="close-detail-modal-btn">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/calendar.js"></script>
 </body>
 </html>

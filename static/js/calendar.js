@@ -38,6 +38,14 @@ async function initializeCalendar() {
     const taskList = document.getElementById('task-list');
     const taskListByMe = document.getElementById('task-list-by-me');
 
+    // (MỚI) Detail Modal Elements
+    const detailModal = document.getElementById('task-detail-modal');
+    const closeDetailModalBtn = document.getElementById('close-detail-modal-btn');
+    const detailDescription = document.getElementById('detail-task-description');
+    const detailAssignee = document.getElementById('detail-task-assignee');
+    const detailDueDate = document.getElementById('detail-task-due-date');
+    const detailCreator = document.getElementById('detail-task-creator');
+    const detailStatus = document.getElementById('detail-task-status');
 
     // Modal Elements
     const modalOverlay = document.getElementById('task-modal');
@@ -294,6 +302,8 @@ async function initializeCalendar() {
         tasks.forEach(task => {
             const li = document.createElement('li');
             li.classList.add('p-3', 'rounded-lg', 'transition-colors', 'duration-200', 'mb-2'); // Bổ sung margin-bottom
+            // (MỚI) Lưu toàn bộ dữ liệu task vào dataset
+            li.dataset.task = JSON.stringify(task);
 
             const dueDate = new Date(task.dueDate + 'T00:00:00'); // Đảm bảo parse dueDate không bị ảnh hưởng bởi múi giờ
 
@@ -333,6 +343,8 @@ async function initializeCalendar() {
         tasks.forEach(task => {
             const li = document.createElement('li');
             li.classList.add('p-3', 'rounded-lg', 'transition-colors', 'duration-200', 'mb-2'); // Bổ sung margin-bottom
+            // (MỚI) Lưu toàn bộ dữ liệu task vào dataset
+            li.dataset.task = JSON.stringify(task);
 
             li.innerHTML = `
                 <div class="flex justify-between items-start">
@@ -361,6 +373,23 @@ async function initializeCalendar() {
             if (d.dataset.date === selectedDateString) d.classList.add('selected');
         });
     }
+    // --- (MỚI) Modal Handling ---
+    function showTaskDetails(task) {
+        detailDescription.textContent = task.description || 'N/A';
+        detailAssignee.textContent = task.assignee || 'N/A';
+        detailDueDate.textContent = new Date(task.dueDate + 'T00:00:00').toLocaleDateString('vi-VN');
+        detailCreator.textContent = task.creator || 'N/A';
+        
+        const statusText = task.complete ? 'Hoàn thành' : 'Chưa hoàn thành';
+        const isOverdue = new Date() > new Date(task.dueDate + 'T00:00:00') && !task.complete;
+        detailStatus.textContent = isOverdue ? `${statusText} (Quá hạn)` : statusText;
+        
+        detailModal.style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+        detailModal.style.display = 'none';
+    }
 
     function openModal() {
         modalForm.reset();
@@ -376,6 +405,14 @@ async function initializeCalendar() {
         if (item && item.dataset.task) {
             const task = JSON.parse(item.dataset.task);
             openModalForEdit(task);
+        }
+    }
+
+    function handleTaskClick(event) {
+        const li = event.target.closest('li[data-task]');
+        if (li) {
+            const taskData = JSON.parse(li.dataset.task);
+            showTaskDetails(taskData);
         }
     }
     function openModalForEdit(task) {
@@ -422,7 +459,12 @@ async function initializeCalendar() {
             dueDate: document.getElementById('task-due-date').value.trim()
         });
     });
-    taskList.addEventListener('click', handleListClick);
+    // (MỚI) Event listeners for detail modal
+    closeDetailModalBtn.addEventListener('click', closeDetailModal);
+    detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeDetailModal(); });
+    taskList.addEventListener('click', handleTaskClick);
+    taskListByMe.addEventListener('click', handleTaskClick);
+    
     selectDate(selectedDate);
     renderCalendar();
     loadUsers();

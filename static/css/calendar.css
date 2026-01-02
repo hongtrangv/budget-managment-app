@@ -221,7 +221,7 @@ body, html {
     background-color: #10b981;
 }
 
-#task-list {
+#task-list, #task-list-by-me {
     list-style: none;
     padding: 0 20px;
     margin: 0;
@@ -229,23 +229,29 @@ body, html {
     overflow-y: auto;
 }
 
-#task-list li {
+#task-list li, #task-list-by-me li {
     padding: 15px 5px;
     border-bottom: 1px solid #f0f0f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer; /* Thay đổi con trỏ chuột khi di qua */
+    transition: background-color 0.2s; /* Hiệu ứng chuyển màu nền */
 }
 
-#task-list li:last-child {
+#task-list li:hover, #task-list-by-me li:hover {
+    background-color: #f9f9f9; /* Màu nền khi hover */
+}
+
+#task-list li:last-child, #task-list-by-me li:last-child {
     border-bottom: none;
 }
 
-#task-list .task-info {
+#task-list .task-info, #task-list-by-me .task-info {
     flex-grow: 1;
 }
 
-#task-list .task-assignee {
+#task-list .task-assignee, #task-list-by-me .task-assignee {
     font-style: italic;
     font-size: 0.9em;
     color: #666;
@@ -255,7 +261,7 @@ body, html {
     border-radius: 12px;
 }
 
-/* Modal Styling */
+/* Modal Styling (General) */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -284,6 +290,7 @@ body, html {
     font-size: 1.5em;
 }
 
+/* Form-specific styling */
 .form-group {
     margin-bottom: 20px;
 }
@@ -295,7 +302,7 @@ body, html {
     color: #333;
 }
 
-.form-group input, .form-group textarea {
+.form-group input, .form-group textarea, .form-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -328,14 +335,56 @@ body, html {
     background-color: #10b981;
 }
 
-.modal-actions #cancel-task-btn {
+#cancel-task-btn {
     background-color: #f0f0f0;
     color: #333;
 }
 
-.modal-actions #cancel-task-btn:hover {
+#cancel-task-btn:hover {
     background-color: #e0e0e0;
 }
+
+/* === (MỚI) Task Detail Modal Styles === */
+.task-detail-title {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.task-detail-item {
+    margin-bottom: 18px;
+}
+
+.task-detail-item strong {
+    display: block;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.task-detail-item p {
+    margin: 0;
+    font-size: 1em;
+    color: #222;
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    white-space: pre-wrap; /* Giữ lại các lần xuống dòng trong mô tả */
+    word-wrap: break-word;
+}
+
+#close-detail-modal-btn {
+    background-color: #6c757d; /* A neutral gray */
+    color: white;
+}
+
+#close-detail-modal-btn:hover {
+    background-color: #5a6268;
+}
+
+
  /* Style đơn giản để tạo layout 2 cột */
  .two-column-layout {
     display: flex;

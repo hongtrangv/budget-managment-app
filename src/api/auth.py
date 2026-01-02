@@ -94,7 +94,8 @@ def login():
             session['username'] = username
             session['fullname'] = response_data.get("data").get('fullname')
             session['roles'] = roles_to_store
-            
+            session['menus'] = response_data.get("data").get('menus')
+
             return jsonify({'status': 'success', 'message': 'Đăng nhập thành công!', 'redirect': '/'})
 
         except APIGatewayError as e:

@@ -1,0 +1,61 @@
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Duyệt Đăng Ký Người Dùng</h1>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="px-6 py-4">
+            <h2 class="text-xl font-semibold text-gray-700">Danh sách người dùng chờ kích hoạt</h2>
+            <p class="text-gray-600 mt-1">Nhấn vào một người dùng để xem chi tiết và duyệt.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Tên Đầy Đủ
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Tên Đăng Nhập
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Hành động
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="inactive-users-list">
+                    <!-- User rows will be dynamically inserted here by JavaScript -->
+                    <tr>
+                        <td colspan="3" class="text-center py-10 px-5">
+                            <div id="loading-spinner" class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                            <p id="no-users-message" class="text-gray-500 mt-4" style="display: none;">Không có người dùng nào đang chờ duyệt.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div id="approval-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center" style="display: none; z-index: 50;">
+    <div class="relative mx-auto p-8 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <h3 class="text-2xl font-bold mb-4">Duyệt Người Dùng</h3>
+        <div id="modal-user-details" class="space-y-2 mb-6">
+            <p><strong>Tên đầy đủ:</strong> <span id="modal-fullname"></span></p>
+            <p><strong>Tên đăng nhập:</strong> <span id="modal-username"></span></p>
+            <p><strong>ID:</strong> <span id="modal-userid"></span></p>
+        </div>
+
+        <div class="mb-6">
+            <label for="role-select" class="block text-sm font-medium text-gray-700 mb-2">Chọn vai trò để gán:</label>
+            <select id="role-select" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <!-- Role options will be dynamically inserted here -->
+            </select>
+             <p id="role-loading-message" class="text-sm text-gray-500 mt-2">Đang tải danh sách vai trò...</p>
+        </div>
+
+        <div class="flex justify-end space-x-4">
+            <button id="cancel-approval" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Hủy bỏ</button>
+            <button id="confirm-approval" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300" disabled>Duyệt và Kích hoạt</button>
+        </div>
+    </div>
+</div>

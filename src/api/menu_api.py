@@ -28,8 +28,7 @@ def get_menu():
         ]
 
         # 3. Wrap the transformed list in the final dictionary structure.
-        menu = {"items": transformed_items}
-        print(f"Menu from session: {menu}")
+        menu = {"items": transformed_items}        
     else:
         # Menu for non-logged-in users
         menu = {

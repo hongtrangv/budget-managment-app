@@ -3,10 +3,9 @@ load_dotenv() # Tải các biến môi trường từ file .env
 
 import os
 from flask import Flask, render_template, session
-# Import a class that holds icon SVGs
-from icons import Icon
+from icons import Icon # Import a class that holds icon SVGs
 
-# Import blueprints from the api directory
+# Import blueprints
 from src.api.auth import auth_bp
 from src.api.collections_api import collections_bp
 from src.api.management_api import management_bp
@@ -18,7 +17,7 @@ from src.api.genre_api import genre_api_blueprint
 from src.api.menu_api import menu_bp
 from src.api.task_api import task_bp
 from src.api.excel_upload_api import excel_upload_bp
-from src.api.admin_api import admin_bp # Import the new admin blueprint
+from src.api.admin_api import admin_bp
 
 app = Flask(__name__,
             template_folder='templates',
@@ -34,7 +33,6 @@ def inject_icons():
     """Injects the Icon class into Jinja2 templates."""
     return dict(icons=Icon)
 
-
 # === REGISTER BLUEPRINTS ===
 app.register_blueprint(auth_bp)
 app.register_blueprint(collections_bp)
@@ -46,17 +44,15 @@ app.register_blueprint(books_bp)
 app.register_blueprint(menu_bp)
 app.register_blueprint(task_bp)
 app.register_blueprint(excel_upload_bp)
-app.register_blueprint(admin_bp) # Register the new admin blueprint
-
-# Register the new genre blueprint with a URL prefix
+app.register_blueprint(admin_bp)
 app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 
+# === VIEW ROUTES (SPA Entry Point) ===
 
-# === VIEW ROUTES ===
-
-# These routes all serve the single-page application's entry point.
+# All these routes serve the single-page application's main entry point.
+# The frontend router (Navigo) will handle rendering the correct page content.
 @app.route("/")
-@app.route("/welcome") # Add route for the welcome page
+@app.route("/welcome")
 @app.route("/saving")
 @app.route('/collections')
 @app.route('/management')
@@ -65,26 +61,25 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/login')
 @app.route('/register')
 @app.route('/calendar')
-@app.route('/dnd-list') # <-- ADDED NEW ROUTE FOR DRAG AND DROP PAGE
+@app.route('/dnd-list')
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
 @app.route('/excel-upload')
 @app.route('/admin/menu')
+@app.route('/admin/user-approval') # <-- ADDED ROUTE FOR THE NEW ADMIN PAGE
+
 def index(row_index=None, unit_index=None, comp_index=None, book_id=None):
     """Serves the main index.html file, which is the entry point for the SPA."""
     api_key = os.environ.get('API_SECRET_KEY')
     return render_template('index.html', api_key=api_key)
 
+# These routes are likely used by the frontend router to fetch HTML partials.
 @app.route('/components/<path:filename>')
 def components(filename):
-    """Serves components like the menu."""
-    # FIX: Explicitly pass `icons` to the template context
     return render_template(os.path.join('components', filename), icons=Icon)
 
 @app.route('/pages/<path:filename>')
 def pages(filename):
-    """Serves the different pages for the SPA."""
-    # FIX: Explicitly pass `icons` to the template context
     return render_template(os.path.join('pages', filename), icons=Icon)
 
 # === START APPLICATION ===

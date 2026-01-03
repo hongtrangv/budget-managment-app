@@ -25,4 +25,8 @@ ACTION_CONFIG = {
     'collections_api.add_document': ['ADD_COLLECTION_DOCUMENT'],
     'collections_api.update_document': ['UPDATE_COLLECTION_DOCUMENT'],
     'collections_api.delete_document': ['DELETE_COLLECTION_DOCUMENT'],
+
+
+    # == Admin API Endpoints ==
+    'admin_bp.approve_user': ['APPROVE_USER'],    
 }

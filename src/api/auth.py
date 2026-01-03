@@ -4,6 +4,20 @@ from src.services.api_client import APIGatewayClient, APIGatewayError
 
 auth_bp = Blueprint('auth_bp', __name__, template_folder='../../templates', static_folder='../../static')
 
+# --- HELPER FUNCTION (This was missing) ---
+def get_user_from_session():
+    """Constructs a consistent user context dictionary from session data."""
+    if not session.get('logged_in', False):
+        return {'logged_in': False}
+    
+    return {
+        'logged_in': True,
+        'username': session.get('username'),
+        'fullname': session.get('fullname'),
+        'role': session.get('roles'), # Standardized to 'role' (singular)
+        'menu': session.get('menus', [])
+    }
+
 # --- Decorators ---
 
 def require_api_key(f):
@@ -30,11 +44,7 @@ def auth_status():
     username = session.get('username', None) if logged_in else None
     fullname = session.get('fullname', None) if logged_in else None
 
-    return jsonify({
-        'logged_in': logged_in,
-        'username': username,
-        'fullname': fullname
-    })
+    return jsonify(get_user_from_session())
 
 # --- API Endpoint for User Groups ---
 @auth_bp.route('/api/auth/groups')
@@ -82,18 +92,12 @@ def login():
             response_data = client.post('/api/auth/login', {'username': username, 'password': password})
             
             # Standardize role handling
-            roles_from_api = response_data.get("data").get('rolename')
-            if roles_from_api is None:
-                roles_to_store = []
-            elif isinstance(roles_from_api, str):
-                roles_to_store = [roles_from_api]
-            else:
-                roles_to_store = roles_from_api # Assume it's a list
+            roles_from_api = response_data.get("data").get('role')            
 
             session['logged_in'] = True
             session['username'] = username
             session['fullname'] = response_data.get("data").get('fullname')
-            session['roles'] = roles_to_store
+            session['roles'] = roles_from_api
             session['menus'] = response_data.get("data").get('menus')
 
             return jsonify({'status': 'success', 'message': 'Đăng nhập thành công!', 'redirect': '/'})
@@ -109,14 +113,14 @@ def register():
     if request.method == 'POST':
         data = request.get_json()
         
-        if not all(k in data for k in ['username', 'fullname', 'group_id', 'password']):
+        if not all(k in data for k in ['username', 'fullname','password']):
              return jsonify({'status': 'error', 'message': 'Thiếu thông tin, vui lòng điền đầy đủ các trường.'}), 400
 
         payload = {
             'username': data.get('username'),
             'fullname': data.get('fullname'),
-            'password': data.get('password'),
-            'group_id': data.get('group_id')
+            'password': data.get('password')
+            
         }
 
         try:

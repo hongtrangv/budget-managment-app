@@ -11,8 +11,7 @@ admin_bp = Blueprint('admin_bp', __name__)
 @admin_bp.route('/api/admin/inactive-users', methods=['GET'])
 def get_inactive_users():
     """API endpoint to fetch all users that are not yet active via the API Gateway."""
-    user_context = get_user_from_session()
-    print(f"User Context: {user_context.get('role')}")
+    user_context = get_user_from_session()    
     if user_context.get('role') != 'admin':
         return jsonify({"status": "error", "message": "Không có quyền truy cập"}), 403
 

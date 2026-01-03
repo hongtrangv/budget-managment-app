@@ -1,3 +1,6 @@
+import { ICONS } from './icons.js';
+import { showAlert, formatDate, authenticatedFetch } from './utils.js';
+
 async function fetchInactiveUsers(userList, loadingSpinner, noUsersMessage, showError) {
     showLoading(true, userList, loadingSpinner, noUsersMessage);
     try {
@@ -60,14 +63,15 @@ function renderUserList(users, userList, noUsersMessage) {
         return;
     }
     noUsersMessage.style.display = 'none';
-    users.forEach(user => {
+    users.forEach((user,i) => {
+        const rowClass = i % 2 === 0 ? 'bg-white' : 'bg-green-50';
         const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50';
+        row.className = rowClass;
         row.innerHTML = `
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap">${user.fullname || 'N/A'}</p></td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap">${user.username}</p></td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
-                <button data-userid="${user.id}" data-username="${user.username}" data-fullname="${user.fullname || 'N/A'}" class="approve-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Duyệt</button>
+            <td class="py-2 px-4 text-center">${user.fullname || 'N/A'}</p></td>
+            <td class="py-2 px-4 text-center">${user.username}</p></td>
+            <td class="py-2 px-4 text-center">
+                <button data-userid="${user.id}" data-username="${user.username}" data-fullname="${user.fullname || 'N/A'}" class="p-1 hover:bg-gray-200 rounded-full approve-btn" title="Duyệt">${ICONS.BADGE_CHECK}</button>
             </td>
         `;
         userList.appendChild(row);

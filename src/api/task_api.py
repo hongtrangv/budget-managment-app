@@ -24,6 +24,9 @@ def get_tasks():
     # This check is now safe because user_roles is guaranteed to be a list.
     if not is_admin:
         params['assignee'] = current_user
+    else:
+        params['assignee'] = ''
+
     # Admins can see all tasks for the given date, so we don't add the assignee filter.
 
     try:

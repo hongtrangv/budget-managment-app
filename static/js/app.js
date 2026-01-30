@@ -12,6 +12,7 @@ import { ICONS } from './icons.js';
 import { initAdminMenuPage } from './admin_menu.js';
 import { initializeDndList } from './dnd_list.js'; // Import the new function
 import { initUserApprovalPage } from './user_approval.js';
+import { loadPriceManagementPage } from './price_management.js';
 
 const content = document.getElementById('content');
 const menuContainer = document.getElementById('menu-container');
@@ -41,6 +42,7 @@ const routes = {
     '/register': { page: '/register', loader: loadRegistrationPage },
     '/admin/user-approval': { page: '/pages/admin/user_approval.html',loader:initUserApprovalPage },
     '/admin/menu': { page: '/admin/menu', loader: initAdminMenuPage },
+    '/price-management': { page: '/pages/price_management.html', loader: loadPriceManagementPage },
     '/shelf/:rowIndex/:unitIndex/:compIndex': { dynamic: true, page: '/shelf/:rowIndex/:unitIndex/:compIndex' },
     '/book/:bookId': { 
         dynamic: true, 

@@ -26,6 +26,13 @@ ACTION_CONFIG = {
     'collections_api.update_document': ['UPDATE_COLLECTION_DOCUMENT'],
     'collections_api.delete_document': ['DELETE_COLLECTION_DOCUMENT'],
 
+    # === Price API Endpoints ===
+    'price_api.create_price': ['CREATE_PRICE'],
+    'price_api.get_prices': ['READ_PRICE'],
+    'price_api.update_price': ['UPDATE_PRICE'],
+    'price_api.delete_price': ['DELETE_PRICE'],
+    'price_api.get_suppliers': ['READ_PRICE'],
+    'price_api.get_products': ['READ_PRICE'],
 
     # == Admin API Endpoints ==
     'admin_bp.approve_user': ['APPROVE_USER'],    

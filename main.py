@@ -18,6 +18,7 @@ from src.api.menu_api import menu_bp
 from src.api.task_api import task_bp
 from src.api.excel_upload_api import excel_upload_bp
 from src.api.admin_api import admin_bp
+from src.api.price_api import price_bp
 
 app = Flask(__name__,
             template_folder='templates',
@@ -45,6 +46,7 @@ app.register_blueprint(menu_bp)
 app.register_blueprint(task_bp)
 app.register_blueprint(excel_upload_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(price_bp)
 app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 
 # === VIEW ROUTES (SPA Entry Point) ===
@@ -62,6 +64,7 @@ app.register_blueprint(genre_api_blueprint, url_prefix='/api/genres')
 @app.route('/register')
 @app.route('/calendar')
 @app.route('/dnd-list')
+@app.route('/price-management')
 @app.route('/shelf/<int:row_index>/<int:unit_index>/<int:comp_index>')
 @app.route('/book/<string:book_id>')
 @app.route('/excel-upload')

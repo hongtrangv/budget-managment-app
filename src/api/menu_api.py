@@ -21,12 +21,20 @@ MENU_CONFIG = [
         "order": 2
     },
     {
+        "id": "price-management",
+        "name": "Quản lý giá", 
+        "path": "/price-management",
+        "icon": "price",
+        "require_login": True,  # Cần đăng nhập
+        "order": 3
+    },
+    {
         "id": "loan-payment",
         "name": "Trả nợ", 
         "path": "/loan-payment",
         "icon": "loan",
         "require_login": True,  # Cần đăng nhập
-        "order": 3
+        "order": 4
     },
     {
         "id": "collections",
@@ -34,7 +42,7 @@ MENU_CONFIG = [
         "path": "/collections", 
         "icon": "collections",
         "require_login": False,  # Không cần đăng nhập
-        "order": 4
+        "order": 5
     },
     {
         "id": "bookstore",
@@ -42,7 +50,7 @@ MENU_CONFIG = [
         "path": "/bookstore",
         "icon": "book",
         "require_login": False,  # Không cần đăng nhập
-        "order": 5
+        "order": 6
     },
     {
         "id": "chatbot",
@@ -50,7 +58,7 @@ MENU_CONFIG = [
         "path": "#chatbot",
         "icon": "chat",
         "require_login": False,  # Không cần đăng nhập
-        "order": 6,
+        "order": 7,
         "is_button": True  # Đánh dấu là button thay vì link
     }
 ]
@@ -96,6 +104,7 @@ def get_menu():
         transformed_items = [
                 #{"url": "/", "icon": "home", "text": "Trang chủ"},
                 {"url": "/bookstore", "icon": "book", "text": "Nhà sách"},
+                {"url": "/price-management", "icon": "book", "text": "Giá cả thị trường"},
                 #{"url": "/login", "icon": "login", "text": "Đăng nhập"},
                 #{"url": "/register", "icon": "register", "text": "Đăng ký"},
                 #{"url": "/calendar", "icon": "register", "text": "Lịch công việc"},

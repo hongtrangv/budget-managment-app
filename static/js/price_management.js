@@ -6,29 +6,6 @@ let currentFilters = {};
 const pageSize = 20;
 
 /**
- * Test function to check if elements exist
- */
-function testElements() {
-    console.log('Testing elements...');
-    const suppliersList = document.getElementById('suppliers-list');
-    const productsList = document.getElementById('products-list');
-    
-    console.log('suppliers-list element:', suppliersList);
-    console.log('products-list element:', productsList);
-    
-    if (suppliersList) {
-        suppliersList.innerHTML = '<div class="p-3 bg-blue-50 rounded">Test suppliers list</div>';
-    }
-    
-    if (productsList) {
-        productsList.innerHTML = '<div class="p-3 bg-green-50 rounded">Test products list</div>';
-    }
-}
-
-// Add test to window for manual testing
-window.testElements = testElements;
-
-/**
  * Initialize price management page
  */
 export async function loadPriceManagementPage() {
@@ -43,17 +20,58 @@ export async function loadPriceManagementPage() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('effective-date').value = today;
         
+        // Load suppliers for filter dropdown
+        await loadSuppliersFilter();
+        
         // Load initial data for manage tab
         console.log('Loading initial data...');
         await loadPrices();
-        await loadSuppliers();
-        await loadProducts();
         
         console.log('Price management page initialized successfully');
         
     } catch (error) {
         console.error('Error initializing price management page:', error);
         showAlert('error', 'Lỗi khởi tạo trang quản lý giá');
+    }
+}
+
+/**
+ * Load suppliers for filter dropdown
+ */
+async function loadSuppliersFilter() {
+    console.log('Loading suppliers for filter...');
+    try {
+        const response = await authenticatedFetch('/api/prices/suppliers', {
+            headers: {
+                'X-Action-Identifier': 'READ_PRICE'
+            }
+        });
+        
+        const result = await response.json();
+        console.log('Suppliers response:', result);
+        
+        if (result.success && result.data) {
+            const supplierSelect = document.getElementById('search-supplier');
+            
+            // Clear existing options except the first one
+            supplierSelect.innerHTML = '<option value="">Tất cả nhà cung cấp</option>';
+            
+            // Add supplier options
+            result.data.forEach(supplier => {
+                const option = document.createElement('option');
+                option.value = supplier;
+                option.textContent = supplier;
+                supplierSelect.appendChild(option);
+            });
+            
+            console.log(`Loaded ${result.data.length} suppliers into filter dropdown`);
+        } else {
+            console.error('Error loading suppliers:', result.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading suppliers:', error);
+        // Don't show alert for this as it's not critical
     }
 }
 
@@ -87,8 +105,7 @@ function setupTabNavigation() {
             // Load data if switching to manage tab
             if (tabId === 'manage') {
                 loadPrices();
-                loadSuppliers();
-                loadProducts();
+                loadSuppliersFilter();
             }
         });
     });
@@ -122,7 +139,7 @@ function setupSearchHandlers() {
     document.getElementById('clear-search').addEventListener('click', handleClearSearch);
     
     // Enter key search
-    const searchInputs = ['search-product', 'search-supplier', 'min-price', 'max-price'];
+    const searchInputs = ['search-product', 'min-price', 'max-price'];
     searchInputs.forEach(inputId => {
         document.getElementById(inputId).addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -130,6 +147,9 @@ function setupSearchHandlers() {
             }
         });
     });
+    
+    // Supplier dropdown change
+    document.getElementById('search-supplier').addEventListener('change', handleSearch);
     
     // Pagination
     document.getElementById('prev-page').addEventListener('click', () => {
@@ -194,7 +214,8 @@ async function handleAddPrice(e) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('effective-date').value = today;
             
-            // Switch to manage tab and reload data
+            // Reload suppliers filter and switch to manage tab
+            await loadSuppliersFilter();
             document.getElementById('tab-manage').click();
             await loadPrices();
         } else {
@@ -213,7 +234,7 @@ async function handleAddPrice(e) {
 async function handleSearch() {
     currentFilters = {
         product_name: document.getElementById('search-product').value.trim(),
-        supplier: document.getElementById('search-supplier').value.trim(),
+        supplier: document.getElementById('search-supplier').value,
         min_price: document.getElementById('min-price').value,
         max_price: document.getElementById('max-price').value
     };
@@ -235,232 +256,6 @@ async function handleClearSearch() {
     currentPage = 1;
     await loadPrices();
 }
-
-/**
- * Load suppliers list
- */
-async function loadSuppliers() {
-    console.log('Loading suppliers...');
-    try {
-        showSuppliersLoading(true);
-        
-        const response = await authenticatedFetch('/api/prices/suppliers', {
-            headers: {
-                'X-Action-Identifier': 'READ_PRICE'
-            }
-        });
-        
-        const result = await response.json();
-        console.log('Suppliers response:', result);
-        
-        if (result.success) {
-            renderSuppliersList(result.data);
-        } else {
-            showSuppliersEmpty();
-            console.error('Error loading suppliers:', result.error);
-        }
-        
-    } catch (error) {
-        console.error('Error loading suppliers:', error);
-        showSuppliersEmpty();
-    } finally {
-        showSuppliersLoading(false);
-    }
-}
-
-/**
- * Load products list
- */
-async function loadProducts() {
-    console.log('Loading products...');
-    try {
-        showProductsLoading(true);
-        
-        const response = await authenticatedFetch('/api/prices/products', {
-            headers: {
-                'X-Action-Identifier': 'READ_PRICE'
-            }
-        });
-        
-        const result = await response.json();
-        console.log('Products response:', result);
-        
-        if (result.success) {
-            renderProductsList(result.data);
-        } else {
-            showProductsEmpty();
-            console.error('Error loading products:', result.error);
-        }
-        
-    } catch (error) {
-        console.error('Error loading products:', error);
-        showProductsEmpty();
-    } finally {
-        showProductsLoading(false);
-    }
-}
-
-/**
- * Render suppliers list
- */
-function renderSuppliersList(suppliers) {
-    console.log('Rendering suppliers:', suppliers);
-    const suppliersList = document.getElementById('suppliers-list');
-    const suppliersEmpty = document.getElementById('suppliers-empty');
-    
-    if (!suppliersList) {
-        console.error('suppliers-list element not found!');
-        return;
-    }
-    
-    if (!suppliers || suppliers.length === 0) {
-        suppliersList.innerHTML = '';
-        suppliersEmpty.classList.remove('hidden');
-        return;
-    }
-    
-    suppliersEmpty.classList.add('hidden');
-    
-    // Xử lý dữ liệu dạng list - có thể là array of strings hoặc array of objects
-    suppliersList.innerHTML = suppliers.map(supplier => {
-        // Nếu supplier là string thì dùng trực tiếp, nếu là object thì lấy thuộc tính name
-        const supplierName = typeof supplier === 'string' ? supplier : (supplier.name || supplier.supplier || '');
-        const productCount = typeof supplier === 'object' ? supplier.product_count : null;
-        
-        return `
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div class="flex-1">
-                    <div class="text-sm font-medium text-gray-900">${escapeHtml(supplierName)}</div>
-                    ${productCount ? `<div class="text-xs text-gray-500">${productCount} sản phẩm</div>` : ''}
-                </div>
-                <button onclick="filterBySupplier('${escapeHtml(supplierName)}')" 
-                        class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                    Xem giá
-                </button>
-            </div>
-        `;
-    }).join('');
-    
-    console.log('Suppliers rendered successfully');
-}
-
-/**
- * Render products list
- */
-function renderProductsList(products) {
-    console.log('Rendering products:', products);
-    const productsList = document.getElementById('products-list');
-    const productsEmpty = document.getElementById('products-empty');
-    
-    if (!productsList) {
-        console.error('products-list element not found!');
-        return;
-    }
-    
-    if (!products || products.length === 0) {
-        productsList.innerHTML = '';
-        productsEmpty.classList.remove('hidden');
-        return;
-    }
-    
-    productsEmpty.classList.add('hidden');
-    
-    // Xử lý dữ liệu dạng list - có thể là array of strings hoặc array of objects
-    productsList.innerHTML = products.map(product => {
-        // Nếu product là string thì dùng trực tiếp, nếu là object thì lấy thuộc tính name
-        const productName = typeof product === 'string' ? product : (product.name || product.product_name || '');
-        const latestPrice = typeof product === 'object' ? product.latest_price : null;
-        
-        return `
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div class="flex-1">
-                    <div class="text-sm font-medium text-gray-900">${escapeHtml(productName)}</div>
-                    ${latestPrice ? `<div class="text-xs text-gray-500">Giá mới nhất: ${formatCurrency(latestPrice)}</div>` : ''}
-                </div>
-                <button onclick="filterByProduct('${escapeHtml(productName)}')" 
-                        class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                    Xem giá
-                </button>
-            </div>
-        `;
-    }).join('');
-    
-    console.log('Products rendered successfully');
-}
-
-/**
- * Show/hide suppliers loading
- */
-function showSuppliersLoading(show) {
-    const loading = document.getElementById('suppliers-loading');
-    const list = document.getElementById('suppliers-list');
-    const empty = document.getElementById('suppliers-empty');
-    
-    if (show) {
-        loading.classList.remove('hidden');
-        list.classList.add('hidden');
-        empty.classList.add('hidden');
-    } else {
-        loading.classList.add('hidden');
-        list.classList.remove('hidden');
-    }
-}
-
-/**
- * Show/hide products loading
- */
-function showProductsLoading(show) {
-    const loading = document.getElementById('products-loading');
-    const list = document.getElementById('products-list');
-    const empty = document.getElementById('products-empty');
-    
-    if (show) {
-        loading.classList.remove('hidden');
-        list.classList.add('hidden');
-        empty.classList.add('hidden');
-    } else {
-        loading.classList.add('hidden');
-        list.classList.remove('hidden');
-    }
-}
-
-/**
- * Show suppliers empty state
- */
-function showSuppliersEmpty() {
-    document.getElementById('suppliers-list').innerHTML = '';
-    document.getElementById('suppliers-empty').classList.remove('hidden');
-}
-
-/**
- * Show products empty state
- */
-function showProductsEmpty() {
-    document.getElementById('products-list').innerHTML = '';
-    document.getElementById('products-empty').classList.remove('hidden');
-}
-
-/**
- * Filter by supplier
- */
-window.filterBySupplier = function(supplierName) {
-    document.getElementById('search-supplier').value = supplierName;
-    document.getElementById('search-product').value = '';
-    document.getElementById('min-price').value = '';
-    document.getElementById('max-price').value = '';
-    handleSearch();
-};
-
-/**
- * Filter by product
- */
-window.filterByProduct = function(productName) {
-    document.getElementById('search-product').value = productName;
-    document.getElementById('search-supplier').value = '';
-    document.getElementById('min-price').value = '';
-    document.getElementById('max-price').value = '';
-    handleSearch();
-};
 
 /**
  * Load prices with current filters and pagination
@@ -666,6 +461,7 @@ async function handleEditPrice(e) {
         if (result.success) {
             showAlert('success', 'Cập nhật thông tin giá thành công');
             document.getElementById('edit-modal').classList.add('hidden');
+            await loadSuppliersFilter(); // Reload suppliers in case new supplier was added
             await loadPrices();
         } else {
             showAlert('error', result.error || 'Không thể cập nhật thông tin giá');
@@ -697,6 +493,7 @@ window.deletePrice = async function(priceId, productName) {
         
         if (result.success) {
             showAlert('success', 'Xóa thông tin giá thành công');
+            await loadSuppliersFilter(); // Reload suppliers in case supplier list changed
             await loadPrices();
         } else {
             showAlert('error', result.error || 'Không thể xóa thông tin giá');

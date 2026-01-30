@@ -20,8 +20,9 @@ export async function loadPriceManagementPage() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('effective-date').value = today;
         
-        // Load suppliers for filter dropdown
+        // Load suppliers and products for filter dropdowns
         await loadSuppliersFilter();
+        await loadProductsFilter();
         
         // Load initial data for manage tab
         console.log('Loading initial data...');
@@ -71,7 +72,45 @@ async function loadSuppliersFilter() {
         
     } catch (error) {
         console.error('Error loading suppliers:', error);
-        // Don't show alert for this as it's not critical
+    }
+}
+
+/**
+ * Load products for filter dropdown
+ */
+async function loadProductsFilter() {
+    console.log('Loading products for filter...');
+    try {
+        const response = await authenticatedFetch('/api/prices/products', {
+            headers: {
+                'X-Action-Identifier': 'READ_PRICE'
+            }
+        });
+        
+        const result = await response.json();
+        console.log('Products response:', result);
+        
+        if (result.success && result.data) {
+            const productSelect = document.getElementById('search-products');
+            
+            // Clear existing options except the first one
+            productSelect.innerHTML = '<option value="">Tất cả sản phẩm</option>';
+            
+            // Add product options
+            result.data.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.name;
+                option.textContent = product.name;
+                productSelect.appendChild(option);
+            });
+            
+            console.log(`Loaded ${result.data.length} products into filter dropdown`);
+        } else {
+            console.error('Error loading products:', result.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading products:', error);
     }
 }
 
@@ -86,7 +125,6 @@ function setupTabNavigation() {
         button.addEventListener('click', () => {
             const tabId = button.id.replace('tab-', '');
             
-            // Update button states
             tabButtons.forEach(btn => {
                 btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
                 btn.classList.add('border-transparent', 'text-gray-500');
@@ -95,17 +133,16 @@ function setupTabNavigation() {
             button.classList.add('active', 'border-blue-500', 'text-blue-600');
             button.classList.remove('border-transparent', 'text-gray-500');
             
-            // Update content visibility
             tabContents.forEach(content => {
                 content.classList.add('hidden');
             });
             
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
             
-            // Load data if switching to manage tab
             if (tabId === 'manage') {
                 loadPrices();
                 loadSuppliersFilter();
+                loadProductsFilter();
             }
         });
     });
@@ -115,18 +152,15 @@ function setupTabNavigation() {
  * Setup form handlers
  */
 function setupFormHandlers() {
-    // Add price form
     const priceForm = document.getElementById('price-form');
     priceForm.addEventListener('submit', handleAddPrice);
     
-    // Reset form button
     document.getElementById('reset-form').addEventListener('click', () => {
         priceForm.reset();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('effective-date').value = today;
     });
     
-    // Edit price form
     const editForm = document.getElementById('edit-price-form');
     editForm.addEventListener('submit', handleEditPrice);
 }
@@ -138,8 +172,7 @@ function setupSearchHandlers() {
     document.getElementById('search-prices').addEventListener('click', handleSearch);
     document.getElementById('clear-search').addEventListener('click', handleClearSearch);
     
-    // Enter key search
-    const searchInputs = ['search-product', 'min-price', 'max-price'];
+    const searchInputs = ['min-price', 'max-price'];
     searchInputs.forEach(inputId => {
         document.getElementById(inputId).addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -148,10 +181,9 @@ function setupSearchHandlers() {
         });
     });
     
-    // Supplier dropdown change
+    document.getElementById('search-products').addEventListener('change', handleSearch);
     document.getElementById('search-supplier').addEventListener('change', handleSearch);
     
-    // Pagination
     document.getElementById('prev-page').addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
@@ -179,7 +211,6 @@ function setupModalHandlers() {
         });
     });
     
-    // Close modal when clicking outside
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.classList.add('hidden');
@@ -214,8 +245,8 @@ async function handleAddPrice(e) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('effective-date').value = today;
             
-            // Reload suppliers filter and switch to manage tab
             await loadSuppliersFilter();
+            await loadProductsFilter();
             document.getElementById('tab-manage').click();
             await loadPrices();
         } else {
@@ -233,7 +264,7 @@ async function handleAddPrice(e) {
  */
 async function handleSearch() {
     currentFilters = {
-        product_name: document.getElementById('search-product').value.trim(),
+        product_name: document.getElementById('search-products').value,
         supplier: document.getElementById('search-supplier').value,
         min_price: document.getElementById('min-price').value,
         max_price: document.getElementById('max-price').value
@@ -247,7 +278,7 @@ async function handleSearch() {
  * Handle clear search
  */
 async function handleClearSearch() {
-    document.getElementById('search-product').value = '';
+    document.getElementById('search-products').value = '';
     document.getElementById('search-supplier').value = '';
     document.getElementById('min-price').value = '';
     document.getElementById('max-price').value = '';
@@ -342,7 +373,6 @@ function renderPricesTable(prices) {
         </tr>
     `).join('');
     
-    // Update results count
     document.getElementById('results-count').textContent = `${prices.length} kết quả`;
 }
 
@@ -358,14 +388,11 @@ function updatePagination(result) {
     if (result.data && result.data.length > 0) {
         pagination.classList.remove('hidden');
         
-        // Update buttons
         prevBtn.disabled = currentPage <= 1;
         nextBtn.disabled = result.data.length < pageSize;
         
-        // Update page info
         currentPageInfo.textContent = `Trang ${currentPage}`;
         
-        // Update showing info
         const from = (currentPage - 1) * pageSize + 1;
         const to = Math.min(currentPage * pageSize, from + result.data.length - 1);
         
@@ -399,6 +426,9 @@ function showLoading(show) {
  */
 window.editPrice = async function(priceId) {
     try {
+        // Since get_prices now returns paginated data, we might need to fetch all to find the one to edit
+        // A better approach would be a dedicated /api/prices/<id> endpoint in the backend
+        // For now, we will assume the price is in the current view or we fetch it again
         const response = await authenticatedFetch(`/api/prices?id=${priceId}`, {
             headers: {
                 'X-Action-Identifier': 'READ_PRICE'
@@ -406,17 +436,14 @@ window.editPrice = async function(priceId) {
         });
         
         const result = await response.json();
-        
-        if (result.success && result.data && result.data.length > 0) {
-            const price = result.data.find(p => p.id === priceId);
-            if (price) {
-                populateEditForm(price);
-                document.getElementById('edit-modal').classList.remove('hidden');
-            }
+        const price = result.data.find(p => p.id === priceId);
+
+        if (price) {
+            populateEditForm(price);
+            document.getElementById('edit-modal').classList.remove('hidden');
         } else {
-            showAlert('error', 'Không tìm thấy thông tin giá');
+            showAlert('error', 'Không tìm thấy thông tin giá. Vui lòng thử lại.');
         }
-        
     } catch (error) {
         console.error('Error loading price for edit:', error);
         showAlert('error', 'Lỗi khi tải thông tin giá');
@@ -430,7 +457,7 @@ function populateEditForm(price) {
     document.getElementById('edit-price-id').value = price.id;
     document.getElementById('edit-product-name').value = price.product_name || '';
     document.getElementById('edit-price').value = price.price || '';
-    document.getElementById('edit-effective-date').value = price.effective_date || '';
+    document.getElementById('edit-effective-date').value = price.effective_date ? new Date(price.effective_date).toISOString().split('T')[0] : '';
     document.getElementById('edit-supplier').value = price.supplier || '';
     document.getElementById('edit-notes').value = price.notes || '';
 }
@@ -442,11 +469,10 @@ async function handleEditPrice(e) {
     e.preventDefault();
     
     try {
+        const priceId = document.getElementById('edit-price-id').value;
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-        const priceId = data.id;
-        delete data.id;
-        
+
         const response = await authenticatedFetch(`/api/prices/${priceId}`, {
             method: 'PUT',
             headers: {
@@ -461,7 +487,8 @@ async function handleEditPrice(e) {
         if (result.success) {
             showAlert('success', 'Cập nhật thông tin giá thành công');
             document.getElementById('edit-modal').classList.add('hidden');
-            await loadSuppliersFilter(); // Reload suppliers in case new supplier was added
+            await loadSuppliersFilter();
+            await loadProductsFilter();
             await loadPrices();
         } else {
             showAlert('error', result.error || 'Không thể cập nhật thông tin giá');
@@ -493,7 +520,8 @@ window.deletePrice = async function(priceId, productName) {
         
         if (result.success) {
             showAlert('success', 'Xóa thông tin giá thành công');
-            await loadSuppliersFilter(); // Reload suppliers in case supplier list changed
+            await loadSuppliersFilter();
+            await loadProductsFilter();
             await loadPrices();
         } else {
             showAlert('error', result.error || 'Không thể xóa thông tin giá');
@@ -509,6 +537,7 @@ window.deletePrice = async function(priceId, productName) {
  * Utility functions
  */
 function escapeHtml(text) {
+    if (text === null || typeof text === 'undefined') return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -517,9 +546,13 @@ function escapeHtml(text) {
 function formatDate(dateString) {
     if (!dateString) return '';
     try {
-        const date = new Date(dateString);
+        // Assuming date is in ISO format, take only the date part
+        const date = new Date(dateString.split('T')[0]);
+        // Add one day to date to fix timezone issue
+        date.setDate(date.getDate() + 1);
         return date.toLocaleDateString('vi-VN');
-    } catch {
+    } catch(e) {
+        console.warn('Could not format date:', dateString, e);
         return dateString;
     }
 }

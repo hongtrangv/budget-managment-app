@@ -9,7 +9,6 @@ price_bp = Blueprint('price_api', __name__)
 
 @price_bp.route("/api/prices", methods=['GET'])
 @require_api_key
-@require_action
 def get_prices():
     """Lấy danh sách giá với tìm kiếm và lọc"""
     try:
@@ -256,72 +255,54 @@ def delete_price(price_id):
 
 @price_bp.route("/api/prices/suppliers", methods=['GET'])
 @require_api_key
-@require_action
 def get_suppliers():
-    """Lấy danh sách nhà cung cấp"""
+    """Lấy danh sách nhà cung cấp duy nhất từ tất cả các bản ghi giá."""
     try:
-        # Kiểm tra đăng nhập
         if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
-        
-        # Gọi API Gateway
+            return jsonify({"success": False, "error": "Yêu cầu đăng nhập"}), 401
+
         client = APIGatewayClient()
-        response = client.get('/api/prices/suppliers')
         
-        return jsonify({
-            "success": True,
-            "data": response.get('data', [])
-        })
+        # Tham số để lấy tất cả các bản ghi, có thể cần điều chỉnh dựa trên API của bạn
+        params = {'limit': 1000, 'page': 1} 
+        all_prices = []
         
+        # Lặp để lấy tất cả các trang
+        while True:
+            response = client.get('/api/prices/suppliers')
+            data = response.get('data', [])
+            all_prices.extend(data)            
+          
+        # Trích xuất và lọc các nhà cung cấp duy nhất
+        suppliers = sorted(list(set(item['supplier'] for item in all_prices if 'supplier' in item)))
+        
+        return jsonify({"success": True, "data": data})
+
     except APIGatewayError as e:
-        print(f"API Gateway error: {e.message}")
-        return jsonify({
-            "success": False,
-            "error": e.message
-        }), e.status_code
-        
+        return jsonify({"success": False, "error": e.message}), e.status_code
     except Exception as e:
-        print(f"Lỗi khi lấy danh sách nhà cung cấp: {e}")
-        return jsonify({
-            "success": False,
-            "error": "Không thể lấy danh sách nhà cung cấp"
-        }), 500
+        return jsonify({"success": False, "error": "Không thể lấy danh sách nhà cung cấp"}), 500
+
 
 @price_bp.route("/api/prices/products", methods=['GET'])
 @require_api_key
-@require_action
 def get_products():
-    """Lấy danh sách sản phẩm"""
+    """Lấy danh sách sản phẩm duy nhất từ tất cả các bản ghi giá."""
     try:
-        # Kiểm tra đăng nhập
         if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
-        
-        # Gọi API Gateway
+            return jsonify({"success": False, "error": "Yêu cầu đăng nhập"}), 401
+
         client = APIGatewayClient()
-        response = client.get('/api/prices/products')
-        
-        return jsonify({
-            "success": True,
-            "data": response.get('data', [])
-        })
-        
+        params = {'limit': 1000, 'page': 1}
+        all_prices = []
+
+        while True:
+            response = client.get('/api/prices/products')
+            data = response.get('data', [])
+            
+        return jsonify({"success": True, "data": data})
+
     except APIGatewayError as e:
-        print(f"API Gateway error: {e.message}")
-        return jsonify({
-            "success": False,
-            "error": e.message
-        }), e.status_code
-        
+        return jsonify({"success": False, "error": e.message}), e.status_code
     except Exception as e:
-        print(f"Lỗi khi lấy danh sách sản phẩm: {e}")
-        return jsonify({
-            "success": False,
-            "error": "Không thể lấy danh sách sản phẩm"
-        }), 500
+        return jsonify({"success": False, "error": "Không thể lấy danh sách sản phẩm"}), 500

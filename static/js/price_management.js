@@ -21,6 +21,8 @@ export async function loadPriceManagementPage() {
         
         // Load initial data for manage tab
         await loadPrices();
+        await loadSuppliers();
+        await loadProducts();
         
     } catch (error) {
         console.error('Error initializing price management page:', error);
@@ -58,6 +60,8 @@ function setupTabNavigation() {
             // Load data if switching to manage tab
             if (tabId === 'manage') {
                 loadPrices();
+                loadSuppliers();
+                loadProducts();
             }
         });
     });
@@ -204,6 +208,198 @@ async function handleClearSearch() {
     currentPage = 1;
     await loadPrices();
 }
+
+/**
+ * Load suppliers list
+ */
+async function loadSuppliers() {
+    try {
+        showSuppliersLoading(true);
+        
+        const response = await authenticatedFetch('/api/prices/suppliers', {
+            headers: {
+                'X-Action-Identifier': 'READ_PRICE'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            renderSuppliersList(result.data);
+        } else {
+            showSuppliersEmpty();
+            console.error('Error loading suppliers:', result.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading suppliers:', error);
+        showSuppliersEmpty();
+    } finally {
+        showSuppliersLoading(false);
+    }
+}
+
+/**
+ * Load products list
+ */
+async function loadProducts() {
+    try {
+        showProductsLoading(true);
+        
+        const response = await authenticatedFetch('/api/prices/products', {
+            headers: {
+                'X-Action-Identifier': 'READ_PRICE'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            renderProductsList(result.data);
+        } else {
+            showProductsEmpty();
+            console.error('Error loading products:', result.error);
+        }
+        
+    } catch (error) {
+        console.error('Error loading products:', error);
+        showProductsEmpty();
+    } finally {
+        showProductsLoading(false);
+    }
+}
+
+/**
+ * Render suppliers list
+ */
+function renderSuppliersList(suppliers) {
+    const suppliersList = document.getElementById('suppliers-list');
+    const suppliersEmpty = document.getElementById('suppliers-empty');
+    
+    if (!suppliers || suppliers.length === 0) {
+        suppliersList.innerHTML = '';
+        suppliersEmpty.classList.remove('hidden');
+        return;
+    }
+    
+    suppliersEmpty.classList.add('hidden');
+    
+    suppliersList.innerHTML = suppliers.map(supplier => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-900">${escapeHtml(supplier.name || supplier)}</div>
+                ${supplier.product_count ? `<div class="text-xs text-gray-500">${supplier.product_count} sản phẩm</div>` : ''}
+            </div>
+            <button onclick="filterBySupplier('${escapeHtml(supplier.name || supplier)}')" 
+                    class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                Xem giá
+            </button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Render products list
+ */
+function renderProductsList(products) {
+    const productsList = document.getElementById('products-list');
+    const productsEmpty = document.getElementById('products-empty');
+    
+    if (!products || products.length === 0) {
+        productsList.innerHTML = '';
+        productsEmpty.classList.remove('hidden');
+        return;
+    }
+    
+    productsEmpty.classList.add('hidden');
+    
+    productsList.innerHTML = products.map(product => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-900">${escapeHtml(product.name || product)}</div>
+                ${product.latest_price ? `<div class="text-xs text-gray-500">Giá mới nhất: ${formatCurrency(product.latest_price)}</div>` : ''}
+            </div>
+            <button onclick="filterByProduct('${escapeHtml(product.name || product)}')" 
+                    class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                Xem giá
+            </button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Show/hide suppliers loading
+ */
+function showSuppliersLoading(show) {
+    const loading = document.getElementById('suppliers-loading');
+    const list = document.getElementById('suppliers-list');
+    const empty = document.getElementById('suppliers-empty');
+    
+    if (show) {
+        loading.classList.remove('hidden');
+        list.classList.add('hidden');
+        empty.classList.add('hidden');
+    } else {
+        loading.classList.add('hidden');
+        list.classList.remove('hidden');
+    }
+}
+
+/**
+ * Show/hide products loading
+ */
+function showProductsLoading(show) {
+    const loading = document.getElementById('products-loading');
+    const list = document.getElementById('products-list');
+    const empty = document.getElementById('products-empty');
+    
+    if (show) {
+        loading.classList.remove('hidden');
+        list.classList.add('hidden');
+        empty.classList.add('hidden');
+    } else {
+        loading.classList.add('hidden');
+        list.classList.remove('hidden');
+    }
+}
+
+/**
+ * Show suppliers empty state
+ */
+function showSuppliersEmpty() {
+    document.getElementById('suppliers-list').innerHTML = '';
+    document.getElementById('suppliers-empty').classList.remove('hidden');
+}
+
+/**
+ * Show products empty state
+ */
+function showProductsEmpty() {
+    document.getElementById('products-list').innerHTML = '';
+    document.getElementById('products-empty').classList.remove('hidden');
+}
+
+/**
+ * Filter by supplier
+ */
+window.filterBySupplier = function(supplierName) {
+    document.getElementById('search-supplier').value = supplierName;
+    document.getElementById('search-product').value = '';
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    handleSearch();
+};
+
+/**
+ * Filter by product
+ */
+window.filterByProduct = function(productName) {
+    document.getElementById('search-product').value = productName;
+    document.getElementById('search-supplier').value = '';
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    handleSearch();
+};
 
 /**
  * Load prices with current filters and pagination

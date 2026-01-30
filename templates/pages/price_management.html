@@ -89,10 +89,52 @@
     </div>
 
     <div id="content-manage" class="tab-content hidden">
+        <!-- Suppliers and Products Lists -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Suppliers List -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Danh sách nhà cung cấp</h3>
+                </div>
+                <div class="p-6">
+                    <div id="suppliers-loading" class="text-center py-4 hidden">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-sm text-gray-600">Đang tải...</p>
+                    </div>
+                    <div id="suppliers-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <!-- Suppliers will be loaded here -->
+                    </div>
+                    <div id="suppliers-empty" class="text-center py-4 text-gray-500 text-sm hidden">
+                        Không có nhà cung cấp nào
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products List -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Danh sách sản phẩm</h3>
+                </div>
+                <div class="p-6">
+                    <div id="products-loading" class="text-center py-4 hidden">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-sm text-gray-600">Đang tải...</p>
+                    </div>
+                    <div id="products-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <!-- Products will be loaded here -->
+                    </div>
+                    <div id="products-empty" class="text-center py-4 text-gray-500 text-sm hidden">
+                        Không có sản phẩm nào
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Management -->
         <div class="bg-white shadow rounded-lg">
             <!-- Search and Filter -->
             <div class="p-6 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Tìm kiếm và lọc</h2>
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Tìm kiếm và lọc giá</h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Tìm kiếm sản phẩm -->

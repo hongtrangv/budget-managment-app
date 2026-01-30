@@ -240,14 +240,14 @@ async function initialLoad() {
         const authStatusResponse = await fetch('/api/auth/status');
         const authStatus = await authStatusResponse.json();
         document.body.dataset.loggedIn = authStatus.logged_in;
-
-        if (authStatus.logged_in) {
-            const menuResponse = await fetch('/api/menu');
-            if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
-            renderMenu(await menuResponse.json());
-        } else {
-             menuContainer.innerHTML = '';
-        }
+        const menuResponse = await fetch('/api/menu');
+        if (!menuResponse.ok) throw new Error(`Menu load failed: ${menuResponse.status}`);
+        renderMenu(await menuResponse.json());
+        // if (authStatus.logged_in) {
+            
+        // } else {
+        //      menuContainer.innerHTML = '';
+        // }I
         
         initializeChatbotWidget();
         initializeResponsiveUI();

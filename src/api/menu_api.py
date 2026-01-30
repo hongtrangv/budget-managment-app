@@ -7,10 +7,11 @@ def get_menu():
     """
     Returns the menu structure based on the user's login status.
     """
+    menu_from_session = session.get('menus', [])
     if 'username' in session:
         # Menu for logged-in users
         # 1. Retrieve the raw menu data stored in the session during login.
-        menu_from_session = session.get('menus', [])
+        #menu_from_session = session.get('menus', [])
 
         # Handle cases where the menu might be missing or not a list.
         if not isinstance(menu_from_session, list):

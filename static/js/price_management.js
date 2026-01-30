@@ -6,9 +6,33 @@ let currentFilters = {};
 const pageSize = 20;
 
 /**
+ * Test function to check if elements exist
+ */
+function testElements() {
+    console.log('Testing elements...');
+    const suppliersList = document.getElementById('suppliers-list');
+    const productsList = document.getElementById('products-list');
+    
+    console.log('suppliers-list element:', suppliersList);
+    console.log('products-list element:', productsList);
+    
+    if (suppliersList) {
+        suppliersList.innerHTML = '<div class="p-3 bg-blue-50 rounded">Test suppliers list</div>';
+    }
+    
+    if (productsList) {
+        productsList.innerHTML = '<div class="p-3 bg-green-50 rounded">Test products list</div>';
+    }
+}
+
+// Add test to window for manual testing
+window.testElements = testElements;
+
+/**
  * Initialize price management page
  */
 export async function loadPriceManagementPage() {
+    console.log('Initializing price management page...');
     try {
         setupTabNavigation();
         setupFormHandlers();
@@ -20,9 +44,12 @@ export async function loadPriceManagementPage() {
         document.getElementById('effective-date').value = today;
         
         // Load initial data for manage tab
+        console.log('Loading initial data...');
         await loadPrices();
         await loadSuppliers();
         await loadProducts();
+        
+        console.log('Price management page initialized successfully');
         
     } catch (error) {
         console.error('Error initializing price management page:', error);
@@ -213,6 +240,7 @@ async function handleClearSearch() {
  * Load suppliers list
  */
 async function loadSuppliers() {
+    console.log('Loading suppliers...');
     try {
         showSuppliersLoading(true);
         
@@ -223,6 +251,7 @@ async function loadSuppliers() {
         });
         
         const result = await response.json();
+        console.log('Suppliers response:', result);
         
         if (result.success) {
             renderSuppliersList(result.data);
@@ -243,6 +272,7 @@ async function loadSuppliers() {
  * Load products list
  */
 async function loadProducts() {
+    console.log('Loading products...');
     try {
         showProductsLoading(true);
         
@@ -253,6 +283,7 @@ async function loadProducts() {
         });
         
         const result = await response.json();
+        console.log('Products response:', result);
         
         if (result.success) {
             renderProductsList(result.data);
@@ -273,8 +304,14 @@ async function loadProducts() {
  * Render suppliers list
  */
 function renderSuppliersList(suppliers) {
+    console.log('Rendering suppliers:', suppliers);
     const suppliersList = document.getElementById('suppliers-list');
     const suppliersEmpty = document.getElementById('suppliers-empty');
+    
+    if (!suppliersList) {
+        console.error('suppliers-list element not found!');
+        return;
+    }
     
     if (!suppliers || suppliers.length === 0) {
         suppliersList.innerHTML = '';
@@ -284,26 +321,41 @@ function renderSuppliersList(suppliers) {
     
     suppliersEmpty.classList.add('hidden');
     
-    suppliersList.innerHTML = suppliers.map(supplier => `
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">${escapeHtml(supplier.name || supplier)}</div>
-                ${supplier.product_count ? `<div class="text-xs text-gray-500">${supplier.product_count} sản phẩm</div>` : ''}
+    // Xử lý dữ liệu dạng list - có thể là array of strings hoặc array of objects
+    suppliersList.innerHTML = suppliers.map(supplier => {
+        // Nếu supplier là string thì dùng trực tiếp, nếu là object thì lấy thuộc tính name
+        const supplierName = typeof supplier === 'string' ? supplier : (supplier.name || supplier.supplier || '');
+        const productCount = typeof supplier === 'object' ? supplier.product_count : null;
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(supplierName)}</div>
+                    ${productCount ? `<div class="text-xs text-gray-500">${productCount} sản phẩm</div>` : ''}
+                </div>
+                <button onclick="filterBySupplier('${escapeHtml(supplierName)}')" 
+                        class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                    Xem giá
+                </button>
             </div>
-            <button onclick="filterBySupplier('${escapeHtml(supplier.name || supplier)}')" 
-                    class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                Xem giá
-            </button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    console.log('Suppliers rendered successfully');
 }
 
 /**
  * Render products list
  */
 function renderProductsList(products) {
+    console.log('Rendering products:', products);
     const productsList = document.getElementById('products-list');
     const productsEmpty = document.getElementById('products-empty');
+    
+    if (!productsList) {
+        console.error('products-list element not found!');
+        return;
+    }
     
     if (!products || products.length === 0) {
         productsList.innerHTML = '';
@@ -313,18 +365,27 @@ function renderProductsList(products) {
     
     productsEmpty.classList.add('hidden');
     
-    productsList.innerHTML = products.map(product => `
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">${escapeHtml(product.name || product)}</div>
-                ${product.latest_price ? `<div class="text-xs text-gray-500">Giá mới nhất: ${formatCurrency(product.latest_price)}</div>` : ''}
+    // Xử lý dữ liệu dạng list - có thể là array of strings hoặc array of objects
+    productsList.innerHTML = products.map(product => {
+        // Nếu product là string thì dùng trực tiếp, nếu là object thì lấy thuộc tính name
+        const productName = typeof product === 'string' ? product : (product.name || product.product_name || '');
+        const latestPrice = typeof product === 'object' ? product.latest_price : null;
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(productName)}</div>
+                    ${latestPrice ? `<div class="text-xs text-gray-500">Giá mới nhất: ${formatCurrency(latestPrice)}</div>` : ''}
+                </div>
+                <button onclick="filterByProduct('${escapeHtml(productName)}')" 
+                        class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                    Xem giá
+                </button>
             </div>
-            <button onclick="filterByProduct('${escapeHtml(product.name || product)}')" 
-                    class="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                Xem giá
-            </button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    console.log('Products rendered successfully');
 }
 
 /**

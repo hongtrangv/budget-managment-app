@@ -13,11 +13,11 @@ def get_prices():
     """Lấy danh sách giá với tìm kiếm và lọc"""
     try:
         # Kiểm tra đăng nhập
-        if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
+        # if 'username' not in session:
+        #     return jsonify({
+        #         "success": False,
+        #         "error": "Yêu cầu đăng nhập"
+        #     }), 401
         
         # Lấy tham số tìm kiếm
         params = {}
@@ -61,16 +61,15 @@ def get_prices():
 
 @price_bp.route("/api/prices", methods=['POST'])
 @require_api_key
-@require_action
 def create_price():
     """Tạo mới thông tin giá"""
     try:
         # Kiểm tra đăng nhập
-        if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
+        # if 'username' not in session:
+        #     return jsonify({
+        #         "success": False,
+        #         "error": "Yêu cầu đăng nhập"
+        #     }), 401
             
         data = request.get_json()
         
@@ -112,8 +111,7 @@ def create_price():
             'price': price,
             'effective_date': data['effective_date'],
             'supplier': data['supplier'].strip(),
-            'notes': data.get('notes', '').strip(),
-            'created_by': session['username']
+            'notes': data.get('notes', '').strip()            
         }
         
         # Gọi API Gateway
@@ -142,17 +140,11 @@ def create_price():
 
 @price_bp.route("/api/prices/<string:price_id>", methods=['PUT'])
 @require_api_key
-@require_action
 def update_price(price_id):
     """Cập nhật thông tin giá"""
     try:
         # Kiểm tra đăng nhập
-        if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
-            
+        
         data = request.get_json()
         
         # Validate giá nếu có
@@ -219,16 +211,10 @@ def update_price(price_id):
 
 @price_bp.route("/api/prices/<string:price_id>", methods=['DELETE'])
 @require_api_key
-@require_action
 def delete_price(price_id):
     """Xóa thông tin giá"""
     try:
         # Kiểm tra đăng nhập
-        if 'username' not in session:
-            return jsonify({
-                "success": False,
-                "error": "Yêu cầu đăng nhập"
-            }), 401
         
         # Gọi API Gateway
         client = APIGatewayClient()
@@ -257,31 +243,16 @@ def delete_price(price_id):
 @require_api_key
 def get_suppliers():
     """Lấy danh sách nhà cung cấp duy nhất từ tất cả các bản ghi giá."""
-    try:
-        if 'username' not in session:
-            return jsonify({"success": False, "error": "Yêu cầu đăng nhập"}), 401
-
-        client = APIGatewayClient()
-        
-        # Tham số để lấy tất cả các bản ghi, có thể cần điều chỉnh dựa trên API của bạn
-        params = {'limit': 1000, 'page': 1} 
-        all_prices = []
-        
-        # Lặp để lấy tất cả các trang
-        while True:
-            response = client.get('/api/prices/suppliers')
-            data = response.get('data', [])
-            all_prices.extend(data)            
-          
-        # Trích xuất và lọc các nhà cung cấp duy nhất
-        suppliers = sorted(list(set(item['supplier'] for item in all_prices if 'supplier' in item)))
-        
-        return jsonify({"success": True, "data": data})
+    try:        
+       
+        client = APIGatewayClient()      
+        response = client.get('/api/prices/suppliers')           
+        return jsonify(response)
 
     except APIGatewayError as e:
-        return jsonify({"success": False, "error": e.message}), e.status_code
+        return jsonify({"message": e.message}), e.status_code
     except Exception as e:
-        return jsonify({"success": False, "error": "Không thể lấy danh sách nhà cung cấp"}), 500
+        return jsonify({"message": f"Lỗi hệ thống không xác định: {e}"}), 500
 
 
 @price_bp.route("/api/prices/products", methods=['GET'])
@@ -289,20 +260,12 @@ def get_suppliers():
 def get_products():
     """Lấy danh sách sản phẩm duy nhất từ tất cả các bản ghi giá."""
     try:
-        if 'username' not in session:
-            return jsonify({"success": False, "error": "Yêu cầu đăng nhập"}), 401
-
-        client = APIGatewayClient()
-        params = {'limit': 1000, 'page': 1}
-        all_prices = []
-
-        while True:
-            response = client.get('/api/prices/products')
-            data = response.get('data', [])
-            
-        return jsonify({"success": True, "data": data})
+        
+        client = APIGatewayClient()       
+        response = client.get('/api/prices/products')
+        return jsonify(response)
 
     except APIGatewayError as e:
-        return jsonify({"success": False, "error": e.message}), e.status_code
+        return jsonify({"message": e.message}), e.status_code
     except Exception as e:
-        return jsonify({"success": False, "error": "Không thể lấy danh sách sản phẩm"}), 500
+        return jsonify({"message": f"Lỗi hệ thống không xác định: {e}"}), 500

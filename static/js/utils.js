@@ -24,6 +24,86 @@ export function formatDateToYMD(timestamp) {
     return `${year}-${month}-${day}`;
 	 
 }
+export function formatDateNew(dateValue) {
+    if (!dateValue) return '';
+    
+    try {
+        let date;
+        
+        // Handle different date formats
+        if (typeof dateValue === 'number') {
+            // Handle timestamp (milliseconds)
+            date = new Date(dateValue);
+        } else if (typeof dateValue === 'string') {
+            // Handle ISO string or date string
+            if (dateValue.includes('T')) {
+                // ISO format with time
+                date = new Date(dateValue);
+            } else {
+                // Date only format (YYYY-MM-DD)
+                date = new Date(dateValue + 'T00:00:00');
+            }
+        } else if (dateValue instanceof Date) {
+            // Already a Date object
+            date = dateValue;
+        } else {
+            // Unknown format
+            return dateValue.toString();
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.warn('Invalid date:', dateValue);
+            return dateValue.toString();
+        }
+        
+        // Format as Vietnamese date
+        return date.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+    } catch (error) {
+        console.warn('Could not format date:', dateValue, error);
+        return dateValue ? dateValue.toString() : '';
+    }
+}
+
+function formatDateForInput(dateValue) {
+    if (!dateValue) return '';
+    
+    try {
+        let date;
+        
+        // Handle different date formats
+        if (typeof dateValue === 'number') {
+            // Handle timestamp (milliseconds)
+            date = new Date(dateValue);
+        } else if (typeof dateValue === 'string') {
+            // Handle ISO string or date string
+            date = new Date(dateValue);
+        } else if (dateValue instanceof Date) {
+            // Already a Date object
+            date = dateValue;
+        } else {
+            return '';
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.warn('Invalid date for input:', dateValue);
+            return '';
+        }
+        
+        // Format as YYYY-MM-DD for input[type="date"]
+        return date.toISOString().split('T')[0];
+        
+    } catch (error) {
+        console.warn('Could not format date for input:', dateValue, error);
+        return '';
+    }
+}
 /**
  * Fetches the API secret key from the server.
  * Stores the key in a local variable for subsequent requests.

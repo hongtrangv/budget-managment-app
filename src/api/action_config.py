@@ -33,6 +33,12 @@ ACTION_CONFIG = {
     'price_api.delete_price': ['DELETE_PRICE'],
     'price_api.get_suppliers': ['READ_PRICE'],
     'price_api.get_products': ['READ_PRICE'],
+    'price_api.get_price_products': ['READ_PRICE'],
+    'price_api.create_price_product': ['CREATE_PRICE'],
+    'price_api.update_price_product': ['UPDATE_PRICE'],
+    'price_api.delete_price_product': ['DELETE_PRICE'],
+    'price_api.get_latest_prices': ['READ_PRICE'],
+    'price_api.get_price_history': ['READ_PRICE'],
 
     # == Admin API Endpoints ==
     'admin_bp.approve_user': ['APPROVE_USER'],    
